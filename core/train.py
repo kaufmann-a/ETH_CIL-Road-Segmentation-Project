@@ -47,12 +47,14 @@ def evaluate(model, batch_size, loss_fn, data_loader):
             # TODO create loss metric class
             total_loss += loss.item()
 
+            # get probabilities
+            preds = torch.sigmoid(output)
+
             # update accuracy
-            accuracy.update(output, label.int())
+            accuracy.update(preds, label.int())
 
             # update dice score
             # TODO create dice score metrics class
-            preds = torch.sigmoid(output)
             preds = (preds >= 0.5).float()
 
             total_dice_score += (2 * (preds * label).sum()) / (
@@ -95,12 +97,14 @@ def train_step(model, batch_size, optimizer, loss_fn, data_loader):
         # TODO create loss metric class
         total_loss += loss.item()
 
+        # get probabilities
+        preds = torch.sigmoid(output)
+
         # update accuracy
-        accuracy.update(output, label.int())
+        accuracy.update(preds, label.int())
 
         # update dice score
         # TODO create dice score metrics class
-        preds = torch.sigmoid(output)
         preds = (preds >= 0.5).float()
 
         total_dice_score += (2 * (preds * label).sum()) / (
