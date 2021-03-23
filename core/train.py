@@ -6,11 +6,11 @@ from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm  # used to show progress bar
 
 from core.dataset.simple_dataset import RoadSegmentationSimpleDataset
-# Hyperparameters etc.
-from core.model.res_unet import ResUnet
 from core.model.res_unet_plus import ResUnetPlusPlus
 from core.utils.metrics import BCEDiceLoss
+from core.utils.utils import save_predictions_as_imgs
 
+# Hyperparameters etc.
 LEARNING_RATE = 1e-3
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # TODO Is out of memory issue normal for images of size 400x400 or is there an error in the code ?
@@ -173,6 +173,9 @@ def main():
 
         print(f"......... - Validation : accuracy = {val_accuracy:.5f},"
               f" loss = {val_loss:.5f}, dice score = {val_dice_score:.5f}")
+
+    # save predictions as images after entire training finished
+    save_predictions_as_imgs(loader=val_data_loader, model=model, device=DEVICE)
 
 
 if __name__ == '__main__':
