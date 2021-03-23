@@ -5,7 +5,7 @@
 import torch
 import torch.nn as nn
 
-from modules import (
+from core.model.modules import (
     ResidualConv,
     ASPP,
     AttentionBlock,
