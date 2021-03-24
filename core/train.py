@@ -19,7 +19,7 @@ BATCH_SIZE = 8
 IMAGE_HEIGHT_RESIZED = 256
 IMAGE_WIDTH_RESIZED = 256
 
-NUM_EPOCHS = 10
+NUM_EPOCHS = 50
 NUM_WORKERS = 1
 TRAIN_IMG_DIR = "../data/training/images"
 TRAIN_MASK_DIR = "../data/training/groundtruth"
@@ -48,7 +48,7 @@ def evaluate(model, batch_size, loss_fn, data_loader):
             total_loss += loss.item()
 
             # get probabilities
-            preds = torch.sigmoid(output)
+            preds = output # using the ResUnet or ResUnetPlusPlus gives already prop. as output
 
             # update accuracy
             accuracy.update(preds, label.int())
@@ -98,7 +98,7 @@ def train_step(model, batch_size, optimizer, loss_fn, data_loader):
         total_loss += loss.item()
 
         # get probabilities
-        preds = torch.sigmoid(output)
+        preds = output  # using the ResUnet or ResUnetPlusPlus gives already prop. as output
 
         # update accuracy
         accuracy.update(preds, label.int())
@@ -161,6 +161,8 @@ def main():
 
     model = ResUnetPlusPlus(3).to(DEVICE)
     loss = BCEDiceLoss()
+    # loss = nn.BCELoss()
+    # optimizer = optim.SGD(model.parameters(), LEARNING_RATE)
     optimizer = optim.Adam(model.parameters(), LEARNING_RATE)
 
     for epoch in range(NUM_EPOCHS):
