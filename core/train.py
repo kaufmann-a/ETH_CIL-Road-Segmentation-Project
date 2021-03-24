@@ -48,7 +48,7 @@ def evaluate(model, batch_size, loss_fn, data_loader):
             total_loss += loss.item()
 
             # get probabilities
-            preds = output # using the ResUnet or ResUnetPlusPlus gives already prop. as output
+            preds = output  # using the ResUnet or ResUnetPlusPlus gives already prop. as output
 
             # update accuracy
             accuracy.update(preds, label.int())
@@ -165,6 +165,8 @@ def main():
     # optimizer = optim.SGD(model.parameters(), LEARNING_RATE)
     optimizer = optim.Adam(model.parameters(), LEARNING_RATE)
 
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+
     for epoch in range(NUM_EPOCHS):
         # train model for one epoch
         train_loss, train_accuracy, train_dice_score = train_step(model=model, loss_fn=loss, optimizer=optimizer,
@@ -173,12 +175,16 @@ def main():
         # evaluate
         val_loss, val_accuracy, val_dice_score = evaluate(model=model, loss_fn=loss, data_loader=val_data_loader,
                                                           batch_size=BATCH_SIZE)
-
-        print(f"\n[Epoch {epoch}] - Training :   accuracy = {train_accuracy:.5f},"
+        print(f"\n[Epoch {epoch}]")
+        print(f"Training :   accuracy = {train_accuracy:.5f},"
               f" loss = {train_loss:.5f}, dice score = {train_dice_score:.5f}")
 
-        print(f"......... - Validation : accuracy = {val_accuracy:.5f},"
+        print(f"Validation : accuracy = {val_accuracy:.5f},"
               f" loss = {val_loss:.5f}, dice score = {val_dice_score:.5f}")
+        print("learning rate", lr_scheduler.get_last_lr())
+
+        # decay learning rate over time
+        lr_scheduler.step()
 
     # save predictions as images after entire training finished
     save_predictions_as_imgs(loader=val_data_loader, model=model, device=DEVICE)
