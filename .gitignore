@@ -133,3 +133,4 @@ dmypy.json
 
 #training runs
 trainings/
+data/
