@@ -6,10 +6,10 @@ import os
 # TODO add desired transformations here
 transform = A.Compose([A.HorizontalFlip()])
 
-IMAGE_DIR = "../../data/training/images"
-MASK_DIR = "../../data/training/groundtruth"
-AUG_IMAGE_DIR = "../../data/training/augmentations/images"
-AUG_MASK_DIR = "../../data/training/augmentations/masks"
+IMAGE_DIR = "../data/training/images"
+MASK_DIR = "../data/training/groundtruth"
+AUG_IMAGE_DIR = "../data/training/augmentations/images"
+AUG_MASK_DIR = "../data/training/augmentations/masks"
 
 for file in os.listdir(IMAGE_DIR):
     filename = os.fsdecode(file)
