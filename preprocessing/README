@@ -1,0 +1,5 @@
+Dependencies:
+pip3 install git+https://github.com/albumentations-team/albumentations
+python version 3.8.5
+
+the release version of albumentation doesn't have all transformations
