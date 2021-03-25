@@ -156,7 +156,7 @@ def main():
     val_data_loader = torch.utils.data.DataLoader(val_set,
                                                   batch_size=BATCH_SIZE,
                                                   num_workers=NUM_WORKERS,
-                                                  shuffle=True,
+                                                  shuffle=False,
                                                   pin_memory=True)
 
     model = ResUnetPlusPlus(3).to(DEVICE)

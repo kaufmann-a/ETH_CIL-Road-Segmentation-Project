@@ -130,3 +130,7 @@ dmypy.json
 
 #Pycharm stuff
 .idea/
+
+#training runs
+trainings/
+data/
