@@ -24,6 +24,7 @@ from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
 #TODO: from source.metrics.metricsfactory import MetricsFactory
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
+from source.helpers.utils import save_predictions_as_imgs
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -74,9 +75,10 @@ class Engine:
             checkpoint = {"state_dict": self.model.state_dict(), "optimizer": self.optimizer.state_dict()}
             # TODO: Implement save checkpionts
             # save_checkpoint(checkpoint)
-            # TODO: Implement some examples to a folder
-            # print some examples to a folder
-            # save_predictions_as_imgs(val_loader, model, folder="data/training/saved_images/", device=DEVICE)
+
+        # TODO: Implement some examples to a folder
+        # print some examples to a folder
+        # save_predictions_as_imgs(val_loader, self.model, folder="./trainings", device=DEVICE, is_prob=False)
 
         return 0
 
