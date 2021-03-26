@@ -1,12 +1,11 @@
 import albumentations as A
-import torch
 import torch.optim as optim
 import torchmetrics as torchmetrics
 from albumentations.pytorch import ToTensorV2
 from tqdm import tqdm  # used to show progress bar
 
 from core.dataset.simple_dataset import RoadSegmentationSimpleDataset
-from core.model.res_unet_plus import ResUnetPlusPlus
+from road_segmentation_main.source.models.res_unet import *
 from core.utils.metrics import BCEDiceLoss
 from core.utils.utils import save_predictions_as_imgs
 
@@ -159,7 +158,7 @@ def main():
                                                   shuffle=False,
                                                   pin_memory=True)
 
-    model = ResUnetPlusPlus(3).to(DEVICE)
+    model = ResUnet(3).to(DEVICE)
     loss = BCEDiceLoss()
     # loss = nn.BCELoss()
     # optimizer = optim.SGD(model.parameters(), LEARNING_RATE)

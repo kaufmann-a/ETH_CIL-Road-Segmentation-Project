@@ -5,14 +5,16 @@
 import torch
 import torch.nn as nn
 
-from core.model.modules import ResidualConv, Upsample
+from source.models.basemodel import BaseModel
+from source.models.modules import ResidualConv, Upsample
 
 
-class ResUnet(nn.Module):
+class ResUnet(BaseModel):
     """
     Based on https://arxiv.org/pdf/1711.10684.pdf
 
     """
+    name = 'ResUnet'
 
     def __init__(self, channel, filters=[64, 128, 256, 512]):
         super(ResUnet, self).__init__()
