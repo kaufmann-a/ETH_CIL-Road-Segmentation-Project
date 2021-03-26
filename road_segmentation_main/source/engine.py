@@ -10,8 +10,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import os
 import torch
-import torch.nn as nn
-from torchsummary import summary
+import torchmetrics as torchmetrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -64,39 +63,55 @@ class Engine:
         # TODO: The following code needs to be checked again, we currently don't do evaluation here
         num_epochs = Configuration.get('training.num_epochs')
         for epoch in range(num_epochs):
-            loop = tqdm(train_loader)
-            for batch_idx, (data,targets) in enumerate(loop):
-                data = data.to(device=DEVICE)
-                targets = targets.float().unsqueeze(1).to(device=DEVICE)
+            acc = self.train_step(train_loader)
 
-                #forward
-                with torch.cuda.amp.autocast():
-                    predictions = self.model(data)
-                    loss = self.loss_function(predictions, targets)
-
-                #backward
-                self.optimizer.zero_grad()
-                self.scaler.scale(loss).backward()
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
-
-                #update tqdm progressbar
-                loop.set_postfix(loss=loss.item())
-
-                # save model
-                checkpoint = {"state_dict": self.model.state_dict(), "optimizer": self.optimizer.state_dict()}
-                # TODO: Implement save checkpionts
-                #save_checkpoint(checkpoint)
-                # TODO: Implement accuracy checker
-                # check accuracy
-                #check_accuracy(val_loader, model, device=DEVICE)
-
-                # TODO: Implement some examples to a folder
-                # print some examples to a folder
-                #save_predictions_as_imgs(val_loader, model, folder="data/training/saved_images/", device=DEVICE)
-
+            Logcreator.info(f"Epoch {epoch}")
+            Logcreator.info(f"accuracy {acc}")
+            
+            # save model
+            checkpoint = {"state_dict": self.model.state_dict(), "optimizer": self.optimizer.state_dict()}
+            # TODO: Implement save checkpionts
+            # save_checkpoint(checkpoint)
+            # TODO: Implement some examples to a folder
+            # print some examples to a folder
+            # save_predictions_as_imgs(val_loader, model, folder="data/training/saved_images/", device=DEVICE)
 
         return 0
+
+    def train_step(self, loader):
+        """
+        Train model for 1 epoch.
+        """
+        # initialize metrics
+        accuracy = torchmetrics.Accuracy(threshold=0.5)
+        accuracy.to(DEVICE)
+
+        # progressbar
+        loop = tqdm(loader)
+
+        # for all batches
+        for batch_idx, (data, targets) in enumerate(loop):
+            data = data.to(device=DEVICE)
+            targets = targets.float().unsqueeze(1).to(device=DEVICE)
+
+            # forward
+            with torch.cuda.amp.autocast():  # improve performance while maintaining accuracy
+                predictions = self.model(data)
+                loss = self.loss_function(predictions, targets)
+
+            # backward
+            self.optimizer.zero_grad()
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+
+            # update metrics
+            accuracy.update(torch.sigmoid(predictions), targets.int())
+
+            # update tqdm progressbar
+            loop.set_postfix(loss=loss.item())
+
+        return accuracy.compute()
 
     def save(self):
         # TODO: Evaluate need of this function (should save model)
@@ -125,4 +140,3 @@ class Engine:
         # Logcrator.info("Load weights from: %s" % path)
         # self.model.load_weights(path)
         return 0
-
