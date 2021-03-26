@@ -123,7 +123,7 @@ class UNet(BaseModel):
     """
     name = 'Unet_'
 
-    def __init__(self, num_classes=1):
+    def __init__(self, options, num_classes=1):
         super().__init__()
 
         # encoding

@@ -16,7 +16,7 @@ class ResUnet(BaseModel):
     """
     name = 'ResUnet'
 
-    def __init__(self, channel, filters=[64, 128, 256, 512]):
+    def __init__(self, options, channel=3, filters=[64, 128, 256, 512]):
         super(ResUnet, self).__init__()
 
         # Encoding

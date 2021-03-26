@@ -18,7 +18,7 @@ from source.models.modules import (
 class ResUnetPlusPlus(BaseModel):
     name = 'ResUnetPlusPlus'
 
-    def __init__(self, channel, filters=[32, 64, 128, 256, 512]):
+    def __init__(self, options, channel=3, filters=[32, 64, 128, 256, 512]):
         super(ResUnetPlusPlus, self).__init__()
 
         self.input_layer = nn.Sequential(
