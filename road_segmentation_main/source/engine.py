@@ -27,6 +27,7 @@ from source.optimizers.optimizerfactory import OptimizerFactory
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 class Engine:
 
     def __init__(self):
@@ -48,7 +49,6 @@ class Engine:
         # TODO: This function should plot the model
         return 0
 
-
     def train(self, epoch_start=0):
         training_data, validation_data, test_data = DataPreparator.load()
 
@@ -60,14 +60,16 @@ class Engine:
         val_loader = DataLoader(validation_data, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=False) # TODO: check what shuffle exactly does and how to use it
         self.test_data = test_data
 
-        # TODO: The following code needs to be checked again, we currently don't do evaluation here
         num_epochs = Configuration.get('training.num_epochs')
         for epoch in range(num_epochs):
-            acc = self.train_step(train_loader)
+            train_loss, train_acc = self.train_step(train_loader)
 
             Logcreator.info(f"Epoch {epoch}")
-            Logcreator.info(f"accuracy {acc}")
-            
+            Logcreator.info(f"Training:   loss: {train_loss:.5f}", f", accuracy: {train_acc:.5f}")
+
+            val_loss, val_acc = self.evaluate(val_loader)
+            Logcreator.info(f"Validation: loss: {val_loss:.5f}", f", accuracy: {val_acc:.5f}")
+
             # save model
             checkpoint = {"state_dict": self.model.state_dict(), "optimizer": self.optimizer.state_dict()}
             # TODO: Implement save checkpionts
@@ -78,16 +80,20 @@ class Engine:
 
         return 0
 
-    def train_step(self, loader):
+    def train_step(self, data_loader):
         """
         Train model for 1 epoch.
         """
+        self.model.train()
+
         # initialize metrics
         accuracy = torchmetrics.Accuracy(threshold=0.5)
         accuracy.to(DEVICE)
 
+        total_loss = 0.
+
         # progressbar
-        loop = tqdm(loader)
+        loop = tqdm(data_loader)
 
         # for all batches
         for batch_idx, (data, targets) in enumerate(loop):
@@ -105,13 +111,51 @@ class Engine:
             self.scaler.step(self.optimizer)
             self.scaler.update()
 
+            # update loss
+            total_loss += loss.item()
+
             # update metrics
+            # TODO create one Metrics class that we can feed with (predicted, targets)
+            #  and computes all metrics we want and maybe logs them -> tensorboard?
             accuracy.update(torch.sigmoid(predictions), targets.int())
 
             # update tqdm progressbar
             loop.set_postfix(loss=loss.item())
 
-        return accuracy.compute()
+        total_loss /= len(data_loader)
+
+        return total_loss, accuracy.compute()
+
+    def evaluate(self, data_loader):
+        """
+        Evaluate model on validation data.
+        """
+        self.model.eval()
+
+        # initialize metrics
+        accuracy = torchmetrics.Accuracy()
+        accuracy.to(DEVICE)
+
+        total_loss = 0.
+
+        with torch.no_grad():
+            for i, (image, targets) in enumerate(data_loader):
+                image, targets = image.to(DEVICE), targets.float().unsqueeze(1).to(DEVICE)
+
+                # forward pass
+                with torch.cuda.amp.autocast():
+                    output = self.model(image)
+                    loss = self.loss_function(output, targets)
+
+                # update loss
+                total_loss += loss.item()
+
+                # update metrics
+                accuracy.update(torch.sigmoid(output), targets.int())
+
+        total_loss /= len(data_loader)
+
+        return total_loss, accuracy.compute()
 
     def save(self):
         # TODO: Evaluate need of this function (should save model)
