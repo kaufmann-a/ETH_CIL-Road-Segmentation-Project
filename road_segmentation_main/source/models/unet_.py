@@ -6,6 +6,9 @@ import torch
 from torch import nn
 
 
+from source.models.basemodel import BaseModel
+
+
 # encoding block
 class encoding_block(nn.Module):
     """
@@ -114,12 +117,13 @@ class decoding_block(nn.Module):
         return self.conv(torch.cat([output1, output2], 1))
 
 
-class UNet(nn.Module):
+class UNet(BaseModel):
     """
     Main UNet architecture
     """
+    name = 'Unet_'
 
-    def __init__(self, num_classes=1):
+    def __init__(self, options, num_classes=1):
         super().__init__()
 
         # encoding
@@ -181,10 +185,11 @@ class UNet(nn.Module):
         return final
 
 
-class UNetSmall(nn.Module):
+class UNetSmall(BaseModel):
     """
     Main UNet architecture
     """
+    name = 'UnetSmall'
 
     def __init__(self, num_classes=1):
         super().__init__()

@@ -5,7 +5,8 @@
 import torch
 import torch.nn as nn
 
-from core.model.modules import (
+from source.models.basemodel import BaseModel
+from source.models.modules import (
     ResidualConv,
     ASPP,
     AttentionBlock,
@@ -14,8 +15,10 @@ from core.model.modules import (
 )
 
 
-class ResUnetPlusPlus(nn.Module):
-    def __init__(self, channel, filters=[32, 64, 128, 256, 512]):
+class ResUnetPlusPlus(BaseModel):
+    name = 'ResUnetPlusPlus'
+
+    def __init__(self, options, channel=3, filters=[32, 64, 128, 256, 512]):
         super(ResUnetPlusPlus, self).__init__()
 
         self.input_layer = nn.Sequential(
