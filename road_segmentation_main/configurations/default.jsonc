@@ -5,7 +5,8 @@
         "log_file" : "logs.txt"
     },
 	"collection" : {
-		"folder" : "D:\\GitHub\\cil-road-segmentation\\road_segmentation_main\\data\\training\\training",
+		"folder" : "../../core/data/training",
+		"transform_folders" : ["original", "flip_hor", "flip_ver", "crop_random", "rotate_random"],
 		"test_data_count" : 0,
 		"validation_ratio" : 0.2
 	},

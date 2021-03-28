@@ -6,19 +6,18 @@ from torch.utils.data import Dataset
 
 
 class RoadSegmentationSimpleDataset(Dataset):
-    def __init__(self, image_dir, mask_dir, device, transform=None):
-        self.image_dir = image_dir
-        self.mask_dir = mask_dir
+    def __init__(self, image_list, mask_list, device, transform=None):
         self.device = device
         self.transform = transform
-        self.images = os.listdir(image_dir)
+        self.images = image_list
+        self.masks = mask_list
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, index):
-        img_path = os.path.join(self.image_dir, self.images[index])
-        mask_path = os.path.join(self.mask_dir, self.images[index])
+        img_path = self.images[index]
+        mask_path = self.masks[index]
         image = np.array(Image.open(img_path).convert("RGB"))
         mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
 

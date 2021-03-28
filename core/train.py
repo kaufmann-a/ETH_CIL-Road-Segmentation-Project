@@ -7,7 +7,7 @@ from tqdm import tqdm  # used to show progress bar
 from core.dataset.simple_dataset import RoadSegmentationSimpleDataset
 from road_segmentation_main.source.models.res_unet import *
 from core.utils.metrics import BCEDiceLoss
-from core.utils.utils import save_predictions_as_imgs
+#from core.utils.utils import save_predictions_as_imgs
 
 # Hyperparameters etc.
 LEARNING_RATE = 1e-3
@@ -22,6 +22,9 @@ NUM_EPOCHS = 50
 NUM_WORKERS = 1
 TRAIN_IMG_DIR = "../data/training/images"
 TRAIN_MASK_DIR = "../data/training/groundtruth"
+
+IMAGE_PATHS = "preprocessing/image_paths.txt"
+MASK_PATHS = "preprocessing/mask_paths.txt"
 
 
 def evaluate(model, batch_size, loss_fn, data_loader):
@@ -133,7 +136,13 @@ def main():
         ],
     )
 
-    dataset = RoadSegmentationSimpleDataset(TRAIN_IMG_DIR, TRAIN_MASK_DIR,
+    with open(IMAGE_PATHS, "r") as file:
+        image_list = [line.strip() for line in file]
+
+    with open(MASK_PATHS, "r") as file:
+        mask_list = [line.strip() for line in file]
+
+    dataset = RoadSegmentationSimpleDataset(image_list, mask_list,
                                             transform=transformer, device=DEVICE)
 
     TRAIN_SET_SIZE = 0.7

@@ -14,14 +14,14 @@ import torchmetrics as torchmetrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-#TODO: from source.callbacks.callbacksfactory import CallbacksFactory
+# TODO: from source.callbacks.callbacksfactory import CallbacksFactory
 from source.configuration import Configuration
 # from source.data.datagenerator import DataGenerator
 from source.data.datapreparator import DataPreparator
 from source.logcreator.logcreator import Logcreator
 from source.helpers import converter
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
-#TODO: from source.metrics.metricsfactory import MetricsFactory
+# TODO: from source.metrics.metricsfactory import MetricsFactory
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
 from source.helpers.utils import save_predictions_as_imgs
@@ -35,16 +35,14 @@ class Engine:
         self.model = ModelFactory.build().to(DEVICE)
         self.optimizer = OptimizerFactory.build(self.model)
         self.loss_function = LossFunctionFactory.build(self.model)
-        self.scaler = torch.cuda.amp.GradScaler() # I assumed we always use gradscaler, thus no factory for this
-
-
+        self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
 
         Logcreator.debug("Model '%s' initialized with %d parameters." %
-                     (Configuration.get('training.model.name'), sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
+                         (Configuration.get('training.model.name'),
+                          sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
 
         # TODO: Print summary
         # Logcreator.debug(summary(self.model, (3, 400, 400))) Not working, check what parameters to input to the function
-
 
     def plot_model(self):
         # TODO: This function should plot the model
@@ -57,8 +55,10 @@ class Engine:
         num_workers = Configuration.get('training.num_workers')
         shuffle = Configuration.get('training.shuffle')
 
-        train_loader = DataLoader(training_data, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=shuffle)
-        val_loader = DataLoader(validation_data, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=False) # TODO: check what shuffle exactly does and how to use it
+        train_loader = DataLoader(training_data, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
+                                  shuffle=shuffle)
+        val_loader = DataLoader(validation_data, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
+                                shuffle=False)  # TODO: check what shuffle exactly does and how to use it
         self.test_data = test_data
 
         num_epochs = Configuration.get('training.num_epochs')
