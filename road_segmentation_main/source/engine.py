@@ -42,15 +42,12 @@ class Engine:
         Logcreator.debug("Model '%s' initialized with %d parameters." %
                      (Configuration.get('training.model.name'), sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
 
-        # TODO: Print summary
-        # Logcreator.debug(summary(self.model, (3, 400, 400))) Not working, check what parameters to input to the function
-
 
     def plot_model(self):
         # TODO: This function should plot the model
         return 0
 
-    def train(self, epoch_start=0):
+    def train(self, epoch_nr=0):
         training_data, validation_data, test_data = DataPreparator.load()
 
         batch_size = Configuration.get('training.batch_size')
@@ -62,7 +59,12 @@ class Engine:
         self.test_data = test_data
 
         num_epochs = Configuration.get('training.num_epochs')
-        for epoch in range(num_epochs):
+
+        epoch = 0
+        if epoch_nr != 0: #Check if continued training
+            epoch = epoch_nr
+
+        while epoch < num_epochs:
             train_loss, train_acc = self.train_step(train_loader)
 
             Logcreator.info(f"Epoch {epoch}")
@@ -72,9 +74,11 @@ class Engine:
             Logcreator.info(f"Validation: loss: {val_loss:.5f}", f", accuracy: {val_acc:.5f}")
 
             # save model
-            checkpoint = {"state_dict": self.model.state_dict(), "optimizer": self.optimizer.state_dict()}
-            # TODO: Implement save checkpionts
-            # save_checkpoint(checkpoint)
+            if epoch % 1 == 0:
+                self.save_model(epoch)
+                self.save_checkpoint(epoch, train_loss, train_acc, val_loss, val_acc)
+
+            epoch += 1
 
         # TODO: Implement some examples to a folder
         # print some examples to a folder
@@ -160,30 +164,44 @@ class Engine:
 
         return total_loss, accuracy.compute()
 
-    def save(self):
-        # TODO: Evaluate need of this function (should save model)
-        # Do we need this??? does it exist in pytorch
-        return 0
 
-    def save_weights(self):
-        # ToDo: Implement save_weights function
+    def save_model(self, epoch_nr):
+        """ This function saves entire model incl. modelstructure"""
+        Configuration.model_save_folder = os.path.join(Configuration.output_directory, "whole_model_backups")
+        if not os.path.exists(Configuration.model_save_folder):
+            os.makedirs(Configuration.model_save_folder)
+        file_name = str(epoch_nr) + "_whole_model_serialized.pth"
+        torch.save(self.model, os.path.join(Configuration.model_save_folder, file_name))
 
-        # path = os.path.join(Configuration.get_path(
-        #     'environment.weights.folder', optional=False), Configuration.get('environment.weights.file', optional=False))
-        # self.model.save_weights(path, overwrite=True)
-        # Logcreator.info("Saved weights to: %s" % path)
-        return 0
+    def save_checkpoint(self, epoch, tl, ta, vl, va):
+        Configuration.weights_save_folder = os.path.join(Configuration.output_directory, "weights_checkpoint")
+        if not os.path.exists(Configuration.weights_save_folder):
+            os.makedirs(Configuration.weights_save_folder)
+        file_name = str(epoch) + "_checkpoint.pth"
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'train_loss': tl,
+            'train_accuracy': ta,
+            'val_loss': vl,
+            'val_accuracy': va,
+        }, os.path.join(Configuration.weights_save_folder, file_name))
 
-    def load(self, path=None):
-        # TODO: Do we need this? Is it available in pytorch? (load model from file)
-        return 0
 
-    def load_weights(self, path=None):
-        # TODO: Implement function to load weight of an interrupted training
+    def load_model(self, path=None):
+        self.model = torch.load(path)
+        self.model.eval() #Todo: check if needed
 
-        # if not path:
-        #     path = os.path.join(Configuration.get_path(
-        #         'environment.weights.folder', optional=False), Configuration.get('environment.weights.file', optional=False))
-        # Logcrator.info("Load weights from: %s" % path)
-        # self.model.load_weights(path)
-        return 0
+    def load_checkpints(self, path=None):
+        checkpoint = torch.load(path)
+        #Todo: check if to device should be called somewhere
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        epoch = checkpoint['epoch']
+        train_loss = checkpoint['train_loss']
+        train_accuracy = checkpoint['train_accuracy']
+        val_loss = checkpoint['val_loss']
+        val_accuracy = checkpoint['val_accuracy']
+
+        return epoch, train_loss, train_accuracy, val_loss, val_accuracy
