@@ -32,7 +32,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 class Engine:
 
     def __init__(self):
-        self.model = ModelFactory.build().to(DEVICE)
+        self.model = ModelFactory.build(print_model=True, DEVICE=DEVICE).to(DEVICE)
         self.optimizer = OptimizerFactory.build(self.model)
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler() # I assumed we always use gradscaler, thus no factory for this
