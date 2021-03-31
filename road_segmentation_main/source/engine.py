@@ -102,13 +102,14 @@ class Engine:
             data = data.to(device=DEVICE)
             targets = targets.float().unsqueeze(1).to(device=DEVICE)
 
-            # forward
-            with torch.cuda.amp.autocast():  # improve performance while maintaining accuracy
+            self.optimizer.zero_grad()
+
+            # runs the forward pass with autocasting (improve performance while maintaining accuracy)
+            with torch.cuda.amp.autocast():
                 predictions = self.model(data)
                 loss = self.loss_function(predictions, targets)
 
-            # backward
-            self.optimizer.zero_grad()
+            # backward according to https://pytorch.org/docs/stable/notes/amp_examples.html#amp-examples
             self.scaler.scale(loss).backward()
             self.scaler.step(self.optimizer)
             self.scaler.update()
