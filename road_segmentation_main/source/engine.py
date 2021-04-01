@@ -91,9 +91,11 @@ class Engine:
         # flush writer
         self.writer.flush()
 
-        # TODO: Implement some examples to a folder
-        # print some examples to a folder
-        # save_predictions_as_imgs(val_loader, self.model, folder="./trainings", device=DEVICE, is_prob=False)
+        # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
+        # save predicted validation images
+        save_predictions_as_imgs(val_loader, self.model,
+                                 folder=os.path.join(Configuration.output_directory, "predictions"), device=DEVICE,
+                                 is_prob=False)
 
         return 0
 
