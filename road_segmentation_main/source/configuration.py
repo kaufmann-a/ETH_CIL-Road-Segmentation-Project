@@ -50,7 +50,7 @@ class Configuration(object):
         if not os.path.exists(configuration_path):
             raise EnvironmentError(
                 "Configuration file " + configuration_path + " not found - aborting.")
-        with open(Configuration.build_path(configuration_path, create=False), 'r') as f:
+        with open(Configuration.build_path(configuration_path, Configuration.output_directory, create=False), 'r') as f:
             config = commentjson.load(f, object_hook=lambda d: {
                                       k: converter.try_eval(d[k]) for k in d})
             return config
@@ -86,11 +86,11 @@ class Configuration(object):
         return Configuration.build_path(path)
 
     @staticmethod
-    def build_path(path, create=True):
+    def build_path(path, workingdir='', create=True):
         """
         Generates an absolute path if a relative is passed.
         """
-        path = filehelper.build_abspath(path, Configuration.output_directory)
+        path = filehelper.build_abspath(path, workingdir)
         if create and not os.path.exists(path):
             os.makedirs(path)
         return path
