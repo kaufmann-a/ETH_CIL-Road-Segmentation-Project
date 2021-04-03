@@ -18,6 +18,7 @@
 		},
 		"batch_size": 8,
 		"num_epochs" : 3,
+		"checkpoint_save_interval" : 5,
 		"num_workers" : 2,
 		"shuffle" : true,
         "loss_function": "bce_with_logits_loss",

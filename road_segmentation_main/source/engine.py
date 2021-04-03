@@ -65,6 +65,7 @@ class Engine:
         self.test_data = test_data
 
         num_epochs = Configuration.get('training.num_epochs')
+        checkpoint_save_interval = Configuration.get('training.checkpoint_save_interval')
 
         epoch = 0
         if epoch_nr != 0:  # Check if continued training
@@ -86,7 +87,7 @@ class Engine:
             self.writer.add_scalar("Accuracy/val", val_acc, epoch)
 
             # save model
-            if epoch % 1 == 0:
+            if epoch % checkpoint_save_interval == checkpoint_save_interval - 1:
                 self.save_model(epoch)
                 self.save_checkpoint(epoch, train_loss, train_acc, val_loss, val_acc)
 
@@ -166,7 +167,7 @@ class Engine:
             for i, (image, targets) in enumerate(data_loader):
                 image, targets = image.to(DEVICE), targets.float().unsqueeze(1).to(DEVICE)
 
-                # forward pass
+                # forward pass according to https://pytorch.org/docs/stable/amp.html
                 with torch.cuda.amp.autocast():
                     output = self.model(image)
                     loss = self.loss_function(output, targets)
