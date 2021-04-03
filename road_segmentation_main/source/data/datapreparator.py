@@ -25,7 +25,7 @@ class DataPreparator(object):
         if not path:
             path = Configuration.get_path('data_collection.folder', False)
         image_dir = os.path.join(path, 'images')
-        groundtruth_dir = os.path.join(path, 'groundtruth')
+        groundtruth_dir = os.path.join(path, 'masks')
 
         images = os.listdir(image_dir)
         groundtruth = os.listdir(groundtruth_dir)
