@@ -56,22 +56,18 @@ class Engine:
     def train(self, epoch_nr=0):
         training_data, validation_data, test_data = DataPreparator.load()
 
-        batch_size = Configuration.get('training.batch_size')
-        num_workers = Configuration.get('training.num_workers')
-        shuffle = Configuration.get('training.shuffle')
+        #Load training parameters from config file
+        train_parms  = Configuration.get('training.general')
 
-        train_loader = DataLoader(training_data, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=shuffle)
-        val_loader = DataLoader(validation_data, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=False) # TODO: check what shuffle exactly does and how to use it
+        train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers, pin_memory=True, shuffle=train_parms.shuffle_data)
+        val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers, pin_memory=True, shuffle=False) # TODO: check what shuffle exactly does and how to use it
         self.test_data = test_data
-
-        num_epochs = Configuration.get('training.num_epochs')
-        checkpoint_save_interval = Configuration.get('training.checkpoint_save_interval')
 
         epoch = 0
         if epoch_nr != 0:  # Check if continued training
             epoch = epoch_nr
 
-        while epoch < num_epochs:
+        while epoch < train_parms.num_epochs:
             train_loss, train_acc = self.train_step(train_loader)
 
             Logcreator.info(f"Epoch {epoch}")
@@ -87,7 +83,7 @@ class Engine:
             self.writer.add_scalar("Accuracy/val", val_acc, epoch)
 
             # save model
-            if epoch % checkpoint_save_interval == checkpoint_save_interval - 1:
+            if epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1:
                 self.save_model(epoch)
                 self.save_checkpoint(epoch, train_loss, train_acc, val_loss, val_acc)
 
