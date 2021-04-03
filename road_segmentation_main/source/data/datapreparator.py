@@ -23,7 +23,7 @@ class DataPreparator(object):
     @staticmethod
     def load(path='', test_data_count=None):
         if not path:
-            path = Configuration.get_path('collection.folder', False)
+            path = Configuration.get_path('data_collection.folder', False)
         image_dir = os.path.join(path, 'images')
         groundtruth_dir = os.path.join(path, 'groundtruth')
 
@@ -35,9 +35,9 @@ class DataPreparator(object):
         # TODO: Decide if we should also splitt test data or if we just use test images provided and upload to kaggle always
         test_images = None
         # test_groundtruth = None
-        test_frequency = Configuration.get('collection.test_frequency', default=0)
+        test_frequency = Configuration.get('data_collection.test_frequency', default=0)
         if not test_data_count:
-            test_data_count = Configuration.get('collection.test_data_count', default=0)
+            test_data_count = Configuration.get('data_collection.test_data_count', default=0)
         if test_data_count > 0:
             test_data_count = int(test_data_count)
             test_images = images[-test_data_count:]
@@ -46,7 +46,7 @@ class DataPreparator(object):
             # groundtruth = groundtruth[-len(groundtruth) - test_data_count:]
 
         # Split of validation files
-        validation_ratio = Configuration.get('collection.validation_ratio', default=0.2)
+        validation_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
 
         validation_images = images[-int(len(images) * validation_ratio):]
         # validation_groundtruth = groundtruth[-int(len(groundtruth) * validation_ratio):]
