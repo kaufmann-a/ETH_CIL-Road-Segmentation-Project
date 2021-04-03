@@ -12,7 +12,7 @@ import glob
 # Load all models
 from os.path import dirname, basename, isfile
 
-from torchsummary import summary
+
 
 from source.configuration import Configuration
 from source.exceptions.configurationerror import ConfigurationError
@@ -29,13 +29,11 @@ for module in [basename(f)[:-3] for f in modules if
 class ModelFactory(object):
 
     @staticmethod
-    def build(print_model=True, DEVICE='cpu'):
+    def build():
         model_config = Configuration.get('training.model', optional=False)
         all_models = BaseModel.__subclasses__()
         if model_config.name:
             model = [m(model_config) for m in all_models if m.name.lower() == model_config.name.lower()]
             if model and len(model) > 0:
-                if print_model:
-                    Logcreator.info(summary(model[0], input_size=(3, 400, 400), device=DEVICE))
                 return model[0]
         raise ConfigurationError('training.model.name')

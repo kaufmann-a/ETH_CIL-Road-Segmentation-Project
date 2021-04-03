@@ -14,6 +14,7 @@ import torchmetrics as torchmetrics
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+from torchsummary import summary
 
 #TODO: from source.callbacks.callbacksfactory import CallbacksFactory
 from source.configuration import Configuration
@@ -33,13 +34,16 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 class Engine:
 
     def __init__(self):
-        self.model = ModelFactory.build(print_model=True, DEVICE=DEVICE).to(DEVICE)
+        self.model = ModelFactory.build().to(DEVICE)
         self.optimizer = OptimizerFactory.build(self.model)
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
 
         # initialize tensorboard logger
         self.writer = SummaryWriter(log_dir=Configuration.output_directory)
+
+        #Print model summary
+        Logcreator.info(summary(self.model, input_size=(3, 400, 400), device=DEVICE))
 
         Logcreator.debug("Model '%s' initialized with %d parameters." %
                      (Configuration.get('training.model.name'), sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
