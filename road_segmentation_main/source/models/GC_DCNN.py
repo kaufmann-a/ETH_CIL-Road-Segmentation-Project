@@ -24,7 +24,21 @@ from source.models.basemodel import BaseModel
 
 class ResidualDilatedBlock(nn.Module):
     """
-    ResidualDilatedBlock - RDB
+    ResidualDilatedBlock - RDB:
+    - BatchNorm2d
+    - ReLU
+    - Conv2d
+    - BatchNorm2d
+    - ReLU
+    - Conv2d
+    - BatchNorm2d
+    - ReLU
+    - Conv2d
+
+    + skip connection:
+     - Conv2d: with fixed kernel weights equal to one
+
+    Attention: We batch normalize the input but not the output!
 
     By default the bias=False in the Conv2d layers, since the BN layer after it will "get rid of it":
         https://discuss.pytorch.org/t/any-purpose-to-set-bias-false-in-densenet-torchvision/22067,
@@ -54,20 +68,47 @@ class ResidualDilatedBlock(nn.Module):
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=bias_out_layer)
         )
 
-        # residual/identity connection
-        # implemented residual/identity connection according to the resnet;
-        #  see downsample in https://pytorch.org/vision/stable/_modules/torchvision/models/resnet.html
-        self.conv_skip = nn.Sequential(  # TODO not clear how they implemented the identity mapping
-            nn.BatchNorm2d(input_dim),  # use BN before Conv2d because also in the conv_block we use it before
+        # identity connection
+        self.conv_skip = nn.Sequential(
+            # TODO not clear how they implemented the identity mapping
+            # - implemented residual/identity connection according to the resnet;
+            #   see "downsample" in https://pytorch.org/vision/stable/_modules/torchvision/models/resnet.html
+            #   Conv2d
+            #   BatchNorm2d
+            #
+            # nn.BatchNorm2d(input_dim),  # use BN before Conv2d because also in the conv_block we use it before
+            # nn.ReLU(),  # should we also ad ReLU after BatchNorm2d ?
+            #
+            # - 1x1 convolutions to match dimensions: https://arxiv.org/abs/1512.03385
+            #   https://stats.stackexchange.com/questions/194142/what-does-1x1-convolution-mean-in-a-neural-network
+            #
+            # BN not good for the identity mapping?: https://arxiv.org/abs/1603.05027
+            #
             nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0, bias=bias_out_layer),
         )
+
+        # TODO is fixing the kernel working correctly: Are the weights staying one also after backpropagation?
+        if True:  # use fixed kernel
+            with torch.no_grad():
+                # use the identity kernel where the parameters are not learned
+                kernel = torch.ones(1, output_dim)
+                self.conv_skip.weight = nn.Parameter(kernel)
+                # F.conv2d(input=input_dim, weight=kernel, stride=stride, padding=0, bias=None)
 
     def forward(self, x):
         return self.conv_block(x) + self.conv_skip(x)
 
 
 class Upsample(nn.Module):
+    """
+    Uses the transposed convolution layer of pytorch to upsample.
+    Depending on the parameters also applies batch normalization after the transposed convolution layer.
+    """
+
     def __init__(self, input_dim, output_dim, kernel, stride, batch_norm=False):
+        """
+        @param batch_norm: True = Batch normalization is applied after the transposed convolution layer
+        """
         super(Upsample, self).__init__()
 
         conv_transpose = nn.ConvTranspose2d(
@@ -86,6 +127,11 @@ class Upsample(nn.Module):
 class conv2DBatchNormRelu(nn.Module):
     """
     Based on: https://github.com/shahabty/PSPNet-Pytorch/blob/f714cfe9b30eaef4dfb301cc261254e4a3c4b996/layers.py#L347
+
+    Combined block:
+    - Conv2d
+    - BatchNorm2d
+    - ReLu
     """
 
     def __init__(self, in_channels, n_filters, k_size, stride, padding, bias=True, dilation=1):
@@ -126,13 +172,14 @@ class PyramidPooling(nn.Module):
         self.pool_sizes = pool_sizes
 
     def forward(self, x):
-        output_slices = [x]
+        output_slices = [x]  # concatenate the input with the pooled outputs below
         h, w = x.shape[2:]
 
         for module, pool_size in zip(self.path_module_list, self.pool_sizes):
             out = F.avg_pool2d(x, int(h / pool_size), int(h / pool_size), 0)
             out = module(out)
-            out = F.upsample(out, size=(h, w), mode='bilinear')
+            # changed to F.interpolate since F.upsample is deprecated
+            out = F.interpolate(out, size=(h, w), mode='bilinear')
             output_slices.append(out)
 
         return torch.cat(output_slices, dim=1)
@@ -167,7 +214,7 @@ class GlobalContextDilatedCNN(BaseModel):
         # Level 4 - RDB 3
         self.residual_dilated_block_3 = ResidualDilatedBlock(filters[2], filters[3], stride=2, dilation=2, padding=1)
 
-        # TODO not clear why or if they do not use BN in front of every "upsampling" convolution layer and in ppm
+        # TODO not clear where they use BN: during "upsampling" and in ppm
         BATCH_NORM = False
 
         # Bridge
@@ -180,24 +227,28 @@ class GlobalContextDilatedCNN(BaseModel):
 
         # Decoder
         # Accordint to paper:
-        #  Upsampling is done with the transposed convolution of pytorch using kernel size 2 and stride 2
+        #  "Upsampling is done with the transposed convolution of pytorch using kernel size 2 and stride 2"
         # Level 6
         self.upsample_1 = Upsample(filters[3] * 2, filters[2], kernel=2, stride=2,
                                    batch_norm=False)  # BN is done at the end of ppm
 
-        # bias of out layer set to true if not followed by a BN layer
-        self.up_residual_block1 = ResidualDilatedBlock(filters[2] * 2, filters[2], stride=1, dilation=1, padding=1,
+        # the bias of the up residual out layer is set to true if not followed by a BN layer
+        self.up_residual_block1 = ResidualDilatedBlock(filters[2] * 2, filters[2],
+                                                       stride=1, dilation=1, padding=1,
                                                        bias_out_layer=not BATCH_NORM)
 
         # Level 7
         self.upsample_2 = Upsample(filters[2], filters[1], kernel=2, stride=2, batch_norm=BATCH_NORM)
-        self.up_residual_block2 = ResidualDilatedBlock(filters[1] * 2, filters[1], stride=1, dilation=1, padding=1,
+
+        self.up_residual_block2 = ResidualDilatedBlock(filters[1] * 2, filters[1],
+                                                       stride=1, dilation=1, padding=1,
                                                        bias_out_layer=not BATCH_NORM)
 
         # Level 8
         self.upsample_3 = Upsample(filters[1], filters[0], kernel=2, stride=2, batch_norm=BATCH_NORM)
 
-        self.up_residual_block3 = ResidualDilatedBlock(filters[0] * 2, filters[0], stride=1, dilation=1, padding=1,
+        self.up_residual_block3 = ResidualDilatedBlock(filters[0] * 2, filters[0],
+                                                       stride=1, dilation=1, padding=1,
                                                        bias_out_layer=not BATCH_NORM)
 
         # Output
