@@ -21,6 +21,8 @@ from torchsummary import summary
 
 from source.models.basemodel import BaseModel
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class ResidualDilatedBlock(nn.Module):
     """
@@ -36,7 +38,7 @@ class ResidualDilatedBlock(nn.Module):
     - Conv2d
 
     + skip connection:
-     - Conv2d: with fixed kernel weights equal to one
+     - Conv2d: with 1x1 kernel
 
     Attention: We batch normalize the input but not the output!
 
@@ -46,8 +48,17 @@ class ResidualDilatedBlock(nn.Module):
         Why ResNet has bias=False: https://github.com/KaimingHe/deep-residual-networks/issues/10#issuecomment-194037195
     """
 
-    def __init__(self, input_dim, output_dim, stride, padding, dilation=2, bias_out_layer=False):
+    def __init__(self, input_dim, output_dim, stride, padding, dilation=2, bias_out_layer=False,
+                 fixed_skip_kernel=False):
+        """
+        @param bias_out_layer: True = bias for the last Conv2d layer is set to True
+        @param fixed_skip_kernel: True = Uses a 1x1 kernel Conv2d layer with fixed weights equal to ones
+                                  False = Uses a 1x1 kernel Conv2d layer where the weights are learned
+                                  # TODO fixed_skip_kernel does not work! The loss does not change during training!
+        """
         super(ResidualDilatedBlock, self).__init__()
+        self.fixed_skip_kernel = fixed_skip_kernel
+        self.stride = stride
 
         # dilated convolution
         self.conv_block = nn.Sequential(
@@ -68,35 +79,24 @@ class ResidualDilatedBlock(nn.Module):
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=bias_out_layer)
         )
 
+        # TODO not clear how they implemented the identity mapping
         # identity connection
         self.conv_skip = nn.Sequential(
-            # TODO not clear how they implemented the identity mapping
-            # - implemented residual/identity connection according to the resnet;
-            #   see "downsample" in https://pytorch.org/vision/stable/_modules/torchvision/models/resnet.html
-            #   Conv2d
-            #   BatchNorm2d
-            #
-            # nn.BatchNorm2d(input_dim),  # use BN before Conv2d because also in the conv_block we use it before
-            # nn.ReLU(),  # should we also ad ReLU after BatchNorm2d ?
-            #
-            # - 1x1 convolutions to match dimensions: https://arxiv.org/abs/1512.03385
-            #   https://stats.stackexchange.com/questions/194142/what-does-1x1-convolution-mean-in-a-neural-network
-            #
-            # BN not good for the identity mapping?: https://arxiv.org/abs/1603.05027
-            #
-            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0, bias=bias_out_layer),
+            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0,
+                      bias=bias_out_layer),
+            # nn.BatchNorm2d(output_dim) # TODO add BN?
         )
 
-        # TODO is fixing the kernel working correctly: Are the weights staying one also after backpropagation?
-        if True:  # use fixed kernel
-            with torch.no_grad():
-                # use the identity kernel where the parameters are not learned
-                kernel = torch.ones(1, output_dim)
-                self.conv_skip.weight = nn.Parameter(kernel)
-                # F.conv2d(input=input_dim, weight=kernel, stride=stride, padding=0, bias=None)
-
     def forward(self, x):
-        return self.conv_block(x) + self.conv_skip(x)
+        if self.fixed_skip_kernel:
+            identity_kernel = torch.ones(self.conv_skip[0].weight.shape).to(DEVICE)
+            identity = F.conv2d(input=x, weight=identity_kernel, stride=self.stride, padding=0, bias=None)
+        else:
+            identity = self.conv_skip(x)
+
+        out = self.conv_block(x) + identity
+
+        return out
 
 
 class Upsample(nn.Module):
@@ -124,65 +124,30 @@ class Upsample(nn.Module):
         return self.upsample(x)
 
 
-class conv2DBatchNormRelu(nn.Module):
-    """
-    Based on: https://github.com/shahabty/PSPNet-Pytorch/blob/f714cfe9b30eaef4dfb301cc261254e4a3c4b996/layers.py#L347
-
-    Combined block:
-    - Conv2d
-    - BatchNorm2d
-    - ReLu
-    """
-
-    def __init__(self, in_channels, n_filters, k_size, stride, padding, bias=True, dilation=1):
-        super(conv2DBatchNormRelu, self).__init__()
-
-        if dilation > 1:
-            conv_mod = nn.Conv2d(int(in_channels), int(n_filters), kernel_size=k_size,
-                                 padding=padding, stride=stride, bias=bias, dilation=dilation)
-
-        else:
-            conv_mod = nn.Conv2d(int(in_channels), int(n_filters), kernel_size=k_size,
-                                 padding=padding, stride=stride, bias=bias, dilation=1)
-
-        self.cbr_unit = nn.Sequential(conv_mod,
-                                      # TODO not clear where to apply BN; before/after or if at all
-                                      nn.BatchNorm2d(int(n_filters)),
-                                      nn.ReLU(inplace=True), )
-
-    def forward(self, inputs):
-        outputs = self.cbr_unit(inputs)
-        return outputs
-
-
-class PyramidPooling(nn.Module):
+class PPM(nn.Module):
     """
     Pyramid Pooling Module - PPM
-    Based on: https://github.com/shahabty/PSPNet-Pytorch/blob/f714cfe9b30eaef4dfb301cc261254e4a3c4b996/layers.py#L347
+    Based on: https://github.com/hszhao/semseg/blob/master/model/pspnet.py
     """
 
-    def __init__(self, in_channels, pool_sizes):
-        super(PyramidPooling, self).__init__()
-
-        self.paths = []
-        for i in range(len(pool_sizes)):
-            self.paths.append(conv2DBatchNormRelu(in_channels, int(in_channels / len(pool_sizes)), 1, 1, 0, bias=False))
-
-        self.path_module_list = nn.ModuleList(self.paths)
-        self.pool_sizes = pool_sizes
+    def __init__(self, in_dim, reduction_dim, bins):
+        super(PPM, self).__init__()
+        self.features = []
+        for bin in bins:
+            self.features.append(nn.Sequential(
+                nn.AdaptiveAvgPool2d(bin),
+                nn.Conv2d(in_dim, reduction_dim, kernel_size=1, bias=False),
+                nn.BatchNorm2d(reduction_dim),
+                nn.ReLU(inplace=True)
+            ))
+        self.features = nn.ModuleList(self.features)
 
     def forward(self, x):
-        output_slices = [x]  # concatenate the input with the pooled outputs below
-        h, w = x.shape[2:]
-
-        for module, pool_size in zip(self.path_module_list, self.pool_sizes):
-            out = F.avg_pool2d(x, int(h / pool_size), int(h / pool_size), 0)
-            out = module(out)
-            # changed to F.interpolate since F.upsample is deprecated
-            out = F.interpolate(out, size=(h, w), mode='bilinear')
-            output_slices.append(out)
-
-        return torch.cat(output_slices, dim=1)
+        x_size = x.size()
+        out = [x]
+        for f in self.features:
+            out.append(F.interpolate(f(x), x_size[2:], mode='bilinear', align_corners=True))
+        return torch.cat(out, 1)
 
 
 class GlobalContextDilatedCNN(BaseModel):
@@ -205,6 +170,7 @@ class GlobalContextDilatedCNN(BaseModel):
         )
         self.input_skip = nn.Sequential(
             nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0)
+            # nn.BatchNorm2d(filters[0]) # TODO add BN?
         )
 
         # Level 2 - RDB 1
@@ -215,41 +181,42 @@ class GlobalContextDilatedCNN(BaseModel):
         self.residual_dilated_block_3 = ResidualDilatedBlock(filters[2], filters[3], stride=2, dilation=2, padding=1)
 
         # TODO not clear where they use BN: during "upsampling" and in ppm
-        BATCH_NORM = False
+        BATCH_NORM_INFRONT_PPM = False
 
         # Bridge
         # Level 5
-        ppm = PyramidPooling(filters[3], [6, 3, 2, 1])
+        bins = (1, 2, 3, 6)
+        ppm = PPM(filters[3], int(filters[3] / len(bins)), bins)
         self.bridge = nn.Sequential(
             nn.BatchNorm2d(filters[3]),
             ppm,
-        ) if BATCH_NORM else ppm
+        ) if BATCH_NORM_INFRONT_PPM else ppm
 
         # Decoder
         # Accordint to paper:
         #  "Upsampling is done with the transposed convolution of pytorch using kernel size 2 and stride 2"
+
         # Level 6
-        self.upsample_1 = Upsample(filters[3] * 2, filters[2], kernel=2, stride=2,
-                                   batch_norm=False)  # BN is done at the end of ppm
+        self.upsample_1 = nn.ConvTranspose2d(filters[3] * 2, filters[2], kernel_size=2, stride=2)
 
         # the bias of the up residual out layer is set to true if not followed by a BN layer
         self.up_residual_block1 = ResidualDilatedBlock(filters[2] * 2, filters[2],
                                                        stride=1, dilation=1, padding=1,
-                                                       bias_out_layer=not BATCH_NORM)
+                                                       bias_out_layer=True)
 
         # Level 7
-        self.upsample_2 = Upsample(filters[2], filters[1], kernel=2, stride=2, batch_norm=BATCH_NORM)
+        self.upsample_2 = nn.ConvTranspose2d(filters[2], filters[1], kernel_size=2, stride=2)
 
         self.up_residual_block2 = ResidualDilatedBlock(filters[1] * 2, filters[1],
                                                        stride=1, dilation=1, padding=1,
-                                                       bias_out_layer=not BATCH_NORM)
+                                                       bias_out_layer=True)
 
         # Level 8
-        self.upsample_3 = Upsample(filters[1], filters[0], kernel=2, stride=2, batch_norm=BATCH_NORM)
+        self.upsample_3 = nn.ConvTranspose2d(filters[1], filters[0], kernel_size=2, stride=2)
 
         self.up_residual_block3 = ResidualDilatedBlock(filters[0] * 2, filters[0],
                                                        stride=1, dilation=1, padding=1,
-                                                       bias_out_layer=not BATCH_NORM)
+                                                       bias_out_layer=True)
 
         # Output
         self.output_layer = nn.Sequential(
@@ -295,4 +262,11 @@ if __name__ == '__main__':
     Test if the dimensions work out and print model
     """
     model = GlobalContextDilatedCNN(options=[])
-    summary(model, input_size=(3, 256, 256), device="cpu")
+    model.to(DEVICE)
+    summary(model, input_size=(3, 256, 256), device=DEVICE)
+
+    # from torchviz import make_dot
+    #
+    # x = torch.zeros((2, 3, 256, 256), dtype=torch.float, requires_grad=False)
+    # out = model(x)
+    # make_dot(out).render("gc_dcnn")
