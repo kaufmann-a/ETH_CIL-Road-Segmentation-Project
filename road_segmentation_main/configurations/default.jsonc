@@ -5,7 +5,7 @@
         "log_file" : "logs.txt"
     },
 	"collection" : {
-		"folder" : "../../core/data/training",
+		"folder" : "data/training",
 		"transform_folders" : ["original", "flip_hor", "flip_ver", "crop_random", "rotate_random"],
 		"test_data_count" : 0,
 		"validation_ratio" : 0.2

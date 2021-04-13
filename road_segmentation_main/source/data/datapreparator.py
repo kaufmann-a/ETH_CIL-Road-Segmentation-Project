@@ -28,7 +28,7 @@ class DataPreparator(object):
         # split original images into val and train
         val_ratio = Configuration.get('collection.validation_ratio', default=0.2)
 
-        originals_list = os.listdir(os.path.join(path, 'originals', 'images'))
+        originals_list = os.listdir(os.path.join(path, 'original', 'images'))
         originals = [image for image in originals_list if image.endswith('.png')]
 
         random.seed(0)
@@ -40,7 +40,7 @@ class DataPreparator(object):
             Logcreator.warn("Intersection between train and validation set.")
 
         # get folder names of transformed images
-        folders = Configuration.get('collection.transform.folders')
+        folders = Configuration.get('collection.transform_folders')
 
         image_paths_train = []
         mask_paths_train = []
@@ -51,8 +51,8 @@ class DataPreparator(object):
                 filename = os.fsdecode(file)
                 if filename.endswith(".png"):
                     if filename in originals_train:
-                        image_paths_train.append(os.path.join(folder, "images", filename))
-                        mask_paths_train.append(os.path.join(folder, "masks", filename))
+                        image_paths_train.append(os.path.join(path, folder, "images", filename))
+                        mask_paths_train.append(os.path.join(path, folder, "masks", filename))
 
         # paths to images (original only) for validation set
         # if we want to use the transformed images for validation too, use the structure from above and include "else"
@@ -67,7 +67,9 @@ class DataPreparator(object):
         if len(image_paths_val) == 0:
             Logcreator.warn("No validation files assigned.")
 
-        # TODO test images
+        # test images
+
+
 
         transform = A.Compose(
             [
