@@ -99,31 +99,6 @@ class ResidualDilatedBlock(nn.Module):
         return out
 
 
-class Upsample(nn.Module):
-    """
-    Uses the transposed convolution layer of pytorch to upsample.
-    Depending on the parameters also applies batch normalization after the transposed convolution layer.
-    """
-
-    def __init__(self, input_dim, output_dim, kernel, stride, batch_norm=False):
-        """
-        @param batch_norm: True = Batch normalization is applied after the transposed convolution layer
-        """
-        super(Upsample, self).__init__()
-
-        conv_transpose = nn.ConvTranspose2d(
-            input_dim, output_dim, kernel_size=kernel, stride=stride
-        )
-
-        self.upsample = nn.Sequential(
-            nn.BatchNorm2d(input_dim),
-            conv_transpose
-        ) if batch_norm else conv_transpose
-
-    def forward(self, x):
-        return self.upsample(x)
-
-
 class PPM(nn.Module):
     """
     Pyramid Pooling Module - PPM
