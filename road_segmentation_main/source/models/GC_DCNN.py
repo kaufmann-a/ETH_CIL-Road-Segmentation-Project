@@ -240,8 +240,36 @@ if __name__ == '__main__':
     model.to(DEVICE)
     summary(model, input_size=(3, 256, 256), device=DEVICE)
 
-    # from torchviz import make_dot
-    #
-    # x = torch.zeros((2, 3, 256, 256), dtype=torch.float, requires_grad=False)
-    # out = model(x)
-    # make_dot(out).render("gc_dcnn")
+    # experimental visualization
+    VISUALIZE = False
+    if VISUALIZE:
+        import hiddenlayer as hl  # need to install IPython
+
+        # Changes so it runs:
+        # Line 71 in pytorch_builder.py of the hiddenlayer library to:
+        # torch_graph = torch.onnx._optimize_trace(trace, torch.onnx.OperatorExportTypes.ONNX_FALLTHROUGH)
+        #
+        # Upgrade changes so we see the stride and dilation for Conv3x3:
+        # Changed line 43/44 in transform.py to:
+        # name = self.name or " &gt; ".join([l.title + ("" if not "Conv3x3" == l.title else 's:' + str(l.params['strides']) + 'd:' + str(l.params['dilations'])) for l in matches])
+        #                 combo = Node(uid=graph.sequence_id(matches),
+        #                              name=name, ...
+        x = torch.zeros((2, 3, 256, 256), dtype=torch.float, requires_grad=True).to(DEVICE)
+
+        transforms = [
+            hl.transforms.Fold("BatchNorm > Relu > Conv", "BnReluConv"),
+            hl.transforms.Fold("Conv > BatchNorm > Relu > Conv", "ConvBnReluConv"),
+            hl.transforms.Fold("BnReluConv > BnReluConv > BnReluConv", "RDB"),
+
+            hl.transforms.FoldDuplicates(),
+        ]
+
+        graph = hl.build_graph(model, x, transforms=transforms)
+        out = graph.build_dot()
+        out.render(filename='gc_dcnn', view=True)
+
+        # from torchviz import make_dot
+        #
+        # x = torch.zeros((2, 3, 256, 256), dtype=torch.float, requires_grad=False)
+        # out = model(x)
+        # make_dot(out).render("gc_dcnn")
