@@ -36,3 +36,17 @@ class RoadSegmentationDataset(Dataset):
             mask = augmentations["mask"]
 
         return image, mask
+
+class RoadSegmentationDatasetInference(Dataset):
+    def __init__(self, image_list):
+        #self.device = device # unsure whether we need this, if yes: add paramaeter device to init
+        self.images = image_list
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        img_path = self.images[index]
+        image = np.array(Image.open(img_path).convert("RGB"))
+
+        return image

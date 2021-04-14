@@ -10,6 +10,7 @@ import time
 import argparse
 import glob
 import sys
+import torch
 
 from source.configuration import Configuration
 from source.engine import Engine
@@ -17,6 +18,8 @@ from source.logcreator.logcreator import Logcreator
 from source.helpers import argumenthelper
 from source.helpers import filehelper
 from source.prediction.prediction import  Prediction
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def process_args(args):
     if args.run_folder:
@@ -66,7 +69,10 @@ if __name__ == "__main__":
     engine.load_checkpints(args.weights)
 
     #Run predictions
-    predictor = Prediction(engine)
+
+    if False: # Todo: code not yet working
+        predictor = Prediction(engine, Configuration.get_path('data_collection.test_images_folder'), DEVICE)
+        predictor.predict()
 
 
 
