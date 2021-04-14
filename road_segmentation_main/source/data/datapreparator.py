@@ -40,7 +40,7 @@ class DataPreparator(object):
             Logcreator.warn("Intersection between train and validation set.")
 
         # get folder names of transformed images
-        folders = Configuration.get('collection.transform_folders')
+        folders = Configuration.get('data_collection.transform_folders')
 
         image_paths_train = []
         mask_paths_train = []
