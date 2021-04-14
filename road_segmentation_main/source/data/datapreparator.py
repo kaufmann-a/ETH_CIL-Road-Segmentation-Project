@@ -26,7 +26,7 @@ class DataPreparator(object):
             path = Configuration.get_path('collection.folder', False)
 
         # split original images into val and train
-        val_ratio = Configuration.get('collection.validation_ratio', default=0.2)
+        val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
 
         originals_list = os.listdir(os.path.join(path, 'original', 'images'))
         originals = [image for image in originals_list if image.endswith('.png')]
