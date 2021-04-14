@@ -84,7 +84,7 @@ class Prediction(object):
             for j in range(math.ceil(width / stride[1])):
                 left, upper, right, lower = self.get_crop_box(i, j, height, width, stride)
 
-                new_image.paste(cropped_images[image_idx], (left, upper))
+                new_image.paste(cropped_images[image_idx], (left, upper)) #Todo: check
                 # new_image.show()
                 image_idx += 1
 
@@ -115,7 +115,7 @@ class Prediction(object):
         # Todo: add jonas code somewhere here
 
         dataset = RoadSegmentationDatasetInference(image_list=image_paths)
-        loader = DataLoader(dataset, batch_size=len(image_list), num_workers=2, pin_memory=True, shuffle=False)
+        loader = DataLoader(dataset, batch_size=8, num_workers=2, pin_memory=True, shuffle=False)
 
         patch_size = 16
         foreground_threshold = 0.5
@@ -123,16 +123,17 @@ class Prediction(object):
 
         with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
             f.write('id,prediction\n')
+
             for idx, x in enumerate(loader):
                 x = x.to(device=self.device)
 
                 with torch.no_grad():
                     preds = self.model(x)
 
-                    # preds = torch.sigmoid(preds)
-
+                    preds = torch.sigmoid(preds) # We need it because our models are constructend without sigmoid at the end
+                    #split tensor into packages of 4 images and then
+                    # for every package call patch_image_together and then f_write
                     # probabilities to 0/1
-                    # preds = (preds >= 0.5).float()
                     f.writelines('{}\n'.format(s) for s in self.mask_to_submission_strings(preds=preds, patch_size=patch_size, foreground_threshold=foreground_threshold, image_nr=image_nr))
 
 

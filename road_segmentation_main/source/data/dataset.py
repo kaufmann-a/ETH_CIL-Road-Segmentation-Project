@@ -27,6 +27,7 @@ class RoadSegmentationDataset(Dataset):
         image = np.array(Image.open(img_path).convert("RGB"))
         mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
 
+        # Todo: check
         threshold = 255.0 / 2
         mask = (mask >= threshold).astype(int)
 
@@ -46,7 +47,4 @@ class RoadSegmentationDatasetInference(Dataset):
         return len(self.images)
 
     def __getitem__(self, index):
-        img_path = self.images[index]
-        image = np.array(Image.open(img_path).convert("RGB"))
-
-        return image
+        return self.images[index]

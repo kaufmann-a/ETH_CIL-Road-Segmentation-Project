@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     #Run predictions
 
-    if False: # Todo: code not yet working
+    if False:
         predictor = Prediction(engine, Configuration.get_path('data_collection.test_images_folder'), DEVICE)
         predictor.predict()
 
