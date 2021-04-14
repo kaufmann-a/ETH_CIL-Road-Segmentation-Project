@@ -30,7 +30,7 @@ if __name__ == "__main__":
     args = argumenthelper.parse_args(parser)
     start = time.time()
 
-    Configuration.initialize(args.configuration, args.workingdir)
+    Configuration.initialize(args.configuration, args.workingdir, create_output_train=True, create_output_inf=False)
     Logcreator.initialize()
 
     Logcreator.h1("Some title")

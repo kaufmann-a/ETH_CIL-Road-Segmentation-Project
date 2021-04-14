@@ -95,7 +95,7 @@ class Engine:
         # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
         # save predicted validation images
         save_predictions_as_imgs(val_loader, self.model,
-                                 folder=os.path.join(Configuration.output_directory, "predictions"), device=DEVICE,
+                                 folder=os.path.join(Configuration.output_directory, "prediction"), device=DEVICE,
                                  is_prob=False)
 
         return 0

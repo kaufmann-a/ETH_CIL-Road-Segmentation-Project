@@ -21,7 +21,7 @@ class Configuration(object):
     output_directory = ''
 
     @staticmethod
-    def initialize(configuration_file, working_directory=None, create_output=True, disable_merge=False):
+    def initialize(configuration_file, working_directory=None, create_output_train=False, create_output_inf=False, disable_merge=False):
         global configuration
         if not working_directory:
             working_directory = os.getcwd()
@@ -33,16 +33,18 @@ class Configuration(object):
         configuration_dict = Configuration.load_config(configuration_file)
         configuration = dictionary.to_named_tuple(configuration_dict)
 
-        if create_output:
+        if create_output_train:
             Configuration.output_directory = os.path.join(working_directory,
                                                           Configuration.get(
                                                               'environment.output_path', optional=False),
                 datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + "-" + os.path.basename(configuration_file.replace(".jsonc", "")))
-            if not os.path.exists(Configuration.output_directory):
-                os.makedirs(Configuration.output_directory)
-                copy(configuration_file, Configuration.output_directory)
+        elif create_output_inf:
+            Configuration.output_directory = os.path.join(working_directory, 'prediction-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
         else:
             Configuration.output_directory = working_directory
+        if not os.path.exists(Configuration.output_directory):
+            os.makedirs(Configuration.output_directory)
+            copy(configuration_file, Configuration.output_directory)
 
 
     @staticmethod
