@@ -50,7 +50,7 @@ class Configuration(object):
         if not os.path.exists(configuration_path):
             raise EnvironmentError(
                 "Configuration file " + configuration_path + " not found - aborting.")
-        with open(Configuration.build_path(configuration_path, create=False), 'r') as f:
+        with open(Configuration.build_path(configuration_path, Configuration.output_directory, create=False), 'r') as f:
             config = commentjson.load(f, object_hook=lambda d: {
                                       k: converter.try_eval(d[k]) for k in d})
             return config

@@ -56,7 +56,7 @@ class ResUnet(BaseModel):
         # Output
         self.output_layer = nn.Sequential(
             nn.Conv2d(filters[0], out_channels=1, kernel_size=1, stride=1),
-            nn.Sigmoid(),
+            # nn.Sigmoid() # we do use sigmoid later in the loss function
         )
 
     def forward(self, x):

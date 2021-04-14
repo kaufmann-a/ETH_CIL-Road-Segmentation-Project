@@ -24,7 +24,7 @@ if __name__ == "__main__":
                         type=str, help="Environment and training configuration.")
     parser.add_argument('--workingdir', default=os.getcwd(), type=str,
                         help="Working directory (default: current directory).")
-    parser.add_argument('--weights', default='', type=str, help="Optonal pretrained weights of a model to continue training.")
+    parser.add_argument('--weights', default='', type=str, help="Optional pretrained weights of a model to continue training.")
 
 
     args = argumenthelper.parse_args(parser)
@@ -38,9 +38,11 @@ if __name__ == "__main__":
 
     engine = Engine()
 
-    #ToDo: Load model and weights of pretrained model if args provide one
-
-    engine.train()
+    if args.weights:
+        epoch, train_loss, train_acc, val_loss, val_acc = engine.load_checkpints(args.weights)
+        engine.train(epoch)
+    else:
+        engine.train()
 
     end = time.time()
     Logcreator.info("Finished processing in %d [s]." % (end - start))
