@@ -133,3 +133,6 @@ dmypy.json
 
 #training runs
 trainings/
+
+# vscode 
+.vscode
