@@ -4,23 +4,26 @@
         "output_path": "trainings",
         "log_file" : "logs.txt"
     },
-	"collection" : {
-		"folder" : "data/training",
+	"data_collection" : {
+		"folder" : "../data/training",
 		"transform_folders" : ["original", "flip_hor", "flip_ver", "crop_random", "rotate_random"],
 		"test_data_count" : 0,
 		"validation_ratio" : 0.2
 	},
 	"training": {
+		"general" : {
+            "batch_size": 8,
+            "num_epochs" : 3,
+            "checkpoint_save_interval" : 5,
+            "num_workers" : 2,
+            "shuffle_data" : true
+		},
 		"model": {
 			"name": "unet",
 			"in_channels" : 3,
 			"out_channels" : 1,
 			"features" : [64, 128, 256, 512]
 		},
-		"batch_size": 8,
-		"num_epochs" : 3,
-		"num_workers" : 2,
-		"shuffle" : true,
         "loss_function": "bce_with_logits_loss",
         "optimizer": {
             "name": "adam",

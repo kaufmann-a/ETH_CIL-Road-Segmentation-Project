@@ -23,7 +23,7 @@ class DataPreparator(object):
     @staticmethod
     def load(path='', test_data_count=None):
         if not path:
-            path = Configuration.get_path('collection.folder', False)
+            path = Configuration.get_path('data_collection.folder', False)
 
         # split original images into val and train
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)

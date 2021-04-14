@@ -47,7 +47,6 @@ class Configuration(object):
 
     @staticmethod
     def load_config(configuration_path):
-        print(os.getcwd())
         if not os.path.exists(configuration_path):
             raise EnvironmentError(
                 "Configuration file " + configuration_path + " not found - aborting.")
@@ -87,11 +86,11 @@ class Configuration(object):
         return Configuration.build_path(path)
 
     @staticmethod
-    def build_path(path, create=True):
+    def build_path(path, workingdir='', create=True):
         """
         Generates an absolute path if a relative is passed.
         """
-        path = filehelper.build_abspath(path)
+        path = filehelper.build_abspath(path, workingdir)
         if create and not os.path.exists(path):
             os.makedirs(path)
         return path

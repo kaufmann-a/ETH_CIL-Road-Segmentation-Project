@@ -11,8 +11,8 @@ import numpy as np
 
 
 class RoadSegmentationDataset(Dataset):
-    def __init__(self, image_list, mask_list, device, transform=None):
-        self.device = device
+    def __init__(self, image_list, mask_list, transform=None):
+        #self.device = device # unsure whether we need this, if yes: add paramaeter device to init
         self.transform = transform
         self.images = image_list
         self.masks = mask_list
