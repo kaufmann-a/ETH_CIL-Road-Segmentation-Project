@@ -8,12 +8,11 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import math
 import os
 
-import numpy as np
 import torch
-import torchvision
 from PIL import Image, ImageChops
 from matplotlib import pyplot
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
@@ -94,11 +93,11 @@ class Prediction(object):
 
         return new_image
 
-    def patch_masks_together(self, cropped_images, total_width=608, total_height=608, stride=(400, 400)):
+    def patch_masks_together(self, cropped_images, total_width=608, total_height=608, stride=(400, 400), debug=False):
         width = total_width
         height = total_height
 
-        out_array = np.zeros(shape=(width, height))
+        out_array = torch.zeros(size=(width, height)).to(self.device)
 
         image_idx = 0
         for i in range(math.ceil(height / stride[0])):
@@ -106,22 +105,18 @@ class Prediction(object):
                 left, upper, right, lower = self.get_crop_box(i, j, height, width, stride)
 
                 # TODO how to patch together: addition, average, smooth corners, ...?
-                out_array[upper:lower, left:right] = np.add(out_array[upper:lower, left:right],
-                                                            cropped_images[image_idx])
+                out_array[upper:lower, left:right] = torch.add(out_array[upper:lower, left:right],
+                                                               cropped_images[image_idx])
                 out_array[upper:lower, left:right] /= 2
 
-                if True:
+                if debug:
                     # print(left, upper, right, lower)
                     # print(cropped_images[image_idx].shape)
                     plot_array = out_array > 0.5
-                    pyplot.imshow(plot_array, cmap='gray', vmin=0, vmax=1)
+                    pyplot.imshow(plot_array.cpu(), cmap='gray', vmin=0, vmax=1)
                     pyplot.show()
 
                 image_idx += 1
-
-        if True:
-            pyplot.imshow(out_array, cmap='gray', vmin=0, vmax=1)
-            pyplot.show()
 
         return out_array
 
@@ -160,7 +155,7 @@ class Prediction(object):
 
     def patch_to_label(self, patch, foreground_threshold):
         # assign a label to a patch
-        df = np.mean(patch)
+        df = torch.mean(patch)
         if df > foreground_threshold:
             return 1
         else:
@@ -189,8 +184,9 @@ class Prediction(object):
 
             self.model.eval()
 
+            loop = tqdm(loader)
             image_nr_list_idx = 0
-            for idx, x in enumerate(loader):
+            for idx, x in enumerate(loop):
                 x = x.to(device=self.device)
 
                 with torch.no_grad():
@@ -218,4 +214,5 @@ class Prediction(object):
                                                                               image_nr=image_number_list[
                                                                                   image_nr_list_idx]))
                         image_nr_list_idx += 1
-        print("done")
+
+                loop.set_postfix(image_nr=image_nr_list_idx)
