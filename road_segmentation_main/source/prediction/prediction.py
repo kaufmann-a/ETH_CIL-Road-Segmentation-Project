@@ -93,7 +93,23 @@ class Prediction(object):
 
         return new_image
 
-    def patch_masks_together(self, cropped_images, total_width=608, total_height=608, stride=(400, 400), debug=False):
+    def patch_masks_together(self, cropped_images,
+                             total_width=608, total_height=608, stride=(400, 400),
+                             mode='avg', debug=False):
+        """
+        Stitches a image mask together from multiple cropped image masks.
+
+        @param cropped_images: list of 2d-image tensors
+        @param total_width: output image width
+        @param total_height: output image height
+        @param stride: size of cropped images
+        @param mode: 'avg': take the average of the overlapping areas,
+                     'max': take the maximum of the overlapping areas,
+                     'overwrite': overwrite the overlapping areas
+        @param debug: True = plot images
+
+        @return: the combined image
+        """
         width = total_width
         height = total_height
 
@@ -105,9 +121,22 @@ class Prediction(object):
                 left, upper, right, lower = self.get_crop_box(i, j, height, width, stride)
 
                 # TODO how to patch together: addition, average, smooth corners, ...?
-                out_array[upper:lower, left:right] = torch.add(out_array[upper:lower, left:right],
-                                                               cropped_images[image_idx])
-                out_array[upper:lower, left:right] /= 2
+
+                if mode == 'avg':
+                    # average of overlapping areas
+                    # TODO chek if working correctly
+                    out_array[upper:lower, left:right] /= 2
+                    overlapping_indices = torch.nonzero(out_array[upper:lower, left:right], as_tuple=True)
+                    cropped_images[image_idx][overlapping_indices] /= 2  # only divide overlapping indices by 2
+
+                    out_array[upper:lower, left:right] = torch.add(out_array[upper:lower, left:right],
+                                                                   cropped_images[image_idx])
+                elif mode == 'max':
+                    out_array[upper:lower, left:right] = torch.maximum(out_array[upper:lower, left:right],
+                                                                       cropped_images[image_idx])
+                else:
+                    # overwrite overlapping areas
+                    out_array[upper:lower, left:right] = cropped_images[image_idx]
 
                 if debug:
                     # print(left, upper, right, lower)
@@ -177,7 +206,7 @@ class Prediction(object):
         loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
         patch_size = 16
-        foreground_threshold = 0.5
+        foreground_threshold = 0.5  # TODO add as a parameter
 
         with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
             f.write('id,prediction\n')
