@@ -6,7 +6,7 @@ import torchvision
 
 def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", device="cuda",
                              is_prob=False,
-                             individual_saving=False):
+                             individual_saving=True):
     """
     Save the predictions of the model as images.
 
@@ -40,16 +40,20 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
             if individual_saving:
                 # save every prediction separately
                 for i in range(0, preds.shape[0]):
+                    # save prediction
                     torchvision.utils.save_image(preds[i], f"{folder}/pred_{pred_img_idx}.png")
+                    # save truth
+                    torchvision.utils.save_image(y[i], f"{folder}/true_{pred_img_idx}.png")
+                    # save input
+                    torchvision.utils.save_image(x[i], f"{folder}/input_{pred_img_idx}.png")
+
                     pred_img_idx += 1
             else:
                 # save entire batch predictions as one grid image
                 torchvision.utils.save_image(preds, f"{folder}/pred_{idx}.png")
-
-            # save truth
-            torchvision.utils.save_image(y, f"{folder}/true_{idx}.png")
-
-            # save input
-            torchvision.utils.save_image(x, f"{folder}/input_{idx}.png")
+                # save truth
+                torchvision.utils.save_image(y, f"{folder}/true_{idx}.png")
+                # save input
+                torchvision.utils.save_image(x, f"{folder}/input_{idx}.png")
 
     model.train()
