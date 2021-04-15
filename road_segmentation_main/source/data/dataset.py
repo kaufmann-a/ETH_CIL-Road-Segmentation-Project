@@ -6,6 +6,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import os
 from PIL import Image
+from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset
 import numpy as np
 
@@ -47,4 +48,21 @@ class RoadSegmentationDatasetInference(Dataset):
         return len(self.images)
 
     def __getitem__(self, index):
-        return self.images[index]
+        # TODO get transformation from "central" place
+        import albumentations as A
+        from albumentations.pytorch import ToTensorV2
+        transform = A.Compose(
+            [
+                A.Resize(height=400, width=400),
+                A.Normalize(
+                    mean=[0.0, 0.0, 0.0],
+                    std=[1.0, 1.0, 1.0],
+                    max_pixel_value=255.0,
+                ),
+                ToTensorV2(),
+            ],
+        )
+
+        augmentations = transform(image=np.array(self.images[index]))
+
+        return augmentations["image"]

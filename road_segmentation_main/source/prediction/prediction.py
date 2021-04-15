@@ -5,22 +5,26 @@ Class for prediction of a set of images
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
-import os
-import sys
-import torch
 import math
-import numpy as np
-from torch.utils.data import DataLoader
-from PIL import Image, ImageChops
+import os
 
-from source.data.dataset import RoadSegmentationDatasetInference
+import numpy as np
+import torch
+import torchvision
+from PIL import Image, ImageChops
+from matplotlib import pyplot
+from torch.utils.data import DataLoader
+
 from source.configuration import Configuration
+from source.data.dataset import RoadSegmentationDatasetInference
+
 
 class Prediction(object):
 
     def __init__(self, engine, images, device):
         self.device = device
         self.model = engine.model
+        self.model.to(device)
         self.images_folder = images
 
     def get_crop_box(self, i, j, height, width, stride):
@@ -73,68 +77,145 @@ class Prediction(object):
 
         return cropped_images
 
-    def patch_image_together(self, cropped_images, total_width=608, total_height=608, stride=(400, 400)):
+    def patch_image_together(self, cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
         width = total_width
         height = total_height
 
-        new_image = Image.new('RGB', (width, height))
+        new_image = Image.new(mode, (width, height))
 
         image_idx = 0
         for i in range(math.ceil(height / stride[0])):
             for j in range(math.ceil(width / stride[1])):
                 left, upper, right, lower = self.get_crop_box(i, j, height, width, stride)
 
-                new_image.paste(cropped_images[image_idx], (left, upper)) #Todo: check
+                new_image.paste(cropped_images[image_idx], (left, upper))
                 # new_image.show()
                 image_idx += 1
 
         return new_image
 
+    def patch_masks_together(self, cropped_images, total_width=608, total_height=608, stride=(400, 400)):
+        width = total_width
+        height = total_height
 
-    # assign a label to a patch
+        out_array = np.zeros(shape=(width, height))
+
+        image_idx = 0
+        for i in range(math.ceil(height / stride[0])):
+            for j in range(math.ceil(width / stride[1])):
+                left, upper, right, lower = self.get_crop_box(i, j, height, width, stride)
+
+                # TODO how to patch together: addition, average, smooth corners, ...?
+                out_array[upper:lower, left:right] = np.add(out_array[upper:lower, left:right],
+                                                            cropped_images[image_idx])
+                out_array[upper:lower, left:right] /= 2
+
+                if True:
+                    # print(left, upper, right, lower)
+                    # print(cropped_images[image_idx].shape)
+                    plot_array = out_array > 0.5
+                    pyplot.imshow(plot_array, cmap='gray', vmin=0, vmax=1)
+                    pyplot.show()
+
+                image_idx += 1
+
+        if True:
+            pyplot.imshow(out_array, cmap='gray', vmin=0, vmax=1)
+            pyplot.show()
+
+        return out_array
+
+    def load_test_images(self, imgDir='../data/test_images/', stride=(400, 400), sanity_check=False):
+        """
+        Loads images from a directory and creates multiple cropped images (that if patched together
+         again equal the original image) according to the stride.
+
+        :param imgDir:
+        :param stride: size of cropped output images (width, height)
+        :param sanity_check: check if cropped images form again the original image
+
+        :return: list of cropped images, image numbers
+        """
+        out_image_list = []
+        image_number_list = []
+
+        for file in os.listdir(imgDir):
+            filename = os.fsdecode(file)
+            if filename.endswith(".png"):
+                # get image number
+                image_number_list.append([int(s) for s in filename.removesuffix(".png").split("_") if s.isdigit()][0])
+                # get cropped images
+                input_image = Image.open(os.path.join(imgDir, filename))
+                cropped_images = self.get_cropped_images(input_image, stride=stride)
+
+                # concatenate out-images with new cropped-images
+                out_image_list += cropped_images
+
+                if sanity_check:
+                    img_patched = self.patch_image_together(cropped_images, mode='RGB', stride=stride)
+                    if ImageChops.difference(input_image, img_patched).getbbox() is not None:
+                        print("Images are not equal!")
+
+        return out_image_list, image_number_list
+
     def patch_to_label(self, patch, foreground_threshold):
+        # assign a label to a patch
         df = np.mean(patch)
         if df > foreground_threshold:
             return 1
         else:
             return 0
 
-    def mask_to_submission_strings(self, preds, patch_size, foreground_threshold, image_nr):
+    def mask_to_submission_strings(self, image, image_nr, patch_size=16, foreground_threshold=0.5):
         # iterate over prediction, just use every 16th pixel
-        for i in range(0, preds.shape[0], patch_size):
-            patch = preds[i:i + patch_size]
-            label = self.patch_to_label(patch, foreground_threshold)
-            yield ("{:03d}_{}_{},{}".format(image_nr, 1, i, label))
-
+        for j in range(0, image.shape[1], patch_size):
+            for i in range(0, image.shape[0], patch_size):
+                patch = image[i:i + patch_size, j:j + patch_size]
+                label = self.patch_to_label(patch, foreground_threshold)
+                yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
     def predict(self):
+        image_list, image_number_list = self.load_test_images(self.images_folder)
+        nr_crops_per_image = int(len(image_list) / len(image_number_list))
 
-        image_list = os.listdir(self.images_folder)
-        image_paths = [os.path.join(self.images_folder, image) for image in image_list]
-
-        # Todo: add jonas code somewhere here
-
-        dataset = RoadSegmentationDatasetInference(image_list=image_paths)
-        loader = DataLoader(dataset, batch_size=8, num_workers=2, pin_memory=True, shuffle=False)
+        dataset = RoadSegmentationDatasetInference(image_list=image_list)
+        loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
         patch_size = 16
         foreground_threshold = 0.5
-        image_nr = 1222 #Todo: Find out image nr, maybe include in dataset
 
         with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
             f.write('id,prediction\n')
 
+            self.model.eval()
+
+            image_nr_list_idx = 0
             for idx, x in enumerate(loader):
                 x = x.to(device=self.device)
 
                 with torch.no_grad():
                     preds = self.model(x)
 
-                    preds = torch.sigmoid(preds) # We need it because our models are constructend without sigmoid at the end
-                    #split tensor into packages of 4 images and then
-                    # for every package call patch_image_together and then f_write
-                    # probabilities to 0/1
-                    f.writelines('{}\n'.format(s) for s in self.mask_to_submission_strings(preds=preds, patch_size=patch_size, foreground_threshold=foreground_threshold, image_nr=image_nr))
+                    # We need it because our models are constructed without sigmoid at the end
+                    preds = torch.sigmoid(preds)
 
+                    # go through all images of current batch; an image consists of multiple cropped images
+                    for i in range(preds.shape[0] // nr_crops_per_image):
+                        # split tensor into packages of "nr_crops_per_image" crops and then
+                        pred_masks = preds[i * nr_crops_per_image:i * nr_crops_per_image + nr_crops_per_image]
+                        crops_list = []
+                        for j in range(nr_crops_per_image):
+                            crops_list.append(torch.squeeze(pred_masks[j]))
 
+                        # for every package call patch_image_together to get the original size image
+                        out_image = self.patch_masks_together(cropped_images=crops_list)
 
+                        # and then convert mask to string
+                        f.writelines('{}\n'.format(s)
+                                     for s in self.mask_to_submission_strings(image=out_image,
+                                                                              patch_size=patch_size,
+                                                                              foreground_threshold=foreground_threshold,
+                                                                              image_nr=image_number_list[
+                                                                                  image_nr_list_idx]))
+                        image_nr_list_idx += 1
+        print("done")
