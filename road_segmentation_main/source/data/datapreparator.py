@@ -56,8 +56,8 @@ class DataPreparator(object):
 
         # paths to images (original only) for validation set
         # if we want to use the transformed images for validation too, use the structure from above and include "else"
-        image_paths_val = [os.path.join(path, 'originals', 'images', filename) for filename in originals_val]
-        mask_paths_val = [os.path.join(path, 'originals', 'mask', filename) for filename in originals_val]
+        image_paths_val = [os.path.join(path, 'original', 'images', filename) for filename in originals_val]
+        mask_paths_val = [os.path.join(path, 'original', 'masks', filename) for filename in originals_val]
 
         Logcreator.debug("Found %d images for training and %d images for validation."
                          % (len(image_paths_train), len(image_paths_val)))
