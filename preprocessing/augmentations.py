@@ -1,14 +1,27 @@
-import albumentations as A
-import cv2
 import os
 
+import albumentations as A
+import cv2
+
 # desired transformations
+rotate_90 = A.Compose([A.RandomRotate90(always_apply=True)])
+rotate_180 = A.Compose([A.RandomRotate90(always_apply=True),
+                        A.RandomRotate90(always_apply=True)])
+rotate_270 = A.Compose([A.RandomRotate90(always_apply=True),
+                        A.RandomRotate90(always_apply=True),
+                        A.RandomRotate90(always_apply=True)])
 
 flip_hor = A.Compose([A.HorizontalFlip(always_apply=True)])
+flip_hor_90 = A.Compose([A.HorizontalFlip(always_apply=True),
+                         A.RandomRotate90(always_apply=True)])
 flip_ver = A.Compose([A.VerticalFlip(always_apply=True)])
+flip_ver_90 = A.Compose([A.VerticalFlip(always_apply=True),
+                         A.RandomRotate90(always_apply=True)])
+
 crop_random = A.Compose([A.RandomCrop(always_apply=True, width=400, height=400)])
 rotate_random = A.Compose([A.Rotate(always_apply=True)])
 
+# TODO is transformations used?
 transformations = [flip_hor, flip_ver]
 
 IMAGE_DIR = "../data/training/original/images"
@@ -39,14 +52,28 @@ def transform_and_save(image, mask, name, transform):
     )
 
 
-for file in os.listdir(IMAGE_DIR):
-    filename = os.fsdecode(file)
-    if filename.endswith(".png"):
-        image = cv2.imread(os.path.join(IMAGE_DIR, filename))
-        mask = cv2.imread(os.path.join(MASK_DIR, filename))
+if __name__ == '__main__':
+    for file in os.listdir(IMAGE_DIR):
+        filename = os.fsdecode(file)
+        if filename.endswith(".png"):
+            image = cv2.imread(os.path.join(IMAGE_DIR, filename))
+            mask = cv2.imread(os.path.join(MASK_DIR, filename))
 
-        # apply the transformations
-        transform_and_save(image, mask, name="flip_hor", transform=flip_hor)
-        transform_and_save(image, mask, name="flip_ver", transform=flip_ver)
-        transform_and_save(image, mask, name="crop_random", transform=crop_random)
-        transform_and_save(image, mask, name="rotate_random", transform=rotate_random)
+            # apply the transformations
+            # rotations
+            print("...rotations")
+            transform_and_save(image, mask, name="rotate_90", transform=rotate_90)
+            transform_and_save(image, mask, name="rotate_180", transform=rotate_180)
+            transform_and_save(image, mask, name="rotate_270", transform=rotate_270)
+
+            # flipped image plus rotations
+            print("...flipping and rotations")
+            transform_and_save(image, mask, name="flip_hor", transform=flip_hor)
+            transform_and_save(image, mask, name="flip_hor_90", transform=flip_hor_90)
+            transform_and_save(image, mask, name="flip_ver", transform=flip_ver)  # flipped + 180
+            transform_and_save(image, mask, name="flip_ver_90", transform=flip_ver_90)  # flipped + 270
+
+            # random
+            print("...random augmentations")
+            transform_and_save(image, mask, name="crop_random", transform=crop_random)
+            transform_and_save(image, mask, name="rotate_random", transform=rotate_random)
