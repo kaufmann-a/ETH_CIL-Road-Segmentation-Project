@@ -9,24 +9,24 @@ __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
 import os
+
 import torch
 import torchmetrics as torchmetrics
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 from torchsummary import summary
+from tqdm import tqdm
 
-#TODO: from source.callbacks.callbacksfactory import CallbacksFactory
+# TODO: from source.callbacks.callbacksfactory import CallbacksFactory
 from source.configuration import Configuration
 # from source.data.datagenerator import DataGenerator
 from source.data.datapreparator import DataPreparator
+from source.helpers.utils import save_predictions_as_imgs
 from source.logcreator.logcreator import Logcreator
-from source.helpers import converter
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
-#TODO: from source.metrics.metricsfactory import MetricsFactory
+# TODO: from source.metrics.metricsfactory import MetricsFactory
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
-from source.helpers.utils import save_predictions_as_imgs
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -36,18 +36,22 @@ class Engine:
     def __init__(self):
         self.model = ModelFactory.build().to(DEVICE)
         self.optimizer = OptimizerFactory.build(self.model)
+        self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,
+                                                            step_size=Configuration.get(
+                                                                "training.lr_scheduler.step_size"),
+                                                            gamma=Configuration.get("training.lr_scheduler.gamma"))
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
 
         # initialize tensorboard logger
         self.writer = SummaryWriter(log_dir=Configuration.output_directory)
 
-        #Print model summary
+        # Print model summary
         Logcreator.info(summary(self.model, input_size=(3, 400, 400), device=DEVICE))
 
         Logcreator.debug("Model '%s' initialized with %d parameters." %
-                     (Configuration.get('training.model.name'), sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
-
+                         (Configuration.get('training.model.name'),
+                          sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
 
     def plot_model(self):
         # TODO: This function should plot the model
@@ -56,11 +60,14 @@ class Engine:
     def train(self, epoch_nr=0):
         training_data, validation_data, test_data = DataPreparator.load()
 
-        #Load training parameters from config file
-        train_parms  = Configuration.get('training.general')
+        # Load training parameters from config file
+        train_parms = Configuration.get('training.general')
 
-        train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers, pin_memory=True, shuffle=train_parms.shuffle_data)
-        val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers, pin_memory=True, shuffle=False) # TODO: check what shuffle exactly does and how to use it
+        train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
+                                  pin_memory=True, shuffle=train_parms.shuffle_data)
+        val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
+                                pin_memory=True,
+                                shuffle=False)  # TODO: check what shuffle exactly does and how to use it
         self.test_data = test_data
 
         epoch = 0
@@ -144,6 +151,8 @@ class Engine:
             loop.set_postfix(loss=loss.item())
 
         total_loss /= len(data_loader)
+
+        self.lr_scheduler.step()  # decay learning rate over time
 
         return total_loss, accuracy.compute()
 
