@@ -4,7 +4,7 @@ import torch
 import torchvision
 
 
-def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", device="cuda",
+def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", pixel_threshold=0.5, device="cuda",
                              is_prob=False,
                              individual_saving=True):
     """
@@ -13,6 +13,7 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
     :param loader: the data loader to use
     :param model: the model to get the predictions
     :param folder: output folder to save the images in (is created if it does not exist)
+    :param pixel_threshold: probability threshold that a pixel is a road
     :param device: cuda/cpu
     :param is_prob: True = The output of the model are probabilities.
     :individual_saving: True = Every predicted mask is saved separately to a file.
@@ -35,7 +36,7 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
                 preds = torch.sigmoid(preds)
 
             # probabilities to 0/1
-            preds = (preds >= 0.5).float()
+            preds = (preds >= pixel_threshold).float()
 
             if individual_saving:
                 # save every prediction separately
@@ -57,3 +58,28 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
                 torchvision.utils.save_image(x, f"{folder}/input_{idx}.png")
 
     model.train()
+
+
+def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True):
+    """
+    Save the predictions of the model as images.
+
+    :preds: list of predictions
+    :index: the index list of the individual predictions
+    :param folder: output folder to save the images in (is created if it does not exist)
+    :param pixel_threshold: probability threshold that a pixel is a road
+    :param is_prob: True = The output of the model are probabilities.
+    :return:
+
+    """
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+    if not is_prob:
+        preds = torch.sigmoid(preds)
+
+    for i in range(len(preds)):
+        # probabilities to 0/1
+        preds[i] = (preds[i] >= pixel_threshold).float()
+        # save prediction
+        torchvision.utils.save_image(preds[i], f"{folder}/pred_{index[i]}.png")

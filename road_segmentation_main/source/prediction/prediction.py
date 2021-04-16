@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
+from source.helpers.utils import save_masks_as_images
 
 
 class Prediction(object):
@@ -190,7 +191,7 @@ class Prediction(object):
         else:
             return 0
 
-    def mask_to_submission_strings(self, image, image_nr, patch_size=16, foreground_threshold=0.5):
+    def mask_to_submission_strings(self, image, image_nr, patch_size=16, foreground_threshold=0.25):
         # iterate over prediction, just use every 16th pixel
         for j in range(0, image.shape[1], patch_size):
             for i in range(0, image.shape[0], patch_size):
@@ -206,7 +207,9 @@ class Prediction(object):
         loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
         patch_size = 16
-        foreground_threshold = 0.5  # TODO add as a parameter
+        patch_foreground_threshold = 0.25  # TODO add as a parameter
+
+        out_image_list = []
 
         with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
             f.write('id,prediction\n')
@@ -234,14 +237,19 @@ class Prediction(object):
 
                         # for every package call patch_image_together to get the original size image
                         out_image = self.patch_masks_together(cropped_images=crops_list)
+                        out_image_list.append(out_image)
 
                         # and then convert mask to string
                         f.writelines('{}\n'.format(s)
                                      for s in self.mask_to_submission_strings(image=out_image,
                                                                               patch_size=patch_size,
-                                                                              foreground_threshold=foreground_threshold,
+                                                                              foreground_threshold=patch_foreground_threshold,
                                                                               image_nr=image_number_list[
                                                                                   image_nr_list_idx]))
                         image_nr_list_idx += 1
 
                 loop.set_postfix(image_nr=image_nr_list_idx)
+
+        save_masks_as_images(out_image_list, image_number_list,
+                             folder=os.path.join(Configuration.output_directory, "pred-masks"),
+                             is_prob=True)
