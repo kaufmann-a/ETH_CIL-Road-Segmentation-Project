@@ -89,11 +89,12 @@ class Engine:
                             f", patch-acc: {val_patch_acc:.5f}")
 
             # log scores
-            # ToDo: add patch_accuracy
             self.writer.add_scalar("Loss/train", train_loss, epoch)
             self.writer.add_scalar("Accuracy/train", train_acc, epoch)
+            self.writer.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
             self.writer.add_scalar("Loss/val", val_loss, epoch)
             self.writer.add_scalar("Accuracy/val", val_acc, epoch)
+            self.writer.add_scalar("PatchAccuracy/val", train_patch_acc, epoch)
 
             # save model
             if epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1:
