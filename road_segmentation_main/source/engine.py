@@ -25,6 +25,7 @@ from source.helpers.utils import save_predictions_as_imgs
 from source.logcreator.logcreator import Logcreator
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
 # TODO: from source.metrics.metricsfactory import MetricsFactory
+from source.metrics.metrics import PatchAccuracy
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
 
@@ -75,19 +76,25 @@ class Engine:
             epoch = epoch_nr
 
         while epoch < train_parms.num_epochs:
-            train_loss, train_acc = self.train_step(train_loader)
+            train_loss, train_acc, train_patch_acc = self.train_step(train_loader)
 
             Logcreator.info(f"Epoch {epoch}")
-            Logcreator.info(f"Training:   loss: {train_loss:.5f}", f", accuracy: {train_acc:.5f}")
+            Logcreator.info(f"Training:   loss: {train_loss:.5f}",
+                            f", accuracy: {train_acc:.5f}",
+                            f", patch-acc: {train_patch_acc:.5f}")
 
-            val_loss, val_acc = self.evaluate(val_loader)
-            Logcreator.info(f"Validation: loss: {val_loss:.5f}", f", accuracy: {val_acc:.5f}")
+            val_loss, val_acc, val_patch_acc = self.evaluate(val_loader)
+            Logcreator.info(f"Validation: loss: {val_loss:.5f}",
+                            f", accuracy: {val_acc:.5f}",
+                            f", patch-acc: {val_patch_acc:.5f}")
 
             # log scores
             self.writer.add_scalar("Loss/train", train_loss, epoch)
             self.writer.add_scalar("Accuracy/train", train_acc, epoch)
+            self.writer.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
             self.writer.add_scalar("Loss/val", val_loss, epoch)
             self.writer.add_scalar("Accuracy/val", val_acc, epoch)
+            self.writer.add_scalar("PatchAccuracy/val", train_patch_acc, epoch)
 
             # save model
             if epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1:
@@ -116,6 +123,9 @@ class Engine:
         # initialize metrics
         accuracy = torchmetrics.Accuracy(threshold=0.5)
         accuracy.to(DEVICE)
+
+        patch_accuracy = PatchAccuracy(threshold=0.25)
+        patch_accuracy.to(DEVICE)
 
         total_loss = 0.
 
@@ -146,6 +156,7 @@ class Engine:
             # TODO create one Metrics class that we can feed with (predicted, targets)
             #  and computes all metrics we want and maybe logs them -> tensorboard?
             accuracy.update(torch.sigmoid(predictions), targets.int())
+            patch_accuracy.update(torch.sigmoid(predictions), targets)
 
             # update tqdm progressbar
             loop.set_postfix(loss=loss.item())
@@ -154,7 +165,7 @@ class Engine:
 
         self.lr_scheduler.step()  # decay learning rate over time
 
-        return total_loss, accuracy.compute()
+        return total_loss, accuracy.compute(), patch_accuracy.compute()
 
     def evaluate(self, data_loader):
         """
@@ -165,6 +176,9 @@ class Engine:
         # initialize metrics
         accuracy = torchmetrics.Accuracy()
         accuracy.to(DEVICE)
+
+        patch_accuracy = PatchAccuracy(threshold=0.25)
+        patch_accuracy.to(DEVICE)
 
         total_loss = 0.
 
@@ -182,10 +196,11 @@ class Engine:
 
                 # update metrics
                 accuracy.update(torch.sigmoid(output), targets.int())
+                patch_accuracy.update(torch.sigmoid(output), targets)
 
         total_loss /= len(data_loader)
 
-        return total_loss, accuracy.compute()
+        return total_loss, accuracy.compute(), patch_accuracy.compute()
 
     def save_model(self, epoch_nr):
         """ This function saves entire model incl. modelstructure"""
@@ -224,5 +239,6 @@ class Engine:
         train_accuracy = checkpoint['train_accuracy']
         val_loss = checkpoint['val_loss']
         val_accuracy = checkpoint['val_accuracy']
+        # ToDo: add patch_accuracy to checkpoints
 
         return epoch, train_loss, train_accuracy, val_loss, val_accuracy
