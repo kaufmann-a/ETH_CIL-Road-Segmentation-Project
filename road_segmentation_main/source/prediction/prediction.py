@@ -116,20 +116,33 @@ class Prediction(object):
         height = total_height
 
         out_array = torch.zeros(size=(width, height)).to(self.device)
+        out_overlap_count = torch.ones(size=(width, height)).to(self.device) #stores nr of intersection at pixels
+        mem_right = mem_lower = right = lower = 0
 
         image_idx = 0
         for i in range(math.ceil(height / stride[0])):
             for j in range(math.ceil(width / stride[1])):
+                mem_lower = lower if mem_lower < lower < total_height else mem_lower
+                mem_right = right if mem_right < right < total_width else mem_right
                 left, upper, right, lower = self.get_crop_box(i, j, height, width, stride)
 
                 # TODO how to patch together: addition, average, smooth corners, ...?
 
                 if mode == 'avg':
-                    # average of overlapping areas
-                    # TODO chek if working correctly
-                    out_array[upper:lower, left:right] /= 2
-                    overlapping_indices = torch.nonzero(out_array[upper:lower, left:right], as_tuple=True)
-                    cropped_images[image_idx][overlapping_indices] /= 2  # only divide overlapping indices by 2
+                    # get overlaping ranges
+                    overlapping_indices_2 = torch.nonzero(out_array[upper:lower, left:right], as_tuple=True)
+                    # Check if there is any overlap at all
+                    if len(overlapping_indices_2[0]) > 0 and len(overlapping_indices_2[1]) > 0:
+                        upper_overlap = int(torch.min(overlapping_indices_2[0])) + upper
+                        lower_overlap = int(torch.max(overlapping_indices_2[0])) + upper + 1
+                        left_overlap = int(torch.min(overlapping_indices_2[1])) + left
+                        right_overlap = int(torch.max(overlapping_indices_2[1])) + left + 1
+
+                        out_overlap_count[upper_overlap:lower_overlap, left_overlap:right_overlap] += 1
+
+                        # case bottom right image was placed, we need to subtract bottom right square again
+                        if torch.max(out_overlap_count) == 4:
+                            out_overlap_count[mem_lower:lower, mem_right:right] -= 1
 
                     out_array[upper:lower, left:right] = torch.add(out_array[upper:lower, left:right],
                                                                    cropped_images[image_idx])
@@ -148,7 +161,8 @@ class Prediction(object):
                     pyplot.show()
 
                 image_idx += 1
-
+        if mode == 'avg':
+            out_array = torch.div(out_array, out_overlap_count)
         return out_array
 
     def load_test_images(self, imgDir='../data/test_images/', stride=(400, 400), sanity_check=False):

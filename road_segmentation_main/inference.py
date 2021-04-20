@@ -17,7 +17,7 @@ from source.engine import Engine
 from source.logcreator.logcreator import Logcreator
 from source.helpers import argumenthelper
 from source.helpers import filehelper
-from source.prediction.prediction import  Prediction
+from source.prediction.prediction import Prediction
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
