@@ -21,11 +21,12 @@ from source.helpers.utils import save_masks_as_images
 
 class Prediction(object):
 
-    def __init__(self, engine, images, device):
+    def __init__(self, engine, images, device, threshold):
         self.device = device
         self.model = engine.model
         self.model.to(device)
         self.images_folder = images
+        self.foreground_threshold = threshold
 
     def get_crop_box(self, i, j, height, width, stride):
         """
@@ -183,20 +184,20 @@ class Prediction(object):
 
         return out_image_list, image_number_list
 
-    def patch_to_label(self, patch, foreground_threshold):
+    def patch_to_label(self, patch):
         # assign a label to a patch
         df = torch.mean(patch)
-        if df > foreground_threshold:
+        if df > self.foreground_threshold:
             return 1
         else:
             return 0
 
-    def mask_to_submission_strings(self, image, image_nr, patch_size=16, foreground_threshold=0.25):
+    def mask_to_submission_strings(self, image, image_nr, patch_size=16):
         # iterate over prediction, just use every 16th pixel
         for j in range(0, image.shape[1], patch_size):
             for i in range(0, image.shape[0], patch_size):
                 patch = image[i:i + patch_size, j:j + patch_size]
-                label = self.patch_to_label(patch, foreground_threshold)
+                label = self.patch_to_label(patch)
                 yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
     def predict(self):
@@ -207,8 +208,6 @@ class Prediction(object):
         loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
         patch_size = 16
-        patch_foreground_threshold = 0.25  # TODO add as a parameter
-
         out_image_list = []
 
         with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
@@ -243,7 +242,6 @@ class Prediction(object):
                         f.writelines('{}\n'.format(s)
                                      for s in self.mask_to_submission_strings(image=out_image,
                                                                               patch_size=patch_size,
-                                                                              foreground_threshold=patch_foreground_threshold,
                                                                               image_nr=image_number_list[
                                                                                   image_nr_list_idx]))
                         image_nr_list_idx += 1
@@ -252,4 +250,5 @@ class Prediction(object):
 
         save_masks_as_images(out_image_list, image_number_list,
                              folder=os.path.join(Configuration.output_directory, "pred-masks"),
-                             is_prob=True)
+                             is_prob=True,
+                             pixel_threshold=self.foreground_threshold)

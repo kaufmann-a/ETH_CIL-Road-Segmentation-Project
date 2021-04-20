@@ -8,15 +8,17 @@ import os
 from PIL import Image
 from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset
+from source.configuration import Configuration
 import numpy as np
 
 
 class RoadSegmentationDataset(Dataset):
-    def __init__(self, image_list, mask_list, transform=None):
+    def __init__(self, image_list, mask_list, threshold, transform=None):
         #self.device = device # unsure whether we need this, if yes: add paramaeter device to init
         self.transform = transform
         self.images = image_list
         self.masks = mask_list
+        self.foreground_threshold = threshold
 
     def __len__(self):
         return len(self.images)
@@ -28,8 +30,7 @@ class RoadSegmentationDataset(Dataset):
         image = np.array(Image.open(img_path).convert("RGB"))
         mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
 
-        # Todo: check
-        threshold = 255.0 / 2
+        threshold = 255.0 * self.foreground_threshold
         mask = (mask >= threshold).astype(int)
 
         if self.transform is not None:

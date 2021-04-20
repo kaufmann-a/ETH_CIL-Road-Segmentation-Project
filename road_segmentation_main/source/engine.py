@@ -109,8 +109,10 @@ class Engine:
         # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
         # save predicted validation images
         save_predictions_as_imgs(val_loader, self.model,
-                                 folder=os.path.join(Configuration.output_directory, "prediction"), device=DEVICE,
-                                 is_prob=False)
+                                 folder=os.path.join(Configuration.output_directory, "prediction"),
+                                 device=DEVICE,
+                                 is_prob=False,
+                                 pixel_threshold=Configuration.get("data_collection.foreground_threshold"))
 
         return 0
 
@@ -120,11 +122,12 @@ class Engine:
         """
         self.model.train()
 
+
         # initialize metrics
-        accuracy = torchmetrics.Accuracy(threshold=0.5)
+        accuracy = torchmetrics.Accuracy(threshold=Configuration.get('data_collection.foreground_threshold'))
         accuracy.to(DEVICE)
 
-        patch_accuracy = PatchAccuracy(threshold=0.25)
+        patch_accuracy = PatchAccuracy(threshold=Configuration.get('data_collection.foreground_threshold'))
         patch_accuracy.to(DEVICE)
 
         total_loss = 0.
@@ -177,7 +180,7 @@ class Engine:
         accuracy = torchmetrics.Accuracy()
         accuracy.to(DEVICE)
 
-        patch_accuracy = PatchAccuracy(threshold=0.25)
+        patch_accuracy = PatchAccuracy(threshold=Configuration.get('data_collection.foreground_threshold'))
         patch_accuracy.to(DEVICE)
 
         total_loss = 0.

@@ -11,7 +11,8 @@
 		                       ], // "crop_random", "rotate_random"],
 		"test_images_folder" : "../data/test_images",
 		"test_data_count" : 0,
-		"validation_ratio" : 0.2
+		"validation_ratio" : 0.2,
+		"foreground_threshold" : 0.25
 	},
 	"training": {
 		"general" : {
