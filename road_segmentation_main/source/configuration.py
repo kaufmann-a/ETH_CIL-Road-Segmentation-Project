@@ -59,7 +59,7 @@ class Configuration(object):
 
 
     @staticmethod
-    def get(key='', optional=True, default=None):
+    def get(key='', optional=False, default=None):
         global configuration
         if not configuration:
             raise EnvironmentError(
@@ -83,7 +83,7 @@ class Configuration(object):
         return default
 
     @staticmethod
-    def get_path(key='', create=True, optional=True):
+    def get_path(key='', create=True, optional=False):
         path = Configuration.get(key, optional)
         return Configuration.build_path(path)
 
