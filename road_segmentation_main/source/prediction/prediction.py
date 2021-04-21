@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# coding: utf8
+
 """
 Class for prediction of a set of images
 """
