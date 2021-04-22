@@ -28,6 +28,7 @@ from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
 from source.metrics.metrics import PatchAccuracy
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
+from source.scheduler.lr_schedulerfactory import LRSchedulerFactory
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -37,10 +38,7 @@ class Engine:
     def __init__(self):
         self.model = ModelFactory.build().to(DEVICE)
         self.optimizer = OptimizerFactory.build(self.model)
-        self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,
-                                                            step_size=Configuration.get(
-                                                                "training.lr_scheduler.step_size"),
-                                                            gamma=Configuration.get("training.lr_scheduler.gamma"))
+        self.lr_scheduler = LRSchedulerFactory.build(self.optimizer)
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
 

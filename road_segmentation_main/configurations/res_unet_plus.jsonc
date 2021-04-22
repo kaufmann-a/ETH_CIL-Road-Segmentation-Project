@@ -15,7 +15,7 @@
 		"foreground_threshold" : 0.25
 	},
 	"training": {
-		"general" : {
+        "general" : {
             "batch_size": 8,
             "num_epochs" : 200,
             "checkpoint_save_interval" : 8,
@@ -31,8 +31,15 @@
             "lr": 0.001
         },
         "lr_scheduler": {
-            "step_size" : 15,
-            "gamma" : 0.9,
+            "name": "stepLR",
+            "stepLR": {
+                "step_size" : 15,
+                "gamma" : 0.9,
+            },
+            "multiStepLR": {
+                "milestones" : [10,40],
+                "gamma" : 0.1,
+            }
         },
 	}
 }
