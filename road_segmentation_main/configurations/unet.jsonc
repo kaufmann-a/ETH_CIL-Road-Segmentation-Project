@@ -28,7 +28,7 @@
             "out_channels" : 1,
             "features" : [64, 128, 256, 512]
         },
-        "loss_function": "bce_with_logits_loss",
+        "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
             "lr": 0.001
