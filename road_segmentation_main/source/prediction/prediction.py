@@ -266,6 +266,6 @@ class Prediction(object):
                 loop.set_postfix(image_nr=image_nr_list_idx)
 
         save_masks_as_images(out_image_list, image_number_list,
-                             folder=os.path.join(Configuration.output_directory, "pred-masks"),
+                             folder=Configuration.output_directory,
                              is_prob=True,
                              pixel_threshold=self.foreground_threshold)

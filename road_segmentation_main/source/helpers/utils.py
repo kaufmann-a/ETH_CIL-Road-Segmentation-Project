@@ -36,7 +36,7 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
                 preds = torch.sigmoid(preds)
 
             # probabilities to 0/1
-            preds = (preds >= pixel_threshold).float()
+            preds = (preds > pixel_threshold).float()
 
             if individual_saving:
                 # save every prediction separately
@@ -60,7 +60,7 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
     model.train()
 
 
-def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True):
+def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True, save_submission_img=True):
     """
     Save the predictions of the model as images.
 
@@ -72,14 +72,31 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
     :return:
 
     """
-    if not os.path.exists(folder):
-        os.makedirs(folder)
+    folder_normal_size = os.path.join(folder, "pred-masks-original")
+    if not os.path.exists(folder_normal_size):
+        os.makedirs(folder_normal_size)
+
+    if save_submission_img:
+        folder_small_size = os.path.join(folder, "pred-mask-submission")
+        if not os.path.exists(folder_small_size):
+            os.makedirs(folder_small_size)
 
     if not is_prob:
         preds = torch.sigmoid(preds)
 
     for i in range(len(preds)):
+
         # probabilities to 0/1
-        preds[i] = (preds[i] >= pixel_threshold).float()
+        out_preds = (preds[i] > pixel_threshold).float()
         # save prediction
-        torchvision.utils.save_image(preds[i], f"{folder}/pred_{index[i]}.png")
+        torchvision.utils.save_image(out_preds, f"{folder_normal_size}/pred_{index[i]}.png")
+
+        if save_submission_img:
+            # save submission masks
+            avgPool = torch.nn.AvgPool2d(16, stride=16)
+            patched_preds = avgPool(torch.unsqueeze(preds[i], 0))
+
+            # convert to integers according to threshold
+            patched_preds = (patched_preds > pixel_threshold).float()
+            # save prediction
+            torchvision.utils.save_image(patched_preds, f"{folder_small_size}/pred_{index[i]}.png")
