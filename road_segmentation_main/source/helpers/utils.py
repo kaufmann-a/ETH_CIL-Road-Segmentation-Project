@@ -4,6 +4,25 @@ import torch
 import torchvision
 
 
+def mask_to_submission_mask(mask, threshold):
+    """
+    Converts a mask of original size to a submission mask.
+    One pixel in the submission mask corresponds to a 16x16 patch of the original mask.
+
+    @param mask: original mask
+    @param threshold: probability threshold
+    @return:
+    """
+    # save submission masks
+    avgPool = torch.nn.AvgPool2d(16, stride=16)
+    submission_mask = avgPool(mask)
+
+    # convert to integers according to threshold
+    submission_mask = (submission_mask > threshold).int()
+
+    return submission_mask
+
+
 def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", pixel_threshold=0.5, device="cuda",
                              is_prob=False,
                              individual_saving=True):
@@ -93,10 +112,6 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
 
         if save_submission_img:
             # save submission masks
-            avgPool = torch.nn.AvgPool2d(16, stride=16)
-            patched_preds = avgPool(torch.unsqueeze(preds[i], 0))
-
-            # convert to integers according to threshold
-            patched_preds = (patched_preds > pixel_threshold).float()
+            patched_preds = mask_to_submission_mask(torch.unsqueeze(preds[i], 0), pixel_threshold).float()
             # save prediction
             torchvision.utils.save_image(patched_preds, f"{folder_small_size}/pred_{index[i]}.png")
