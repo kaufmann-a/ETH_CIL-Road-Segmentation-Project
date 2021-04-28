@@ -43,7 +43,10 @@ class Engine:
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
 
         # initialize tensorboard logger
-        self.writer = SummaryWriter(log_dir=Configuration.output_directory)
+        Configuration.tensorboard_folder = os.path.join(Configuration.output_directory, "tensorboard")
+        if not os.path.exists(Configuration.tensorboard_folder):
+            os.makedirs(Configuration.tensorboard_folder)
+        self.writer = SummaryWriter(log_dir=Configuration.tensorboard_folder)
 
         # Print model summary
         Logcreator.info(summary(self.model, input_size=(3, 400, 400), device=DEVICE))
