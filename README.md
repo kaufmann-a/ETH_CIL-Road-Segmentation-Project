@@ -54,7 +54,7 @@ Software Versions used for this Project (Proposal by Andreas):
 - Closing panes: `Ctrl+d` or `exit` (by clossing all panes you exit the session)
 - Detach Session (session keeps running in background): `Ctrl+b d`
 - Reattach to running session: Check out running sessions with `tmux ls` then attach to session with `tmux attach -t 0` where 0 is session 0.
-
+- Enter scroll-mode (to scroll up and down): `Ctrl+b [` then arrow keys (to quit press `q`)
 
 ### Other commands
 - New window: `Ctrl+b c`
