@@ -13,7 +13,6 @@ import torch.nn as nn
 from source.configuration import Configuration
 from source.lossfunctions.lossfunctions import DiceLoss, DiceBCELoss
 
-
 class LossFunctionFactory(object):
     model = False
 

@@ -11,8 +11,7 @@
                                ], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
-        "validation_ratio" : 0.2,
-        "foreground_threshold" : 0.25
+        "validation_ratio" : 0.2
     },
     "training": {
         "general" : {
@@ -20,7 +19,8 @@
             "num_epochs" : 200,
             "checkpoint_save_interval" : 8,
             "num_workers" : 2,
-            "shuffle_data" : true
+            "shuffle_data" : true,
+            "foreground_threshold" : 0.25
         },
         "model": {
             "name": "ResUnetPlusPlus",
@@ -41,5 +41,10 @@
                 "gamma" : 0.1,
             }
         },
+    },
+    "inference" : {
+        "general" : {
+            "foreground_threshold" : 0.25
+        }
     }
 }
