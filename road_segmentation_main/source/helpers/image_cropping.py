@@ -62,8 +62,6 @@ class ImageCropper:
         i = index_of_segment // height_upper_bound
         j = index_of_segment % width_upper_bound
 
-        assert (i + j == index_of_segment)
-
         box = get_crop_box(i, j, height, width, self.out_image_size)
         img_cropped = image.crop(box)
 
