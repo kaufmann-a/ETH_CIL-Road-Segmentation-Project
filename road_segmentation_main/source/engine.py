@@ -110,7 +110,7 @@ class Engine:
                                  folder=os.path.join(Configuration.output_directory, "prediction-validation-set"),
                                  device=DEVICE,
                                  is_prob=False,
-                                 pixel_threshold=Configuration.get("data_collection.foreground_threshold"))
+                                 pixel_threshold=Configuration.get("inference.general.foreground_threshold"))
 
         return 0
 

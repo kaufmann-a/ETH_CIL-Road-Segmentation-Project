@@ -83,7 +83,7 @@ class DataPreparator(object):
             ],
         )
 
-        foreground_threshold = Configuration.get("data_collection.foreground_threshold")
+        foreground_threshold = Configuration.get("training.general.foreground_threshold")
         train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train, foreground_threshold, transform)
         val_ds = RoadSegmentationDataset(image_paths_val, mask_paths_val, foreground_threshold, transform)
         test_ds = RoadSegmentationDataset([], [], foreground_threshold, transform)

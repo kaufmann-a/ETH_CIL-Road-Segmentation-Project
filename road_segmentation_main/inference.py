@@ -76,5 +76,5 @@ if __name__ == "__main__":
     predictor = Prediction(engine=engine,
                            images=Configuration.get_path('data_collection.test_images_folder'),
                            device=DEVICE,
-                           threshold=Configuration.get('data_collection.foreground_threshold'))
+                           threshold=Configuration.get('inference.general.foreground_threshold'))
     predictor.predict()
