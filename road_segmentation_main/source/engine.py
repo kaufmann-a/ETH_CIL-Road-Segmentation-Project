@@ -175,10 +175,10 @@ class Engine:
         self.model.eval()
 
         # initialize metrics
-        accuracy = torchmetrics.Accuracy()
+        accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))
         accuracy.to(DEVICE)
 
-        patch_accuracy = PatchAccuracy(threshold=Configuration.get('data_collection.foreground_threshold'))
+        patch_accuracy = PatchAccuracy(threshold=Configuration.get('training.general.foreground_threshold'))
         patch_accuracy.to(DEVICE)
 
         total_loss = 0.
