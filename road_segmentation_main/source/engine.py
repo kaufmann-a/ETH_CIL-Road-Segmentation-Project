@@ -10,6 +10,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import os
 
+import numpy as np
 import torch
 import torchmetrics as torchmetrics
 from torch.utils.data import DataLoader
@@ -49,7 +50,9 @@ class Engine:
         self.writer = SummaryWriter(log_dir=Configuration.tensorboard_folder)
 
         # Print model summary
-        Logcreator.info(summary(self.model, input_size=(3, 400, 400), device=DEVICE))
+        cropped_image_size = Configuration.get("training.general.cropped_image_size")
+        input_size = tuple(np.insert(cropped_image_size, 0, values=3))
+        Logcreator.info(summary(self.model, input_size=input_size, device=DEVICE))
 
         Logcreator.debug("Model '%s' initialized with %d parameters." %
                          (Configuration.get('training.model.name'),
@@ -122,7 +125,6 @@ class Engine:
         Train model for 1 epoch.
         """
         self.model.train()
-
 
         # initialize metrics
         accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))

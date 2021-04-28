@@ -72,8 +72,12 @@ class DataPreparator(object):
         transform = get_transformations()
 
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
-        train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train, foreground_threshold, transform)
-        val_ds = RoadSegmentationDataset(image_paths_val, mask_paths_val, foreground_threshold, transform)
-        test_ds = RoadSegmentationDataset([], [], foreground_threshold, transform)
+        cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
+
+        train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train,
+                                           foreground_threshold, transform, crop_size=cropped_image_size)
+        val_ds = RoadSegmentationDataset(image_paths_val, mask_paths_val,
+                                         foreground_threshold, transform, crop_size=cropped_image_size)
+        test_ds = RoadSegmentationDataset([], [], foreground_threshold, transform, crop_size=cropped_image_size)
 
         return train_ds, val_ds, test_ds

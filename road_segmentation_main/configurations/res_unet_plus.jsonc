@@ -20,7 +20,8 @@
             "checkpoint_save_interval" : 8,
             "num_workers" : 2,
             "shuffle_data" : true,
-            "foreground_threshold" : 0.25
+            "foreground_threshold" : 0.25,
+            "cropped_image_size" : [400, 400],
         },
         "model": {
             "name": "ResUnetPlusPlus",
