@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
+from source.data.transformation import get_transformations
 from source.helpers.image_cropping import get_crop_box, get_cropped_images
 from source.helpers.utils import save_masks_as_images
 
@@ -172,7 +173,7 @@ class Prediction(object):
         image_list, image_number_list = self.load_test_images(self.images_folder)
         nr_crops_per_image = int(len(image_list) / len(image_number_list))
 
-        dataset = RoadSegmentationDatasetInference(image_list=image_list)
+        dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations())
         loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
         patch_size = 16

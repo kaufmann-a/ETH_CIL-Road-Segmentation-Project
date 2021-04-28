@@ -9,11 +9,11 @@ __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
 import os
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+
 import random
 
 from source.configuration import Configuration
+from source.data.transformation import get_transformations
 from source.logcreator.logcreator import Logcreator
 from source.data.dataset import RoadSegmentationDataset
 
@@ -69,19 +69,7 @@ class DataPreparator(object):
 
         # test images
 
-
-
-        transform = A.Compose(
-            [
-                A.Resize(height=400, width=400),
-                A.Normalize(
-                    mean=[0.0, 0.0, 0.0],
-                    std=[1.0, 1.0, 1.0],
-                    max_pixel_value=255.0,
-                ),
-                ToTensorV2(),
-            ],
-        )
+        transform = get_transformations()
 
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
         train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train, foreground_threshold, transform)

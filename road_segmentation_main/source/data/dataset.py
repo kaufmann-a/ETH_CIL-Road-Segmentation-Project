@@ -42,24 +42,10 @@ class RoadSegmentationDataset(Dataset):
 
 
 class RoadSegmentationDatasetInference(Dataset):
-    def __init__(self, image_list):
+    def __init__(self, image_list, transform):
         # self.device = device # unsure whether we need this, if yes: add parameter device to init
         self.images = image_list
-
-        # TODO get transformation from "central" place
-        import albumentations as A
-        from albumentations.pytorch import ToTensorV2
-
-        self.transform = A.Compose(
-            [
-                A.Normalize(
-                    mean=[0.0, 0.0, 0.0],
-                    std=[1.0, 1.0, 1.0],
-                    max_pixel_value=255.0,
-                ),
-                ToTensorV2(),
-            ],
-        )
+        self.transform = transform
 
     def __len__(self):
         return len(self.images)
