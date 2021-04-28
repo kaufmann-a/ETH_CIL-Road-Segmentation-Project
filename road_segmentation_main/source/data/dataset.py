@@ -5,11 +5,14 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
 
+from source.helpers.image_cropping import ImageCropper
 from source.helpers.utils import mask_to_submission_mask
 
 
 class RoadSegmentationDataset(Dataset):
-    def __init__(self, image_list, mask_list, threshold, transform=None, use_submission_masks=False):
+    def __init__(self, image_list, mask_list, threshold, transform=None,
+                 crop_size=(400, 400),
+                 use_submission_masks=False):
         # self.device = device # unsure whether we need this, if yes: add parameter device to init
         self.transform = transform
         self.images = image_list
@@ -17,15 +20,38 @@ class RoadSegmentationDataset(Dataset):
         self.foreground_threshold = threshold
         self.use_submission_masks = use_submission_masks
 
+        # open one image to get the size of the image
+        self.image_cropper = ImageCropper(out_image_size=crop_size)
+        if len(image_list) > 0:
+            image = Image.open(self.images[0])
+            self.nr_segments_per_image = self.image_cropper.get_number_of_cropped_images(image)
+        else:
+            self.nr_segments_per_image = 1
+
     def __len__(self):
-        return len(self.images)
+        return len(self.images) * self.nr_segments_per_image
 
     def __getitem__(self, index):
-        img_path = self.images[index]
-        mask_path = self.masks[index]
+        index_into_list = index // self.nr_segments_per_image
+        index_of_segment = index % self.nr_segments_per_image
 
-        image = np.array(Image.open(img_path).convert("RGB"))
-        mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
+        img_path = self.images[index_into_list]
+        mask_path = self.masks[index_into_list]
+
+        image = Image.open(img_path).convert("RGB")
+        mask = Image.open(mask_path).convert("L")
+
+        # get cropped image and mask
+        image_cropped = self.image_cropper.get_cropped_image(image, index_of_segment)
+        mask_cropped = self.image_cropper.get_cropped_image(mask, index_of_segment)
+
+        # sanity check if no cropping is necessary
+        # if self.nr_segments_per_image == 1:
+        #   assert (np.equal(np.array(image), np.array(image_cropped)).all())
+        #   assert (np.equal(np.array(mask), np.array(mask_cropped)).all())
+
+        image = np.array(image_cropped)
+        mask = np.array(mask_cropped, dtype=np.float32)
 
         threshold = 255.0 * self.foreground_threshold
         mask = (mask >= threshold).astype(int)

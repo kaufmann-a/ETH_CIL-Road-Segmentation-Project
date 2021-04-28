@@ -39,29 +39,61 @@ def get_crop_box(i, j, height, width, stride):
     return left, upper, right, lower
 
 
-def get_cropped_images(image: PIL.Image, stride=(400, 400)):
-    """
-    Splits image into multiple smaller cropped images of size according to stride.
+class ImageCropper:
+    def __init__(self, out_image_size=(400, 400)):
+        self.out_image_size = out_image_size
 
-    :param image: the PIL image
-    :param stride: the output image size
-    :return: list of cropped images
-    """
-    height = image.height
-    width = image.width
+    def get_cropped_image(self, image: PIL.Image, index_of_segment):
+        """
+        Get the "index_of_segment"-th crop of the supplied image.
 
-    cropped_images = []
+        :param image:
+        :param index_of_segment: should be zero indexed
+        :return: cropped image
+        """
+        height = image.height
+        width = image.width
 
-    for i in range(math.ceil(height / stride[0])):
-        for j in range(math.ceil(width / stride[1])):
-            box = get_crop_box(i, j, height, width, stride)
-            img_cropped = image.crop(box)
+        height_upper_bound = math.ceil(height / self.out_image_size[0])
+        width_upper_bound = math.ceil(width / self.out_image_size[1])
+        if width_upper_bound + width_upper_bound <= index_of_segment:
+            raise ValueError('Segment does not exist:', index_of_segment)
 
-            # img_cropped.show()
-            # from matplotlib import pyplot
-            # pyplot.imshow(img_cropped)
-            # pyplot.show()
+        i = index_of_segment // height_upper_bound
+        j = index_of_segment % width_upper_bound
 
-            cropped_images.append(img_cropped)
+        assert (i + j == index_of_segment)
 
-    return cropped_images
+        box = get_crop_box(i, j, height, width, self.out_image_size)
+        img_cropped = image.crop(box)
+
+        return img_cropped
+
+    def get_cropped_images(self, image: PIL.Image):
+        """
+        Splits image into multiple smaller cropped images of size according to stride.
+
+        :param image: the PIL image
+        :return: list of cropped images
+        """
+        height = image.height
+        width = image.width
+
+        cropped_images = []
+
+        for i in range(math.ceil(height / self.out_image_size[0])):
+            for j in range(math.ceil(width / self.out_image_size[1])):
+                box = get_crop_box(i, j, height, width, self.out_image_size)
+                img_cropped = image.crop(box)
+
+                # img_cropped.show()
+                # from matplotlib import pyplot
+                # pyplot.imshow(img_cropped)
+                # pyplot.show()
+
+                cropped_images.append(img_cropped)
+
+        return cropped_images
+
+    def get_number_of_cropped_images(self, image: PIL.Image):
+        return math.ceil(image.height / self.out_image_size[0]) * math.ceil(image.width / self.out_image_size[1])

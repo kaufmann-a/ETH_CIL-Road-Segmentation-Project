@@ -20,7 +20,7 @@ from tqdm import tqdm
 from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
 from source.data.transformation import get_transformations
-from source.helpers.image_cropping import get_crop_box, get_cropped_images
+from source.helpers.image_cropping import get_crop_box, ImageCropper
 from source.helpers.utils import save_masks_as_images
 
 
@@ -134,6 +134,8 @@ class Prediction(object):
         out_image_list = []
         image_number_list = []
 
+        image_cropper = ImageCropper(out_image_size=stride)
+
         for file in os.listdir(imgDir):
             filename = os.fsdecode(file)
             if filename.endswith(".png"):
@@ -141,7 +143,7 @@ class Prediction(object):
                 image_number_list.append([int(s) for s in filename[:-4].split("_") if s.isdigit()][0])
                 # get cropped images
                 input_image = Image.open(os.path.join(imgDir, filename))
-                cropped_images = get_cropped_images(input_image, stride=stride)
+                cropped_images = image_cropper.get_cropped_images(input_image)
 
                 # concatenate out-images with new cropped-images
                 out_image_list += cropped_images
