@@ -171,8 +171,17 @@ class Prediction(object):
                 label = self.patch_to_label(patch)
                 yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
-    def predict(self):
-        image_list, image_number_list = self.load_test_images(self.images_folder)
+    def predict(self, use_small_patches=True):
+        """
+
+        :param use_small_patches: True = patch image together from small subpatches of same size as in training
+        """
+        if use_small_patches:
+            cropped_image_size = Configuration.get("training.general.cropped_image_size")
+        else:
+            cropped_image_size = (608, 608)
+
+        image_list, image_number_list = self.load_test_images(self.images_folder, stride=cropped_image_size)
         nr_crops_per_image = int(len(image_list) / len(image_number_list))
 
         dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations())
@@ -206,7 +215,7 @@ class Prediction(object):
                             crops_list.append(torch.squeeze(pred_masks[j]))
 
                         # for every package call patch_image_together to get the original size image
-                        out_image = self.patch_masks_together(cropped_images=crops_list)
+                        out_image = self.patch_masks_together(cropped_images=crops_list, stride=cropped_image_size)
                         out_image_list.append(out_image)
 
                         # and then convert mask to string
