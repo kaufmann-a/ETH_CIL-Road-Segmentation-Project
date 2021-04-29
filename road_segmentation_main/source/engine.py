@@ -42,6 +42,7 @@ class Engine:
         self.lr_scheduler = LRSchedulerFactory.build(self.optimizer)
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
+        self.submission_loss = Configuration.get("training.general.submission_loss")
 
         # initialize tensorboard logger
         Configuration.tensorboard_folder = os.path.join(Configuration.output_directory, "tensorboard")
@@ -120,6 +121,14 @@ class Engine:
 
         return 0
 
+    def compute_loss(self, predictions, targets):
+        if self.submission_loss:
+            avgPool = torch.nn.AvgPool2d(16, stride=16)
+            predictions = avgPool(predictions)
+            targets = avgPool(targets)
+
+        return self.loss_function(predictions, targets)
+
     def train_step(self, data_loader):
         """
         Train model for 1 epoch.
@@ -148,7 +157,7 @@ class Engine:
             # runs the forward pass with autocasting (improve performance while maintaining accuracy)
             with torch.cuda.amp.autocast():
                 predictions = self.model(data)
-                loss = self.loss_function(predictions, targets)
+                loss = self.compute_loss(predictions, targets)
 
             # backward according to https://pytorch.org/docs/stable/notes/amp_examples.html#amp-examples
             self.scaler.scale(loss).backward()
@@ -194,15 +203,15 @@ class Engine:
 
                 # forward pass according to https://pytorch.org/docs/stable/amp.html
                 with torch.cuda.amp.autocast():
-                    output = self.model(image)
-                    loss = self.loss_function(output, targets)
+                    predictions = self.model(image)
+                    loss = self.compute_loss(predictions, targets)
 
                 # update loss
                 total_loss += loss.item()
 
                 # update metrics
-                accuracy.update(torch.sigmoid(output), targets.int())
-                patch_accuracy.update(torch.sigmoid(output), targets)
+                accuracy.update(torch.sigmoid(predictions), targets.int())
+                patch_accuracy.update(torch.sigmoid(predictions), targets)
 
         total_loss /= len(data_loader)
 

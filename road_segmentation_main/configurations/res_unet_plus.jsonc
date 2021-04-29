@@ -22,6 +22,7 @@
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
             "cropped_image_size" : [400, 400],
+            "submission_loss" : false,
         },
         "model": {
             "name": "ResUnetPlusPlus",
