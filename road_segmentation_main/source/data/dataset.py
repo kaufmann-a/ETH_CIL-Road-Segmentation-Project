@@ -41,17 +41,22 @@ class RoadSegmentationDataset(Dataset):
         image = Image.open(img_path).convert("RGB")
         mask = Image.open(mask_path).convert("L")
 
-        # get cropped image and mask
-        image_cropped = self.image_cropper.get_cropped_image(image, index_of_segment)
-        mask_cropped = self.image_cropper.get_cropped_image(mask, index_of_segment)
+        if self.nr_segments_per_image == 1:
+            # no cropping necessary
+            image = np.array(image)
+            mask = np.array(mask, dtype=np.float32)
+        else:
+            # get cropped image and mask
+            image_cropped = self.image_cropper.get_cropped_image(image, index_of_segment)
+            mask_cropped = self.image_cropper.get_cropped_image(mask, index_of_segment)
 
-        # sanity check if no cropping is necessary
-        # if self.nr_segments_per_image == 1:
-        #   assert (np.equal(np.array(image), np.array(image_cropped)).all())
-        #   assert (np.equal(np.array(mask), np.array(mask_cropped)).all())
+            # sanity check if no cropping is necessary
+            # if self.nr_segments_per_image == 1:
+            #    assert (np.equal(np.array(image), np.array(image_cropped)).all())
+            #    assert (np.equal(np.array(mask), np.array(mask_cropped)).all())
 
-        image = np.array(image_cropped)
-        mask = np.array(mask_cropped, dtype=np.float32)
+            image = np.array(image_cropped)
+            mask = np.array(mask_cropped, dtype=np.float32)
 
         threshold = 255.0 * self.foreground_threshold
         mask = (mask >= threshold).astype(int)
