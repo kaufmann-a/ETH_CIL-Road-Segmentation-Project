@@ -56,7 +56,7 @@ class ImageCropper:
 
         height_upper_bound = math.ceil(height / self.out_image_size[0])
         width_upper_bound = math.ceil(width / self.out_image_size[1])
-        if width_upper_bound + width_upper_bound <= index_of_segment:
+        if height_upper_bound * width_upper_bound <= index_of_segment:
             raise ValueError('Segment does not exist:', index_of_segment)
 
         i = index_of_segment // height_upper_bound
