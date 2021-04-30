@@ -15,11 +15,14 @@
 	},
 	"training": {
 		"general" : {
-            "batch_size": 4,
+            "batch_size": 8,
             "num_epochs" : 5,
             "checkpoint_save_interval" : 5,
             "num_workers" : 2,
-            "shuffle_data" : true
+            "shuffle_data" : true,
+            "foreground_threshold" : 0.25,
+            "cropped_image_size" : [400, 400],
+            "submission_loss" : false,
 		},
 		"model": {
 			"name": "ResUnet",
@@ -33,8 +36,21 @@
             "lr": 0.001
         },
         "lr_scheduler": {
-            "step_size" : 10,
-            "gamma" : 0.1,
+            "name": "stepLR",
+            "stepLR": {
+                "step_size" : 10,
+                "gamma" : 0.1,
+            },
+            "multiStepLR": {
+                "milestones" : [10,40],
+                "gamma" : 0.1,
+            }
         },
-	}
+	},
+    "inference" : {
+        "general" : {
+            "foreground_threshold" : 0.25,
+            "use_original_image_size" : false,
+        }
+    }
 }

@@ -26,12 +26,22 @@ from source.helpers.utils import save_masks_as_images
 
 class Prediction(object):
 
-    def __init__(self, engine, images, device, threshold):
+    def __init__(self, engine, images, device, threshold, use_original_image_size):
+        """
+
+        :param engine:
+        :param images:
+        :param device:
+        :param threshold:
+        :param use_original_image_size: False = patch image together from small subpatches of same size as in training
+        """
+
         self.device = device
         self.model = engine.model
         self.model.to(device)
         self.images_folder = images
         self.foreground_threshold = threshold
+        self.use_original_image_size = use_original_image_size
 
     def patch_image_together(self, cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
         width = total_width
@@ -171,15 +181,11 @@ class Prediction(object):
                 label = self.patch_to_label(patch)
                 yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
-    def predict(self, use_small_patches=True):
-        """
-
-        :param use_small_patches: True = patch image together from small subpatches of same size as in training
-        """
-        if use_small_patches:
-            cropped_image_size = Configuration.get("training.general.cropped_image_size")
-        else:
+    def predict(self):
+        if self.use_original_image_size:
             cropped_image_size = (608, 608)
+        else:
+            cropped_image_size = Configuration.get("training.general.cropped_image_size")
 
         image_list, image_number_list = self.load_test_images(self.images_folder, stride=cropped_image_size)
         nr_crops_per_image = int(len(image_list) / len(image_number_list))
