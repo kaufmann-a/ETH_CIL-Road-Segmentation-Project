@@ -102,7 +102,8 @@ class Engine:
             self.writer.add_scalar("PatchAccuracy/val", train_patch_acc, epoch)
 
             # save model
-            if epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1:
+            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
+                    epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
                 self.save_model(epoch)
                 self.save_checkpoint(epoch, train_loss, train_acc, val_loss, val_acc)
 
