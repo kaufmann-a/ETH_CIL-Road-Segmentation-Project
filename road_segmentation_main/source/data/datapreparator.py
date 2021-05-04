@@ -44,6 +44,11 @@ class DataPreparator(object):
 
         image_paths_train = []
         mask_paths_train = []
+        image_paths_val = []
+        mask_paths_val = []
+
+        include_val_transforms = Configuration.get('data_collection.include_val_transforms')
+        #include_val_transforms = True
 
         # paths to images (original and transformed) for training set
         for folder in folders:
@@ -54,10 +59,13 @@ class DataPreparator(object):
                         image_paths_train.append(os.path.join(path, folder, "images", filename))
                         mask_paths_train.append(os.path.join(path, folder, "masks", filename))
 
-        # paths to images (original only) for validation set
-        # if we want to use the transformed images for validation too, use the structure from above and include "else"
-        image_paths_val = [os.path.join(path, 'original', 'images', filename) for filename in originals_val]
-        mask_paths_val = [os.path.join(path, 'original', 'masks', filename) for filename in originals_val]
+                        if include_val_transforms:
+                            image_paths_val.append(os.path.join(path, folder, "images", filename))
+                            mask_paths_val.append(os.path.join(path, folder, "masks", filename))
+
+        if not include_val_transforms: # only include originals in validation set
+            image_paths_val = [os.path.join(path, 'original', 'images', filename) for filename in originals_val]
+            mask_paths_val = [os.path.join(path, 'original', 'masks', filename) for filename in originals_val]
 
         Logcreator.debug("Found %d images for training and %d images for validation."
                          % (len(image_paths_train), len(image_paths_val)))

@@ -6,17 +6,18 @@
     },
 	"data_collection" : {
 		"folder" : "../data/training",
-		"transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
-		                       "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+		"transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270"
+		                       //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
 		                       ], // "crop_random", "rotate_random"],
 		"test_images_folder" : "../data/test_images",
 		"test_data_count" : 0,
-		"validation_ratio" : 0.2
+		"validation_ratio" : 0.2,
+		"include_val_transforms" : false
 	},
 	"training": {
 		"general" : {
             "batch_size": 8,
-            "num_epochs" : 5,
+            "num_epochs" : 2,
             "checkpoint_save_interval" : 5,
             "num_workers" : 2,
             "shuffle_data" : true,
