@@ -50,7 +50,7 @@ class DataPreparator(object):
         mask_paths_val = []
 
         include_val_transforms = Configuration.get('data_collection.include_val_transforms')
-        #include_val_transforms = True
+        # include_val_transforms = True
 
         # paths to images (original and transformed) for training set
         for folder in folders:
@@ -83,11 +83,16 @@ class DataPreparator(object):
 
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
-        # use_submission_masks = Configuration.get("training.general.use_submission_masks")
-        train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train,
-                                           foreground_threshold, transform, crop_size=cropped_image_size)
-        val_ds = RoadSegmentationDataset(image_paths_val, mask_paths_val,
-                                         foreground_threshold, transform, crop_size=cropped_image_size)
-        test_ds = RoadSegmentationDataset([], [], foreground_threshold, transform, crop_size=cropped_image_size)
+        use_submission_masks = Configuration.get("training.general.use_submission_masks")
+
+        train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train, foreground_threshold, transform,
+                                           crop_size=cropped_image_size,
+                                           use_submission_masks=use_submission_masks)
+        val_ds = RoadSegmentationDataset(image_paths_val, mask_paths_val, foreground_threshold, transform,
+                                         crop_size=cropped_image_size,
+                                         use_submission_masks=use_submission_masks)
+        test_ds = RoadSegmentationDataset([], [], foreground_threshold, transform,
+                                          crop_size=cropped_image_size,
+                                          use_submission_masks=use_submission_masks)
 
         return train_ds, val_ds, test_ds
