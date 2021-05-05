@@ -6,6 +6,7 @@
     },
     "data_collection" : {
         "folder" : "../data/training",
+        "main_folder_name" : "original",
         "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ],
