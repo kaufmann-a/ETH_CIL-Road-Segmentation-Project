@@ -78,7 +78,7 @@ class Engine:
 
         epoch = 0
         if epoch_nr != 0:  # Check if continued training
-            epoch = epoch_nr
+            epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         while epoch < train_parms.num_epochs:
             train_loss, train_acc, train_patch_acc = self.train_step(train_loader, epoch)
