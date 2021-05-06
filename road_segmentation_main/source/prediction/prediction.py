@@ -22,7 +22,7 @@ from road_segmentation_main.source.data.dataset import RoadSegmentationDatasetIn
 from road_segmentation_main.source.data.transformation import get_transformations
 from road_segmentation_main.source.helpers.image_cropping import get_crop_box, ImageCropper
 from road_segmentation_main.source.helpers.utils import save_masks_as_images
-from road_segmentation_main.source.postprocessing import postprocessing
+from road_segmentation_main.source.helpers.utils import runpostprocessing
 
 
 class Prediction(object):
@@ -237,7 +237,10 @@ class Prediction(object):
 
                 loop.set_postfix(image_nr=image_nr_list_idx)
 
-        save_masks_as_images(out_image_list, image_number_list,
+        out_preds_list = save_masks_as_images(out_image_list, image_number_list,
                              folder=Configuration.output_directory,
                              is_prob=True,
                              pixel_threshold=self.foreground_threshold)
+
+        if(self.enable_postprocessing):
+            runpostprocessing(out_preds_list,image_number_list, folder=Configuration.output_directory, postprocessingparams=self.postprocessing)

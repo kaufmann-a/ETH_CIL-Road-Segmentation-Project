@@ -5,6 +5,7 @@ import cv2
 def erodedilateallones(img, numdilate=4, numerode=4, nummedian=2, kernelsz=16, mediansz=5 ):
     kernel_allones = np.ones((kernelsz,kernelsz))
     #Continuous dilations. Spreads out the pixels to join the roads.
+    kernel_allones = kernel_allones.astype('uint8')
     if(numdilate>0):
         out_img = cv2.dilate(img, kernel_allones)
         for i in range(0,numdilate-1):
