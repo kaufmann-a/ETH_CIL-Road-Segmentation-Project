@@ -17,16 +17,17 @@ from matplotlib import pyplot
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from source.configuration import Configuration
-from source.data.dataset import RoadSegmentationDatasetInference
-from source.data.transformation import get_transformations
-from source.helpers.image_cropping import get_crop_box, ImageCropper
-from source.helpers.utils import save_masks_as_images
+from road_segmentation_main.source.configuration import Configuration
+from road_segmentation_main.source.data.dataset import RoadSegmentationDatasetInference
+from road_segmentation_main.source.data.transformation import get_transformations
+from road_segmentation_main.source.helpers.image_cropping import get_crop_box, ImageCropper
+from road_segmentation_main.source.helpers.utils import save_masks_as_images
+from road_segmentation_main.source.postprocessing import postprocessing
 
 
 class Prediction(object):
 
-    def __init__(self, engine, images, device, threshold, use_original_image_size):
+    def __init__(self, engine, images, device, threshold, enable_postprocessing, postprocessing, use_original_image_size):
         """
 
         :param engine:
@@ -41,6 +42,8 @@ class Prediction(object):
         self.model.to(device)
         self.images_folder = images
         self.foreground_threshold = threshold
+        self.enable_postprocessing = enable_postprocessing
+        self.postprocessing = postprocessing
         self.use_original_image_size = use_original_image_size
 
     def patch_image_together(self, cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
