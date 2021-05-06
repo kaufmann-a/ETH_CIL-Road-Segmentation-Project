@@ -26,7 +26,7 @@ from source.helpers.utils import save_predictions_as_imgs
 from source.logcreator.logcreator import Logcreator
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
 # TODO: from source.metrics.metricsfactory import MetricsFactory
-from source.metrics.metrics import PatchAccuracy
+from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
 from source.scheduler.lr_schedulerfactory import LRSchedulerFactory
@@ -78,17 +78,17 @@ class Engine:
 
         epoch = 0
         if epoch_nr != 0:  # Check if continued training
-            epoch = epoch_nr
+            epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         while epoch < train_parms.num_epochs:
-            train_loss, train_acc, train_patch_acc = self.train_step(train_loader)
+            train_loss, train_acc, train_patch_acc = self.train_step(train_loader, epoch)
 
             Logcreator.info(f"Epoch {epoch}")
             Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                             f", accuracy: {train_acc:.5f}",
                             f", patch-acc: {train_patch_acc:.5f}")
 
-            val_loss, val_acc, val_patch_acc = self.evaluate(val_loader)
+            val_loss, val_acc, val_patch_acc = self.evaluate(val_loader, epoch)
             Logcreator.info(f"Validation: loss: {val_loss:.5f}",
                             f", accuracy: {val_acc:.5f}",
                             f", patch-acc: {val_patch_acc:.5f}")
@@ -102,7 +102,8 @@ class Engine:
             self.writer.add_scalar("PatchAccuracy/val", train_patch_acc, epoch)
 
             # save model
-            if epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1:
+            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
+                    epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
                 self.save_model(epoch)
                 self.save_checkpoint(epoch, train_loss, train_acc, val_loss, val_acc)
 
@@ -129,13 +130,15 @@ class Engine:
 
         return self.loss_function(predictions, targets)
 
-    def train_step(self, data_loader):
+    def train_step(self, data_loader, epoch):
         """
         Train model for 1 epoch.
         """
         self.model.train()
 
         # initialize metrics
+        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
+
         accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))
         accuracy.to(DEVICE)
 
@@ -170,8 +173,10 @@ class Engine:
             # update metrics
             # TODO create one Metrics class that we can feed with (predicted, targets)
             #  and computes all metrics we want and maybe logs them -> tensorboard?
-            accuracy.update(torch.sigmoid(predictions), targets.int())
-            patch_accuracy.update(torch.sigmoid(predictions), targets)
+            prediction_probabilities = torch.sigmoid(predictions)
+            multi_accuracy_metric.update(prediction_probabilities, targets)
+            accuracy.update(prediction_probabilities, targets.int())
+            patch_accuracy.update(prediction_probabilities, targets)
 
             # update tqdm progressbar
             loop.set_postfix(loss=loss.item())
@@ -180,15 +185,19 @@ class Engine:
 
         self.lr_scheduler.step()  # decay learning rate over time
 
+        multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix='train')
+
         return total_loss, accuracy.compute(), patch_accuracy.compute()
 
-    def evaluate(self, data_loader):
+    def evaluate(self, data_loader, epoch):
         """
         Evaluate model on validation data.
         """
         self.model.eval()
 
         # initialize metrics
+        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
+
         accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))
         accuracy.to(DEVICE)
 
@@ -210,10 +219,14 @@ class Engine:
                 total_loss += loss.item()
 
                 # update metrics
-                accuracy.update(torch.sigmoid(predictions), targets.int())
-                patch_accuracy.update(torch.sigmoid(predictions), targets)
+                prediction_probabilities = torch.sigmoid(predictions)
+                multi_accuracy_metric.update(prediction_probabilities, targets)
+                accuracy.update(prediction_probabilities, targets.int())
+                patch_accuracy.update(prediction_probabilities, targets)
 
         total_loss /= len(data_loader)
+
+        multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix='val')
 
         return total_loss, accuracy.compute(), patch_accuracy.compute()
 
