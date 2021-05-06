@@ -11,14 +11,14 @@
                                ],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
-        "validation_ratio" : 0.2,
+        "validation_ratio" : 0.3,
         "include_val_transforms" : false
     },
     "training": {
         "general" : {
             "batch_size": 8,
-            "num_epochs" : 50,
-            "checkpoint_save_interval" : 5,
+            "num_epochs" : 12,
+            "checkpoint_save_interval" : 12,
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
