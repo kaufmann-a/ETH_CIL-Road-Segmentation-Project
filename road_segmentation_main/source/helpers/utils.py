@@ -2,7 +2,8 @@ import os
 
 import torch
 import torchvision
-from road_segmentation_main.source.postprocessing.postprocessing import postprocess
+from source.postprocessing.postprocessing import postprocess
+from tqdm import tqdm
 
 
 def mask_to_submission_mask(mask, threshold):
@@ -121,6 +122,7 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
 
     return out_preds_list
 
+# TODO: Handle if morphological operations aren't defined.
 def runpostprocessing(preds_list, index, folder, postprocessingparams):
     folder_postprocessed = os.path.join(folder, "pred-masks-postprocessed")
     if not os.path.exists(folder_postprocessed):
