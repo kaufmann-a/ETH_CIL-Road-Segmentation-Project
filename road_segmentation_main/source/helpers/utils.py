@@ -2,6 +2,7 @@ import os
 
 import torch
 import torchvision
+import cv2
 from source.postprocessing.postprocessing import postprocess
 from tqdm import tqdm
 
@@ -129,6 +130,9 @@ def runpostprocessing(preds_list, index, folder, postprocessingparams):
         os.makedirs(folder_postprocessed)
 
     for i in range(len(preds_list)):
-        preds = preds_list[i].astype('uint8')
+        preds = preds_list[i]
+        preds = preds.numpy()
+        preds = preds.astype('uint8')
         postprocessed_img = postprocess(preds, postprocessingparams.morphology)
-        torchvision.utils.save_image(postprocessed_img, f"{folder_postprocessed}/pred_{index[i]}.png")
+        #torchvision.utils.save_image(postprocessed_img, f"{folder_postprocessed}/pred_{index[i]}.png")
+        cv2.imwrite(f"{folder_postprocessed}/pred_{index[i]}.png", postprocessed_img)
