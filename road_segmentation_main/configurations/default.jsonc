@@ -58,11 +58,11 @@
         },
         "postprocessing":{
                 "morphology":{
-                "numdilate":4,
-                "numerode":4,
+                "numdilate":2,
+                "numerode":2,
                 "nummedian":2,
-                "kernelsz":16,
-                "mediansz":5,
+                "kernelsz":4,
+                "mediansz":3,
                 }
         }
     }

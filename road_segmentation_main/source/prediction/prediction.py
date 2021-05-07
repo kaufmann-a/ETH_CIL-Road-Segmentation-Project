@@ -27,7 +27,7 @@ from source.helpers.utils import runpostprocessing
 
 class Prediction(object):
 
-    def __init__(self, engine, images, device, threshold, enable_postprocessing, postprocessing, use_original_image_size):
+    def __init__(self, engine, images, device, threshold,  postprocessing, use_original_image_size, enable_postprocessing=False):
         """
 
         :param engine:

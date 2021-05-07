@@ -155,7 +155,7 @@ def runpostprocessing(preds_list, folder, postprocessingparams, image_number_lis
             preds = preds.numpy()
             preds = preds.astype('uint8')
             postprocessed_img = postprocess(preds, postprocessingparams.morphology)
-            cv2.imwrite(f"{folder_postprocessed}/pred_{image_number_list[i]}.png", postprocessed_img)
+            cv2.imwrite(f"{folder_postprocessed}/pred_{image_number_list[i]}.png", 255*postprocessed_img)
             postprocessed_img = torch.tensor(postprocessed_img)
             postprocessed_img = postprocessed_img.to(torch.double)
             f.writelines('{}\n'.format(s)
