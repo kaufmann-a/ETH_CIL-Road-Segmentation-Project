@@ -54,7 +54,7 @@
         "general" : {
             "foreground_threshold" : 0.25,
             "use_original_image_size" : false,
-            "enable_postprocessing" : false,
+            "enable_postprocessing" : true,
         },
         "postprocessing":{
                 "morphology":{

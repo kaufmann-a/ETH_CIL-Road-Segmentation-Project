@@ -21,6 +21,7 @@ from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
 from source.data.transformation import get_transformations
 from source.helpers.image_cropping import get_crop_box, ImageCropper
+from source.helpers.utils import mask_to_submission_strings
 from source.helpers.utils import save_masks_as_images
 from source.helpers.utils import runpostprocessing
 
@@ -168,21 +169,6 @@ class Prediction(object):
 
         return out_image_list, image_number_list
 
-    def patch_to_label(self, patch):
-        # assign a label to a patch
-        df = torch.mean(patch)
-        if df > self.foreground_threshold:
-            return 1
-        else:
-            return 0
-
-    def mask_to_submission_strings(self, image, image_nr, patch_size=16):
-        # iterate over prediction, just use every 16th pixel
-        for j in range(0, image.shape[1], patch_size):
-            for i in range(0, image.shape[0], patch_size):
-                patch = image[i:i + patch_size, j:j + patch_size]
-                label = self.patch_to_label(patch)
-                yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
     def predict(self):
         if self.use_original_image_size:
@@ -229,10 +215,10 @@ class Prediction(object):
 
                         # and then convert mask to string
                         f.writelines('{}\n'.format(s)
-                                     for s in self.mask_to_submission_strings(image=out_image,
+                                     for s in mask_to_submission_strings(image=out_image,
                                                                               patch_size=patch_size,
                                                                               image_nr=image_number_list[
-                                                                                  image_nr_list_idx]))
+                                                                                  image_nr_list_idx],foreground_threshold=self.foreground_threshold))
                         image_nr_list_idx += 1
 
                 loop.set_postfix(image_nr=image_nr_list_idx)
@@ -243,4 +229,9 @@ class Prediction(object):
                              pixel_threshold=self.foreground_threshold)
 
         if(self.enable_postprocessing):
-            runpostprocessing(out_preds_list,image_number_list, folder=Configuration.output_directory, postprocessingparams=self.postprocessing)
+            runpostprocessing(out_preds_list,
+                              folder=Configuration.output_directory,
+                              postprocessingparams=self.postprocessing,
+                              image_number_list=image_number_list,
+                              patch_size=patch_size,
+                              foreground_threshold=self.foreground_threshold)
