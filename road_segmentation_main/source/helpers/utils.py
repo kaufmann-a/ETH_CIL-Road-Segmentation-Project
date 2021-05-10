@@ -34,7 +34,7 @@ def patch_to_label(foreground_threshold, patch):
         return 0
 
 
-def mask_to_submission_strings( image, image_nr, patch_size=16, foreground_threshold=0.25):
+def mask_to_submission_strings(image, image_nr, patch_size=16, foreground_threshold=0.25):
     # iterate over prediction, just use every 16th pixel
     for j in range(0, image.shape[1], patch_size):
         for i in range(0, image.shape[0], patch_size):
@@ -123,7 +123,7 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
     if not is_prob:
         preds = torch.sigmoid(preds)
 
-    out_preds_list =[]
+    out_preds_list = []
     for i in range(len(preds)):
 
         # probabilities to 0/1
@@ -140,6 +140,7 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
 
     return out_preds_list
 
+
 # TODO: Handle if morphological operations aren't defined.
 def runpostprocessing(preds_list, folder, postprocessingparams, image_number_list, patch_size, foreground_threshold):
     folder_postprocessed = os.path.join(folder, "pred-masks-postprocessed")
@@ -155,7 +156,7 @@ def runpostprocessing(preds_list, folder, postprocessingparams, image_number_lis
             preds = preds.cpu().numpy()
             preds = preds.astype('uint8')
             postprocessed_img = postprocess(preds, postprocessingparams.morphology)
-            cv2.imwrite(f"{folder_postprocessed}/pred_{image_number_list[i]}.png", 255*postprocessed_img)
+            cv2.imwrite(f"{folder_postprocessed}/pred_{image_number_list[i]}.png", 255 * postprocessed_img)
             postprocessed_img = torch.tensor(postprocessed_img)
             postprocessed_img = postprocessed_img.to(torch.double)
             f.writelines('{}\n'.format(s)
@@ -163,4 +164,4 @@ def runpostprocessing(preds_list, folder, postprocessingparams, image_number_lis
                                                              patch_size=patch_size,
                                                              image_nr=image_number_list[image_nr_list_idx],
                                                              foreground_threshold=foreground_threshold))
-        image_nr_list_idx += 1
+            image_nr_list_idx += 1
