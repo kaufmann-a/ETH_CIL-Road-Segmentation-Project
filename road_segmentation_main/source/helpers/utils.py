@@ -152,7 +152,7 @@ def runpostprocessing(preds_list, folder, postprocessingparams, image_number_lis
 
         for i in range(len(preds_list)):
             preds = preds_list[i]
-            preds = preds.numpy()
+            preds = preds.cpu().numpy()
             preds = preds.astype('uint8')
             postprocessed_img = postprocess(preds, postprocessingparams.morphology)
             cv2.imwrite(f"{folder_postprocessed}/pred_{image_number_list[i]}.png", 255*postprocessed_img)
