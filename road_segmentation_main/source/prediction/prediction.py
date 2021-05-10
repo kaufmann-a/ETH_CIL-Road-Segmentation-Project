@@ -25,9 +25,11 @@ from source.helpers.utils import mask_to_submission_strings
 from source.helpers.utils import save_masks_as_images
 from source.helpers.utils import runpostprocessing
 
+
 class Prediction(object):
 
-    def __init__(self, engine, images, device, threshold,  postprocessing, use_original_image_size, enable_postprocessing=False):
+    def __init__(self, engine, images, device, threshold, postprocessing, use_original_image_size,
+                 enable_postprocessing=False):
         """
 
         :param engine:
@@ -42,7 +44,6 @@ class Prediction(object):
         self.model.to(device)
         self.images_folder = images
         self.foreground_threshold = threshold
-        # TODO: Set default value of enable_postprocessing to false
         self.enable_postprocessing = enable_postprocessing
         self.postprocessing = postprocessing
         self.use_original_image_size = use_original_image_size
@@ -169,7 +170,6 @@ class Prediction(object):
 
         return out_image_list, image_number_list
 
-
     def predict(self):
         if self.use_original_image_size:
             cropped_image_size = (608, 608)
@@ -216,19 +216,19 @@ class Prediction(object):
                         # and then convert mask to string
                         f.writelines('{}\n'.format(s)
                                      for s in mask_to_submission_strings(image=out_image,
-                                                                              patch_size=patch_size,
-                                                                              image_nr=image_number_list[
-                                                                                  image_nr_list_idx],foreground_threshold=self.foreground_threshold))
+                                                                         patch_size=patch_size,
+                                                                         image_nr=image_number_list[image_nr_list_idx],
+                                                                         foreground_threshold=self.foreground_threshold))
                         image_nr_list_idx += 1
 
                 loop.set_postfix(image_nr=image_nr_list_idx)
 
         out_preds_list = save_masks_as_images(out_image_list, image_number_list,
-                             folder=Configuration.output_directory,
-                             is_prob=True,
-                             pixel_threshold=self.foreground_threshold)
+                                              folder=Configuration.output_directory,
+                                              is_prob=True,
+                                              pixel_threshold=self.foreground_threshold)
 
-        if(self.enable_postprocessing):
+        if self.enable_postprocessing:
             runpostprocessing(out_preds_list,
                               folder=Configuration.output_directory,
                               postprocessingparams=self.postprocessing,
