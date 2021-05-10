@@ -54,6 +54,16 @@
         "general" : {
             "foreground_threshold" : 0.25,
             "use_original_image_size" : false,
+            "enable_postprocessing" : true,
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":2,
+                "kernelsz":4,
+                "mediansz":3,
+                }
         }
     }
 }
