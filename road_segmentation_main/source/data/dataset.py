@@ -6,7 +6,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from source.helpers.image_cropping import ImageCropper
-from source.helpers.utils import mask_to_submission_mask
+from source.helpers.maskconverthelper import mask_to_submission_mask
 
 
 class RoadSegmentationDataset(Dataset):

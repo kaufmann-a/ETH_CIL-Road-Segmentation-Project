@@ -17,13 +17,15 @@ from matplotlib import pyplot
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+import source.helpers.predictionhelper
+
 from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
 from source.data.transformation import get_transformations
 from source.helpers.image_cropping import get_crop_box, ImageCropper
-from source.helpers.utils import mask_to_submission_strings
-from source.helpers.utils import save_masks_as_images
-from source.helpers.utils import runpostprocessing
+from source.helpers.predictionhelper import mask_to_submission_strings
+from source.helpers.imagesavehelper import save_masks_as_images
+from source.helpers.predictionhelper import runpostprocessing
 
 
 class Prediction(object):

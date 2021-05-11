@@ -18,14 +18,11 @@ from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
 from tqdm import tqdm
 
-# TODO: from source.callbacks.callbacksfactory import CallbacksFactory
 from source.configuration import Configuration
-# from source.data.datagenerator import DataGenerator
 from source.data.datapreparator import DataPreparator
-from source.helpers.utils import save_predictions_as_imgs
+from source.helpers.imagesavehelper import save_predictions_as_imgs
 from source.logcreator.logcreator import Logcreator
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
-# TODO: from source.metrics.metricsfactory import MetricsFactory
 from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
