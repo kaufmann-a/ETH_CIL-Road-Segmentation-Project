@@ -19,7 +19,8 @@
             "num_epochs" : 50,
             "checkpoint_save_interval" : 50,
             "num_workers" : 2,
-            "shuffle_data" : true
+            "shuffle_data" : true,
+            "log_to_comet" : true,
 		},
 		"model": {
 			"name": "ResUnet",

@@ -29,7 +29,8 @@
             "stochastic_weight_averaging" : {
                 "on" : false,
                 "start_epoch" : 40
-            }
+            },
+            "log_to_comet" : true,
         },
         "model": {
             "name": "ResUnet",

@@ -2,14 +2,14 @@
     "environment": {
         "name" : "Basic config for res unet plus plus",
         "output_path": "trainings",
-        "log_file" : "logs.txt"
+        "log_file" : "logs.txt",
     },
     "data_collection" : {
         "folder" : "../data/training",
         "main_folder_name" : "original",
-        "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
-                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
-                               ], // "crop_random", "rotate_random"],
+        "transform_folders" : ["original"], //"rotate_90", "rotate_180", "rotate_270",
+                               //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+                               //], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
         "validation_ratio" : 0.2,
@@ -29,7 +29,8 @@
             "stochastic_weight_averaging" : {
                 "on" : false,
                 "start_epoch" : 40
-            }
+            },
+            "log_to_comet" : true,
         },
         "model": {
             "name": "ResUnetPlusPlus",
