@@ -11,7 +11,7 @@ import random
 import time
 
 import numpy
-import torch
+
 
 from source.configuration import Configuration
 from source.engine import Engine
@@ -19,10 +19,7 @@ from source.helpers import argumenthelper
 from source.logcreator.logcreator import Logcreator
 
 
-def fix_random_seeds(seed):
-    torch.manual_seed(seed)
-    numpy.random.seed(seed)
-    random.seed(seed)
+
 
 
 if __name__ == "__main__":
@@ -46,13 +43,7 @@ if __name__ == "__main__":
     Logcreator.h1("Some title")
     Logcreator.info("Environment: %s" % Configuration.get('environment.name'))
 
-    # fix random seeds
-    seed = 49626446
-    fix_random_seeds(seed)
 
-    # log used gpu device
-    if torch.cuda.is_available():
-        Logcreator.info(torch.cuda.get_device_name(0))
 
     engine = Engine()
 

@@ -8,22 +8,29 @@ Model of the road segmentatjion neuronal network learning object.
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
-import os
-import sys
-from io import StringIO
 
+
+
+from comet_ml import Experiment
+
+import sys
+import os
 import numpy as np
+import random
 import torch
-import torchmetrics as torchmetrics
+
 from torch.optim.swa_utils import AveragedModel
+import torchmetrics
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+
 from torchsummary import summary
 from tqdm import tqdm
+from io import StringIO
 
 from source.configuration import Configuration
 from source.data.datapreparator import DataPreparator
 from source.helpers.imagesavehelper import save_predictions_as_imgs
+import source.helpers.metricslogging as metricslogging
 from source.logcreator.logcreator import Logcreator
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
 from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric
@@ -37,12 +44,19 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 class Engine:
 
     def __init__(self):
+        # fix random seeds
+        seed = 49626446
+        self.fix_random_seeds(seed)
+
+        # initialize model
         self.model = ModelFactory.build().to(DEVICE)
         self.optimizer = OptimizerFactory.build(self.model)
         self.lr_scheduler = LRSchedulerFactory.build(self.optimizer)
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
         self.submission_loss = Configuration.get("training.general.submission_loss")
+        Logcreator.info("Following device will be used for training: " + DEVICE)
+
         # stochastic model weight averaging
         # https://pytorch.org/docs/stable/optim.html#constructing-averaged-models
         self.swa_model = AveragedModel(self.model).to(DEVICE)
@@ -53,29 +67,12 @@ class Engine:
         # self.swa_scheduler = torch.optim.swa_utils.SWALR(optimizer, \
         #          anneal_strategy="linear", anneal_epochs=5, swa_lr=0.05)
 
-        # initialize tensorboard logger
-        Configuration.tensorboard_folder = os.path.join(Configuration.output_directory, "tensorboard")
-        if not os.path.exists(Configuration.tensorboard_folder):
-            os.makedirs(Configuration.tensorboard_folder)
-        self.writer = SummaryWriter(log_dir=Configuration.tensorboard_folder)
+        # Init comet and tensorboard
+        self.experiment = metricslogging.init_comet()
+        self.tensorboard = metricslogging.init_tensorboard()
 
         # Print model summary
-        cropped_image_size = Configuration.get("training.general.cropped_image_size")
-        input_size = tuple(np.insert(cropped_image_size, 0, values=3))
-        # redirect stdout to our logger
-        sys.stdout = mystdout = StringIO()
-        summary(self.model, input_size=input_size, device=DEVICE)
-        # reset stdout to original
-        sys.stdout = sys.__stdout__
-        Logcreator.info(mystdout.getvalue())
-
-        Logcreator.debug("Model '%s' initialized with %d parameters." %
-                         (Configuration.get('training.model.name'),
-                          sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
-
-    def plot_model(self):
-        # TODO: This function should plot the model
-        return 0
+        self.print_modelsummary()
 
     def train(self, epoch_nr=0):
         training_data, validation_data, test_data = DataPreparator.load()
@@ -97,36 +94,41 @@ class Engine:
         while epoch < train_parms.num_epochs:
             Logcreator.info(f"Epoch {epoch}")
 
-            train_loss, train_acc, train_patch_acc = self.train_step(train_loader, epoch)
-
-            val_loss, val_acc, val_patch_acc = self.evaluate(self.model, val_loader, epoch)
-
-            if self.swa_enabled and epoch >= self.swa_start_epoch:
-                self.swa_model.update_parameters(self.model)
-                # update batch normalization statistics for the swa_model
-                torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
-                # evaluate on validation set
-                swa_val_loss, swa_val_acc, swa_val_patch_acc = self.evaluate(self.swa_model, val_loader, epoch,
-                                                                             log_model_name="SWA-",
-                                                                             log_postfix_path='val_swa')
+            train_metrics = self.train_step(train_loader, epoch)
+            val_metrics = self.evaluate(self.model, val_loader, epoch)
 
             # save model
             if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
                     epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
                 self.save_model(epoch)
-                self.save_checkpoint(self.model, epoch, train_loss, train_acc, val_loss, val_acc)
+                self.save_checkpoint(self.model, epoch, train_metrics['train_loss'], train_metrics['train_acc'],
+                                     val_metrics['val_loss'], val_metrics['val_acc'])
 
-                if self.swa_enabled and epoch >= self.swa_start_epoch:
-                    # update batch normalization statistics for the swa_model at the end
-                    torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
-                    # save swa model separately
-                    self.save_checkpoint(self.swa_model, epoch, train_loss, train_acc, swa_val_loss, swa_val_acc,
-                                         file_name="swa_checkpoint.pth")
+
+            # swa model
+            if self.swa_enabled and epoch >= self.swa_start_epoch:
+                self.swa_model.update_parameters(self.model)
+                # update batch normalization statistics for the swa_model
+                torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
+                # evaluate on validation set
+                swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch,
+                                                log_model_name="SWA-", log_postfix_path='val_swa')
+
+                # save model
+                if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
+                        epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
+                    if self.swa_enabled and epoch >= self.swa_start_epoch:
+                        # update batch normalization statistics for the swa_model at the end
+                        torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
+                        # save swa model separately
+                        self.save_checkpoint(self.swa_model, epoch, train_metrics['train_loss'],
+                                             train_metrics['train_acc'], swa_val_metrics['val_loss'],
+                                             swa_val_metrics['val_acc'], file_name="swa_checkpoint.pth")
+
+            # Flus tensorboard
+            self.tensorboard.flush()
 
             epoch += 1
-
-        # flush writer
-        self.writer.flush()
 
         # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
         # save predicted validation images
@@ -138,13 +140,7 @@ class Engine:
 
         return 0
 
-    def compute_loss(self, predictions, targets):
-        if self.submission_loss:
-            avgPool = torch.nn.AvgPool2d(16, stride=16)
-            predictions = avgPool(predictions)
-            targets = avgPool(targets)
 
-        return self.loss_function(predictions, targets)
 
     def train_step(self, data_loader, epoch):
         """
@@ -205,17 +201,21 @@ class Engine:
         train_patch_acc = patch_accuracy.compute()
 
         # log scores
-        multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix='train')
-
-        self.writer.add_scalar("Loss/train", train_loss, epoch)
-        self.writer.add_scalar("Accuracy/train", train_acc, epoch)
-        self.writer.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
-
+        multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix='train')
+        # Tensorboard
+        self.tensorboard.add_scalar("Loss/train", train_loss, epoch)
+        self.tensorboard.add_scalar("Accuracy/train", train_acc, epoch)
+        self.tensorboard.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
+        # Comet
+        if self.experiment is not None:
+            self.experiment.log_metric('train_loss', train_loss)
+            self.experiment.log_metric('train_acc', train_acc)
+            self.experiment.log_metric('train_patch_acc', train_patch_acc)
+        # Logfile
         Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                         f", accuracy: {train_acc:.5f}",
                         f", patch-acc: {train_patch_acc:.5f}")
-
-        return train_loss, train_acc, train_patch_acc
+        return {'train_loss': total_loss, 'train_acc': accuracy.compute(), 'train_patch_acc': patch_accuracy.compute()}
 
     def evaluate(self, model, data_loader, epoch, log_model_name='', log_postfix_path='val'):
         """
@@ -258,17 +258,22 @@ class Engine:
         val_patch_acc = patch_accuracy.compute()
 
         # log scores
-        multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix=log_postfix_path)
-
-        self.writer.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
-        self.writer.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
-        self.writer.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
-
+        multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix=log_postfix_path)
+        # Tensorboard
+        self.tensorboard.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
+        self.tensorboard.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
+        self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
+        # Comet
+        if self.experiment is not None:
+            self.experiment.log_metric(log_postfix_path+'_loss', val_loss)
+            self.experiment.log_metric(log_postfix_path+'_acc', val_acc)
+            self.experiment.log_metric(log_postfix_path+'_patch_acc', val_patch_acc)
+        # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
                         f", patch-acc: {val_patch_acc:.5f}")
 
-        return total_loss, val_acc, val_patch_acc
+        return {'val_loss': total_loss, 'val_acc': val_acc, 'val_patch_acc': val_patch_acc}
 
     def save_model(self, epoch_nr):
         """ This function saves entire model incl. modelstructure"""
@@ -310,3 +315,30 @@ class Engine:
         # ToDo: add patch_accuracy to checkpoints
 
         return epoch, train_loss, train_accuracy, val_loss, val_accuracy
+
+    def compute_loss(self, predictions, targets):
+        if self.submission_loss:
+            avgPool = torch.nn.AvgPool2d(16, stride=16)
+            predictions = avgPool(predictions)
+            targets = avgPool(targets)
+
+        return self.loss_function(predictions, targets)
+
+    def fix_random_seeds(self, seed):
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+
+    def print_modelsummary(self):
+        cropped_image_size = Configuration.get("training.general.cropped_image_size")
+        input_size = tuple(np.insert(cropped_image_size, 0, values=3))
+        # redirect stdout to our logger
+        sys.stdout = mystdout = StringIO()
+        summary(self.model, input_size=input_size, device=DEVICE)
+        # reset stdout to original
+        sys.stdout = sys.__stdout__
+        Logcreator.info(mystdout.getvalue())
+
+        Logcreator.debug("Model '%s' initialized with %d parameters." %
+                         (Configuration.get('training.model.name'),
+                          sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
