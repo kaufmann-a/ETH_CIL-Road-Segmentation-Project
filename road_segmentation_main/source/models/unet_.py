@@ -123,7 +123,7 @@ class UNet(BaseModel):
     """
     name = 'Unet_'
 
-    def __init__(self, options, num_classes=1):
+    def __init__(self, config, num_classes=1):
         super().__init__()
 
         # encoding
@@ -148,8 +148,16 @@ class UNet(BaseModel):
         self.decode2 = decoding_block(256, 128)
         self.decode1 = decoding_block(128, 64)
 
+        # Choose output kernel size
+        if not config.use_submission_masks:
+            out_kernel_size = 1
+            out_stride = 1
+        else:
+            out_kernel_size = 16
+            out_stride = 16
+
         # final
-        self.final = nn.Conv2d(64, num_classes, kernel_size=1)
+        self.final = nn.Conv2d(64, num_classes, kernel_size=out_kernel_size, stride=out_stride)
 
     def forward(self, input):
         # encoding
@@ -191,7 +199,7 @@ class UNetSmall(BaseModel):
     """
     name = 'UnetSmall'
 
-    def __init__(self, num_classes=1):
+    def __init__(self, config, num_classes=1):
         super().__init__()
 
         # encoding
@@ -216,8 +224,16 @@ class UNetSmall(BaseModel):
         self.decode2 = decoding_block(128, 64)
         self.decode1 = decoding_block(64, 32)
 
+        # Choose output kernel size
+        if not config.use_submission_masks:
+            out_kernel_size = 1
+            out_stride = 1
+        else:
+            out_kernel_size = 16
+            out_stride = 16
+
         # final
-        self.final = nn.Conv2d(32, num_classes, kernel_size=1)
+        self.final = nn.Conv2d(32, num_classes, kernel_size=out_kernel_size, stride=out_stride)
 
     def forward(self, input):
         # encoding

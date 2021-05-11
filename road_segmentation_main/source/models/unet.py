@@ -50,12 +50,21 @@ class UNET(BaseModel):
         # Up part of UNET
         for feature in reversed(self.features):
             self.ups.append(
-                nn.ConvTranspose2d(feature*2, feature, kernel_size=2, stride=2, )
+                nn.ConvTranspose2d(feature * 2, feature, kernel_size=2, stride=2, )
             )
-            self.ups.append(DoubleConv(feature*2, feature))
+            self.ups.append(DoubleConv(feature * 2, feature))
 
-        self.bottleneck = DoubleConv(self.features[-1], self.features[-1]*2)
-        self.final_conv = nn.Conv2d(self.features[0], self.out_channels, kernel_size=1)
+        self.bottleneck = DoubleConv(self.features[-1], self.features[-1] * 2)
+
+        # Choose output kernel size
+        if not config.use_submission_masks:
+            out_kernel_size = 1
+            out_stride = 1
+        else:
+            out_kernel_size = 16
+            out_stride = 16
+
+        self.final_conv = nn.Conv2d(self.features[0], self.out_channels, kernel_size=out_kernel_size, stride=out_stride)
 
     def forward(self, x):
         skip_connections = []
