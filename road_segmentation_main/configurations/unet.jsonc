@@ -1,19 +1,19 @@
 {
     "environment": {
-        "name" : "Name of the run - this is just a default config file",
+        "name" : "Unet, 300",
         "output_path": "trainings",
         "log_file" : "logs.txt"
     },
     "data_collection" : {
         "folder" : "../data/training",
-        "main_folder_name" : "original",
+        "main_folder_name" : "github_ale",
         "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
         "validation_ratio" : 0.3,
-        "include_val_transforms" : false
+        "include_val_transforms" : true
     },
     "training": {
         "general" : {
@@ -54,16 +54,6 @@
         "general" : {
             "foreground_threshold" : 0.25,
             "use_original_image_size" : false,
-            "enable_postprocessing" : true,
-        },
-        "postprocessing":{
-                "morphology":{
-                "numdilate":2,
-                "numerode":2,
-                "nummedian":2,
-                "kernelsz":4,
-                "mediansz":3,
-                }
         }
     }
 }
