@@ -8,9 +8,6 @@ Model of the road segmentatjion neuronal network learning object.
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
-
-
-
 from comet_ml import Experiment
 
 import sys
@@ -104,7 +101,6 @@ class Engine:
                 self.save_checkpoint(self.model, epoch, train_metrics['train_loss'], train_metrics['train_acc'],
                                      val_metrics['val_loss'], val_metrics['val_acc'])
 
-
             # swa model
             if self.swa_enabled and epoch >= self.swa_start_epoch:
                 self.swa_model.update_parameters(self.model)
@@ -140,8 +136,6 @@ class Engine:
 
         return 0
 
-
-
     def train_step(self, data_loader, epoch):
         """
         Train model for 1 epoch.
@@ -165,7 +159,7 @@ class Engine:
         # for all batches
         for batch_idx, (data, targets) in enumerate(loop):
             data = data.to(device=DEVICE)
-            targets = targets.float().unsqueeze(1).to(device=DEVICE)
+            targets = targets.to(device=DEVICE)
 
             self.optimizer.zero_grad()
 
@@ -236,7 +230,7 @@ class Engine:
 
         with torch.no_grad():
             for i, (image, targets) in enumerate(data_loader):
-                image, targets = image.to(DEVICE), targets.float().unsqueeze(1).to(DEVICE)
+                image, targets = image.to(DEVICE), targets.to(DEVICE)
 
                 # forward pass according to https://pytorch.org/docs/stable/amp.html
                 with torch.cuda.amp.autocast():
@@ -265,9 +259,9 @@ class Engine:
         self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
         # Comet
         if self.experiment is not None:
-            self.experiment.log_metric(log_postfix_path+'_loss', val_loss)
-            self.experiment.log_metric(log_postfix_path+'_acc', val_acc)
-            self.experiment.log_metric(log_postfix_path+'_patch_acc', val_patch_acc)
+            self.experiment.log_metric(log_postfix_path + '_loss', val_loss)
+            self.experiment.log_metric(log_postfix_path + '_acc', val_acc)
+            self.experiment.log_metric(log_postfix_path + '_patch_acc', val_patch_acc)
         # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",

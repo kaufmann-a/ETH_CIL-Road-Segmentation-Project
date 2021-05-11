@@ -18,7 +18,7 @@ from source.models.modules import (
 class ResUnetPlusPlus(BaseModel):
     name = 'ResUnetPlusPlus'
 
-    def __init__(self, options, channel=3, filters=[32, 64, 128, 256, 512]):
+    def __init__(self, config, channel=3, filters=[32, 64, 128, 256, 512]):
         super(ResUnetPlusPlus, self).__init__()
 
         self.input_layer = nn.Sequential(
@@ -59,8 +59,16 @@ class ResUnetPlusPlus(BaseModel):
 
         self.aspp_out = ASPP(filters[1], filters[0])
 
+        # Choose output kernel size
+        if not config.use_submission_masks:
+            out_kernel_size = 1
+            out_stride = 1
+        else:
+            out_kernel_size = 16
+            out_stride = 16
+
         self.output_layer = nn.Sequential(
-            nn.Conv2d(filters[0], 1, 1),
+            nn.Conv2d(filters[0], 1, kernel_size=out_kernel_size, stride=out_stride),
             # nn.Sigmoid() # we do use sigmoid later in the loss function
         )
 

@@ -16,7 +16,7 @@ class ResUnet(BaseModel):
     """
     name = 'ResUnet'
 
-    def __init__(self, options, channel=3, filters=[64, 128, 256, 512]):
+    def __init__(self, config, channel=3, filters=[64, 128, 256, 512]):
         super(ResUnet, self).__init__()
 
         # Encoding
@@ -53,9 +53,16 @@ class ResUnet(BaseModel):
         self.upsample_3 = Upsample(filters[1], filters[1], kernel=2, stride=2)
         self.up_residual_conv3 = ResidualConv(filters[1] + filters[0], filters[0], stride=1, padding=1)
 
-        # Output
+        # Choose output kernel size
+        if not config.use_submission_masks:
+            out_kernel_size = 1
+            out_stride = 1
+        else:
+            out_kernel_size = 16
+            out_stride = 16
+
         self.output_layer = nn.Sequential(
-            nn.Conv2d(filters[0], out_channels=1, kernel_size=1, stride=1),
+            nn.Conv2d(filters[0], out_channels=1, kernel_size=out_kernel_size, stride=out_stride),
             # nn.Sigmoid() # we do use sigmoid later in the loss function
         )
 

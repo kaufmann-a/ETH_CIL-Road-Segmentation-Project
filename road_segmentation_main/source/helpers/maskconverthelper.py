@@ -17,5 +17,5 @@ def mask_to_submission_mask(mask, threshold):
     submission_mask = avgPool(mask)
 
     # convert to integers according to threshold
-    submission_mask = (submission_mask > threshold).int()
+    submission_mask = (submission_mask > threshold).float()
     return submission_mask

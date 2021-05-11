@@ -108,6 +108,9 @@ class RoadSegmentationDataset(Dataset):
             image = augmentations["image"]
             mask = augmentations["mask"]
 
+            # 2d to 3d tensor
+            mask = mask.unsqueeze(0).float()
+
             if self.use_submission_masks:  # use submission masks for training
                 mask = mask_to_submission_mask(mask, threshold=self.foreground_threshold)
 
