@@ -109,10 +109,11 @@ class Engine:
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         while epoch < train_parms.num_epochs:
-
             Logcreator.info(f"Epoch {epoch}")
+
             train_metrics = self.train_step(train_loader, epoch)
-            val_metrics = self.evaluate(val_loader, epoch)
+            val_metrics = self.evaluate(self.model, val_loader, epoch)
+
 
             if self.swa_enabled and epoch >= self.swa_start_epoch:
                 self.swa_model.update_parameters(self.model)
@@ -122,8 +123,6 @@ class Engine:
                 swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch,
                                                                              log_model_name="SWA-",
                                                                              log_postfix_path='val_swa')
-
-            self.log_metrics({**train_metrics, **val_metrics}, epoch)
 
 
             # save model
@@ -150,11 +149,10 @@ class Engine:
                                          swa_val_metrics['val_acc'],
                                          file_name="swa_checkpoint.pth")
 
+            self.writer.flush()
 
             epoch += 1
 
-        # flush writer
-        self.writer.flush()
 
         # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
         # save predicted validation images
@@ -234,9 +232,20 @@ class Engine:
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix='train')
-
+        # Tensorboard
+        self.writer.add_scalar("Loss/train", train_loss, epoch)
+        self.writer.add_scalar("Accuracy/train",train_acc, epoch)
+        self.writer.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
+        # Comet
+        if self.experiment is not None:
+            self.experiment.log_metric('train_loss', train_loss)
+            self.experiment.log_metric('train_acc', train_acc)
+            self.experiment.log_metric('train_patch_acc', train_patch_acc)
+        # Logfile
+        Logcreator.info(f"Training:   loss: {train_loss:.5f}",
+                        f", accuracy: {train_acc:.5f}",
+                        f", patch-acc: {train_patch_acc:.5f}")
         return {'train_loss': total_loss, 'train_acc': accuracy.compute(), 'train_patch_acc': patch_accuracy.compute()}
-
 
     def evaluate(self, model, data_loader, epoch, log_model_name='', log_postfix_path='val'):
         """
@@ -280,40 +289,21 @@ class Engine:
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix=log_postfix_path)
-
+        # Tensorboard
         self.writer.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
         self.writer.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
         self.writer.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
-
+        # Comet
+        if self.experiment is not None:
+            self.experiment.log_metric(log_postfix_path+'_loss', val_loss)
+            self.experiment.log_metric(log_postfix_path+'_acc', val_acc)
+            self.experiment.log_metric(log_postfix_path+'train_patch_acc', val_patch_acc)
+        # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
                         f", patch-acc: {val_patch_acc:.5f}")
 
         return {'val_loss': total_loss, 'val_acc': val_acc, 'val_patch_acc': val_patch_acc}
-
-
-
-    def log_metrics(self, metrics_dict, epoch):
-        # log scores to logfile
-        Logcreator.info(f"Epoch {epoch}")
-        Logcreator.info(f"Training:   loss: {metrics_dict['train_loss']:.5f}",
-                        f", accuracy: {metrics_dict['train_acc']:.5f}",
-                        f", patch-acc: {metrics_dict['train_patch_acc']:.5f}")
-        Logcreator.info(f"Validation: loss: {metrics_dict['val_loss']:.5f}",
-                        f", accuracy: {metrics_dict['val_acc']:.5f}",
-                        f", patch-acc: {metrics_dict['val_patch_acc']:.5f}")
-
-        # log scores to tensorboard
-        self.writer.add_scalar("Loss/train", metrics_dict['train_loss'], epoch)
-        self.writer.add_scalar("Accuracy/train", metrics_dict['train_acc'], epoch)
-        self.writer.add_scalar("PatchAccuracy/train", metrics_dict['train_patch_acc'], epoch)
-        self.writer.add_scalar("Loss/val", metrics_dict['val_loss'], epoch)
-        self.writer.add_scalar("Accuracy/val", metrics_dict['val_acc'], epoch)
-        self.writer.add_scalar("PatchAccuracy/val", metrics_dict['val_patch_acc'], epoch)
-
-        # log scores to comet
-        if self.experiment is not None:
-            self.experiment.log_metrics(metrics_dict, epoch=epoch)
 
     def save_model(self, epoch_nr):
         """ This function saves entire model incl. modelstructure"""
