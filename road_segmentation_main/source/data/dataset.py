@@ -26,8 +26,10 @@ class RoadSegmentationDataset(Dataset):
         self.image_cropper = ImageCropper(out_image_size=crop_size)
         if len(image_list) > 0:
             image = Image.open(self.images[0])
+            self.cropping_needed = image.width > crop_size[0] or image.height > crop_size[1]
             self.nr_segments_per_image = self.image_cropper.get_number_of_cropped_images(image)
         else:
+            self.cropping_needed = False
             self.nr_segments_per_image = 1
 
         # preload images into memory to not read from drive everytime
@@ -39,7 +41,7 @@ class RoadSegmentationDataset(Dataset):
                 image = Image.open(image_path).convert("RGB")
                 mask = Image.open(mask_path).convert("L")
 
-                if self.nr_segments_per_image == 1:
+                if not self.cropping_needed:
                     # no cropping necessary
                     image = np.array(image)
                     mask = np.array(mask, dtype=np.float32)
@@ -81,7 +83,7 @@ class RoadSegmentationDataset(Dataset):
             image = Image.open(img_path).convert("RGB")
             mask = Image.open(mask_path).convert("L")
 
-            if self.nr_segments_per_image == 1:
+            if not self.cropping_needed:
                 # no cropping necessary
                 image = np.array(image)
                 mask = np.array(mask, dtype=np.float32)
