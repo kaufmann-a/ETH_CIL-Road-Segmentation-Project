@@ -26,6 +26,10 @@
             "cropped_image_size" : [400, 400],
             "submission_loss" : false,
             "use_submission_masks" : false,
+            "stochastic_weight_averaging" : {
+                "on" : false,
+                "start_epoch" : 40
+            }
         },
         "model": {
             "name": "unet",
