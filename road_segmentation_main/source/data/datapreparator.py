@@ -69,6 +69,14 @@ class DataPreparator(object):
             image_paths_val = [os.path.join(path, main_folder_name, 'images', filename) for filename in originals_val]
             mask_paths_val = [os.path.join(path, main_folder_name, 'masks', filename) for filename in originals_val]
 
+        # add additional training folders to training data
+        additional_training_folders = Configuration.get('data_collection.additional_training_folders')
+        if len(additional_training_folders) > 0:
+            for folder in additional_training_folders:
+                for file in os.listdir(os.path.join(path, folder, "images")):
+                    image_paths_train.append(os.path.join(path, folder, "images", file))
+                    mask_paths_train.append(os.path.join(path, folder, "masks", file))
+
         Logcreator.debug("Found %d images for training and %d images for validation."
                          % (len(image_paths_train), len(image_paths_val)))
 
