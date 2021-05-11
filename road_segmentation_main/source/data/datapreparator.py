@@ -60,7 +60,7 @@ class DataPreparator(object):
                     if filename in originals_train:
                         image_paths_train.append(os.path.join(path, folder, "images", filename))
                         mask_paths_train.append(os.path.join(path, folder, "masks", filename))
-
+                    if filename in originals_val:
                         if include_val_transforms:
                             image_paths_val.append(os.path.join(path, folder, "images", filename))
                             mask_paths_val.append(os.path.join(path, folder, "masks", filename))

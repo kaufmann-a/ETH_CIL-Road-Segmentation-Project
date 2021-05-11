@@ -7,7 +7,7 @@
     "data_collection" : {
         "folder" : "../data/training",
         "main_folder_name" : "github_ale",
-        "transform_folders" : [],
+        "transform_folders" : ["github_ale"],
         //["original", "rotate_90", "rotate_180", "rotate_270",
                                //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                //],
