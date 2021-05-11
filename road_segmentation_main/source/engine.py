@@ -9,6 +9,8 @@ __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
 import os
+import sys
+from io import StringIO
 
 import numpy as np
 import torch
@@ -60,7 +62,12 @@ class Engine:
         # Print model summary
         cropped_image_size = Configuration.get("training.general.cropped_image_size")
         input_size = tuple(np.insert(cropped_image_size, 0, values=3))
-        Logcreator.info(summary(self.model, input_size=input_size, device=DEVICE))
+        # redirect stdout to our logger
+        sys.stdout = mystdout = StringIO()
+        summary(self.model, input_size=input_size, device=DEVICE)
+        # reset stdout to original
+        sys.stdout = sys.__stdout__
+        Logcreator.info(mystdout.getvalue())
 
         Logcreator.debug("Model '%s' initialized with %d parameters." %
                          (Configuration.get('training.model.name'),
