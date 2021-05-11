@@ -6,10 +6,10 @@
     },
     "data_collection" : {
         "folder" : "../data/training",
-        "main_folder_name" : "github_ale",
+        "main_folder_name" : "original",
         "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
-                               ],
+                               "github_jkf"],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
         "validation_ratio" : 0.3,
@@ -58,7 +58,7 @@
         "general" : {
             "foreground_threshold" : 0.25,
             "use_original_image_size" : false,
-            "enable_postprocessing" : true,
+            "enable_postprocessing" : false,
         },
         "postprocessing":{
                 "morphology":{
