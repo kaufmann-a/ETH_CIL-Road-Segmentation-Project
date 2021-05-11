@@ -6,11 +6,8 @@
     },
     "data_collection" : {
         "folder" : "../data/training",
-        "main_folder_name" : "github_ale",
-        "transform_folders" : ["github_ale"],
-        //["original", "rotate_90", "rotate_180", "rotate_270",
-                               //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
-                               //],
+        "main_folder_name" : "github_jkf",
+        "transform_folders" : ["github_jkf"],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
         "validation_ratio" : 0.3,
@@ -55,6 +52,16 @@
         "general" : {
             "foreground_threshold" : 0.25,
             "use_original_image_size" : false,
+            "enable_postprocessing" : true,
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":2,
+                "kernelsz":4,
+                "mediansz":3,
+                }
         }
     }
 }
