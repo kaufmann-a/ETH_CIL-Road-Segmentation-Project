@@ -1,6 +1,7 @@
 
 import os
 from comet_ml import Experiment
+from torch.utils.tensorboard import SummaryWriter
 from source.configuration import Configuration
 from source.logcreator.logcreator import Logcreator
 
@@ -34,3 +35,10 @@ def init_comet():
         Logcreator.error("Pleas add the missing parameters to a file called .env")
         Logcreator.info("Training now continues without logging to Comet")
         return None
+
+# initialize tensorboard logger
+def init_tensorboard():
+    Configuration.tensorboard_folder = os.path.join(Configuration.output_directory, "tensorboard")
+    if not os.path.exists(Configuration.tensorboard_folder):
+        os.makedirs(Configuration.tensorboard_folder)
+    return SummaryWriter(log_dir=Configuration.tensorboard_folder)
