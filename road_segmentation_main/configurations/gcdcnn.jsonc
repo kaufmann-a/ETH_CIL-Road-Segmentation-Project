@@ -31,7 +31,7 @@
                 "on" : false,
                 "start_epoch" : 40
             },
-            "log_to_comet" : true,
+            "log_to_comet" : false,
         },
         "model": {
             "name": "gcdcnn",
