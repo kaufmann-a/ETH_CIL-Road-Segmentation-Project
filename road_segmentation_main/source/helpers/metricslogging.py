@@ -6,6 +6,9 @@ from source.configuration import Configuration
 from source.logcreator.logcreator import Logcreator
 
 def init_comet():
+    if not Configuration.get('training.general.log_to_comet'):
+        return None
+
     api_key = os.getenv('COMET_API_KEY')
     project_name = os.getenv('COMET_PROJECT_NAME')
     workspace = os.getenv('COMET_WORKSPACE')
