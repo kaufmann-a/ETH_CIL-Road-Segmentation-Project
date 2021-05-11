@@ -12,3 +12,4 @@ torchmetrics~=0.2.0
 tensorboard~=2.4
 hiddenlayer~=0.3
 ipython~=7.22.0
+comet-ml~=3.9.1
