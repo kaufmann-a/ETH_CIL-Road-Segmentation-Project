@@ -31,7 +31,7 @@ class DataPreparator(object):
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
 
         originals_list = os.listdir(os.path.join(path, main_folder_name, 'images'))
-        originals = [image for image in originals_list if image.endswith('.png')]
+        originals = [image for image in originals_list if (image.endswith('.png') or image.endswith('.jpg'))]
 
         random.seed(0)
         originals_val = random.sample(originals, int(len(originals) * val_ratio))
@@ -56,7 +56,7 @@ class DataPreparator(object):
         for folder in folders:
             for file in os.listdir(os.path.join(path, folder, "images")):
                 filename = os.fsdecode(file)
-                if filename.endswith(".png"):
+                if filename.endswith(".png") or filename.endswith(".jpg"):
                     if filename in originals_train:
                         image_paths_train.append(os.path.join(path, folder, "images", filename))
                         mask_paths_train.append(os.path.join(path, folder, "masks", filename))
