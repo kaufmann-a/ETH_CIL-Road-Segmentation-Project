@@ -9,10 +9,13 @@ __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
 import os
+import sys
+from io import StringIO
 
 import numpy as np
 import torch
 import torchmetrics as torchmetrics
+from torch.optim.swa_utils import AveragedModel
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchsummary import summary
@@ -40,6 +43,15 @@ class Engine:
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
         self.submission_loss = Configuration.get("training.general.submission_loss")
+        # stochastic model weight averaging
+        # https://pytorch.org/docs/stable/optim.html#constructing-averaged-models
+        self.swa_model = AveragedModel(self.model).to(DEVICE)
+        self.swa_enabled = Configuration.get("training.general.stochastic_weight_averaging.on")
+        self.swa_start_epoch = Configuration.get("training.general.stochastic_weight_averaging.start_epoch")
+        # TODO Maybe add learning rate scheduler for swa
+        #  see https://pytorch.org/blog/pytorch-1.6-now-includes-stochastic-weight-averaging/
+        # self.swa_scheduler = torch.optim.swa_utils.SWALR(optimizer, \
+        #          anneal_strategy="linear", anneal_epochs=5, swa_lr=0.05)
 
         # initialize tensorboard logger
         Configuration.tensorboard_folder = os.path.join(Configuration.output_directory, "tensorboard")
@@ -50,7 +62,12 @@ class Engine:
         # Print model summary
         cropped_image_size = Configuration.get("training.general.cropped_image_size")
         input_size = tuple(np.insert(cropped_image_size, 0, values=3))
-        Logcreator.info(summary(self.model, input_size=input_size, device=DEVICE))
+        # redirect stdout to our logger
+        sys.stdout = mystdout = StringIO()
+        summary(self.model, input_size=input_size, device=DEVICE)
+        # reset stdout to original
+        sys.stdout = sys.__stdout__
+        Logcreator.info(mystdout.getvalue())
 
         Logcreator.debug("Model '%s' initialized with %d parameters." %
                          (Configuration.get('training.model.name'),
@@ -78,31 +95,33 @@ class Engine:
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         while epoch < train_parms.num_epochs:
+            Logcreator.info(f"Epoch {epoch}")
+
             train_loss, train_acc, train_patch_acc = self.train_step(train_loader, epoch)
 
-            Logcreator.info(f"Epoch {epoch}")
-            Logcreator.info(f"Training:   loss: {train_loss:.5f}",
-                            f", accuracy: {train_acc:.5f}",
-                            f", patch-acc: {train_patch_acc:.5f}")
+            val_loss, val_acc, val_patch_acc = self.evaluate(self.model, val_loader, epoch)
 
-            val_loss, val_acc, val_patch_acc = self.evaluate(val_loader, epoch)
-            Logcreator.info(f"Validation: loss: {val_loss:.5f}",
-                            f", accuracy: {val_acc:.5f}",
-                            f", patch-acc: {val_patch_acc:.5f}")
-
-            # log scores
-            self.writer.add_scalar("Loss/train", train_loss, epoch)
-            self.writer.add_scalar("Accuracy/train", train_acc, epoch)
-            self.writer.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
-            self.writer.add_scalar("Loss/val", val_loss, epoch)
-            self.writer.add_scalar("Accuracy/val", val_acc, epoch)
-            self.writer.add_scalar("PatchAccuracy/val", train_patch_acc, epoch)
+            if self.swa_enabled and epoch >= self.swa_start_epoch:
+                self.swa_model.update_parameters(self.model)
+                # update batch normalization statistics for the swa_model
+                torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
+                # evaluate on validation set
+                swa_val_loss, swa_val_acc, swa_val_patch_acc = self.evaluate(self.swa_model, val_loader, epoch,
+                                                                             log_model_name="SWA-",
+                                                                             log_postfix_path='val_swa')
 
             # save model
             if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
                     epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
                 self.save_model(epoch)
-                self.save_checkpoint(epoch, train_loss, train_acc, val_loss, val_acc)
+                self.save_checkpoint(self.model, epoch, train_loss, train_acc, val_loss, val_acc)
+
+                if self.swa_enabled and epoch >= self.swa_start_epoch:
+                    # update batch normalization statistics for the swa_model at the end
+                    torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
+                    # save swa model separately
+                    self.save_checkpoint(self.swa_model, epoch, train_loss, train_acc, swa_val_loss, swa_val_acc,
+                                         file_name="swa_checkpoint.pth")
 
             epoch += 1
 
@@ -178,19 +197,31 @@ class Engine:
             # update tqdm progressbar
             loop.set_postfix(loss=loss.item())
 
-        total_loss /= len(data_loader)
-
         self.lr_scheduler.step()  # decay learning rate over time
 
+        # compute epoch scores
+        train_loss = total_loss / len(data_loader)
+        train_acc = accuracy.compute()
+        train_patch_acc = patch_accuracy.compute()
+
+        # log scores
         multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix='train')
 
-        return total_loss, accuracy.compute(), patch_accuracy.compute()
+        self.writer.add_scalar("Loss/train", train_loss, epoch)
+        self.writer.add_scalar("Accuracy/train", train_acc, epoch)
+        self.writer.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
 
-    def evaluate(self, data_loader, epoch):
+        Logcreator.info(f"Training:   loss: {train_loss:.5f}",
+                        f", accuracy: {train_acc:.5f}",
+                        f", patch-acc: {train_patch_acc:.5f}")
+
+        return train_loss, train_acc, train_patch_acc
+
+    def evaluate(self, model, data_loader, epoch, log_model_name='', log_postfix_path='val'):
         """
         Evaluate model on validation data.
         """
-        self.model.eval()
+        model.eval()
 
         # initialize metrics
         multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
@@ -209,7 +240,7 @@ class Engine:
 
                 # forward pass according to https://pytorch.org/docs/stable/amp.html
                 with torch.cuda.amp.autocast():
-                    predictions = self.model(image)
+                    predictions = model(image)
                     loss = self.compute_loss(predictions, targets)
 
                 # update loss
@@ -221,11 +252,23 @@ class Engine:
                 accuracy.update(prediction_probabilities, targets.int())
                 patch_accuracy.update(prediction_probabilities, targets)
 
-        total_loss /= len(data_loader)
+        # compute epoch scores
+        val_loss = total_loss / len(data_loader)
+        val_acc = accuracy.compute()
+        val_patch_acc = patch_accuracy.compute()
 
-        multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix='val')
+        # log scores
+        multi_accuracy_metric.compute_and_log(self.writer, epoch, path_postfix=log_postfix_path)
 
-        return total_loss, accuracy.compute(), patch_accuracy.compute()
+        self.writer.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
+        self.writer.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
+        self.writer.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
+
+        Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
+                        f", accuracy: {val_acc:.5f}",
+                        f", patch-acc: {val_patch_acc:.5f}")
+
+        return total_loss, val_acc, val_patch_acc
 
     def save_model(self, epoch_nr):
         """ This function saves entire model incl. modelstructure"""
@@ -235,14 +278,14 @@ class Engine:
         file_name = str(epoch_nr) + "_whole_model_serialized.pth"
         torch.save(self.model, os.path.join(Configuration.model_save_folder, file_name))
 
-    def save_checkpoint(self, epoch, tl, ta, vl, va):
+    def save_checkpoint(self, model, epoch, tl, ta, vl, va, file_name="checkpoint.pth"):
         Configuration.weights_save_folder = os.path.join(Configuration.output_directory, "weights_checkpoint")
         if not os.path.exists(Configuration.weights_save_folder):
             os.makedirs(Configuration.weights_save_folder)
-        file_name = str(epoch) + "_checkpoint.pth"
+        file_name = str(epoch) + "_" + file_name
         torch.save({
             'epoch': epoch,
-            'model_state_dict': self.model.state_dict(),
+            'model_state_dict': model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'train_loss': tl,
             'train_accuracy': ta,

@@ -4,19 +4,19 @@
         "output_path": "trainings",
         "log_file" : "logs.txt"
     },
-	"data_collection" : {
-		"folder" : "../data/training",
+    "data_collection" : {
+        "folder" : "../data/training",
         "main_folder_name" : "original",
-		"transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270"
-		                       //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
-		                       ], // "crop_random", "rotate_random"],
-		"test_images_folder" : "../data/test_images",
-		"test_data_count" : 0,
-		"validation_ratio" : 0.2,
-		"include_val_transforms" : false
-	},
-	"training": {
-		"general" : {
+        "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270"
+                               //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+                               ], // "crop_random", "rotate_random"],
+        "test_images_folder" : "../data/test_images",
+        "test_data_count" : 0,
+        "validation_ratio" : 0.2,
+        "include_val_transforms" : false
+    },
+    "training": {
+        "general" : {
             "batch_size": 8,
             "num_epochs" : 2,
             "checkpoint_save_interval" : 5,
@@ -26,13 +26,17 @@
             "cropped_image_size" : [400, 400],
             "submission_loss" : false,
             "use_submission_masks" : false,
-		},
-		"model": {
-			"name": "ResUnet",
-			"in_channels" : 3,
-			"out_channels" : 1,
-			"features" : [64, 128, 256, 512]
-		},
+            "stochastic_weight_averaging" : {
+                "on" : false,
+                "start_epoch" : 40
+            }
+        },
+        "model": {
+            "name": "ResUnet",
+            "in_channels" : 3,
+            "out_channels" : 1,
+            "features" : [64, 128, 256, 512]
+        },
         "loss_function": "dice_bce_loss",
         "optimizer": {
             "name": "adam",
@@ -49,7 +53,7 @@
                 "gamma" : 0.1,
             }
         },
-	},
+    },
     "inference" : {
         "general" : {
             "foreground_threshold" : 0.25,
