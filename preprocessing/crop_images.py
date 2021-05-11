@@ -38,10 +38,10 @@ def transform_and_save(image, mask, name, transform):
 
 
 if __name__ == '__main__':
-    for file in os.listdir(IMAGE_DIR)[0:1]:
+    for file in os.listdir(IMAGE_DIR):
         filename = os.fsdecode(file)
         if filename.endswith(".png") or filename.endswith(".jpg"):
             image = cv2.imread(os.path.join(IMAGE_DIR, filename))
             mask = cv2.imread(os.path.join(MASK_DIR, filename))
 
-            transform_and_save(image, mask, name="github_jfk_cropped_400", transform=crop)
+            transform_and_save(image, mask, name="github_jkf_cropped_400", transform=crop)
