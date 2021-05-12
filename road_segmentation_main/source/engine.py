@@ -71,6 +71,9 @@ class Engine:
         # Print model summary
         self.print_modelsummary()
 
+    def get_lr(self):
+        return self.optimizer.param_groups[0]['lr']
+
     def train(self, epoch_nr=0):
         training_data, validation_data, test_data = DataPreparator.load()
 
@@ -89,7 +92,7 @@ class Engine:
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         while epoch < train_parms.num_epochs:
-            Logcreator.info(f"Epoch {epoch}")
+            Logcreator.info(f"Epoch {epoch}, lr-optimizer={self.get_lr():e}")
 
             train_metrics = self.train_step(train_loader, epoch)
             val_metrics = self.evaluate(self.model, val_loader, epoch)
