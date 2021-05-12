@@ -94,7 +94,7 @@ class Engine:
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         while epoch < train_parms.num_epochs:
-            Logcreator.info(f"Epoch {epoch}, lr-optimizer={self.get_lr():e}")
+            Logcreator.info(f"Epoch {epoch}, lr: {self.get_lr():.3e}, lr-step: {self.lr_scheduler.last_epoch}")
 
             train_metrics = self.train_step(train_loader, epoch)
             val_metrics = self.evaluate(self.model, val_loader, epoch)
@@ -334,6 +334,11 @@ class Engine:
             Logcreator.info(f"Reseted learning rate to: {self.get_lr():e}")
 
         epoch = checkpoint['epoch']
+
+        # TODO should we do this or should we start from zero or save the scheduler?
+        # init the step count of the learning rate scheduler
+        self.lr_scheduler = LRSchedulerFactory.build(self.optimizer, last_epoch=epoch + 1)
+
         train_loss = checkpoint['train_loss']
         train_accuracy = checkpoint['train_accuracy']
         val_loss = checkpoint['val_loss']
