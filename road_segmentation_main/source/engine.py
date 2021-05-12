@@ -52,7 +52,8 @@ class Engine:
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
         self.submission_loss = Configuration.get("training.general.submission_loss")
-        Logcreator.info("Following device will be used for training: " + DEVICE)
+        Logcreator.info("Following device will be used for training: " + DEVICE,
+                        torch.cuda.get_device_name(0) if torch.cuda.is_available() else "")
 
         # stochastic model weight averaging
         # https://pytorch.org/docs/stable/optim.html#constructing-averaged-models
