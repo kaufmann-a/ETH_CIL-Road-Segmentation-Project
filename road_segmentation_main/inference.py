@@ -24,6 +24,7 @@ from source.prediction.prediction import Prediction
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 def process_args(args):
     if args.run_folder:
         args.workingdir = filehelper.build_abspath(args.run_folder, os.getcwd()) #In case relative path was passed in args
@@ -50,7 +51,6 @@ def process_args(args):
         print("No folder of a previous training run provided, add one in arguments")
 
 
-
 if __name__ == "__main__":
     global config
 
@@ -67,11 +67,11 @@ if __name__ == "__main__":
 
     Logcreator.h1("This is a prediction run with test-images")
 
-    #Init engine
+    # Init engine
     engine = Engine()
     engine.load_checkpoints(args.weights)
 
-    #Run predictions
+    # Run predictions
 
     predictor = Prediction(engine=engine,
                            images=Configuration.get_path('data_collection.test_images_folder'),
@@ -79,7 +79,8 @@ if __name__ == "__main__":
                            threshold=Configuration.get('inference.general.foreground_threshold'),
                            postprocessing=Configuration.get('inference.postprocessing'),
                            use_original_image_size=Configuration.get('inference.general.use_original_image_size'),
-                           enable_postprocessing = Configuration.get('inference.general.enable_postprocessing')
+                           enable_postprocessing=Configuration.get('inference.general.enable_postprocessing'),
+                           use_submission_masks=Configuration.get("training.general.use_submission_masks")
                            )
 
     predictor.predict()
