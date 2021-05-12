@@ -19,6 +19,7 @@ import torch
 from torch.optim.swa_utils import AveragedModel
 import torchmetrics
 from torch.utils.data import DataLoader
+from torchmetrics import IoU
 
 from torchsummary import summary
 from tqdm import tqdm
@@ -147,13 +148,7 @@ class Engine:
         self.model.train()
 
         # initialize metrics
-        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
-
-        accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        accuracy.to(DEVICE)
-
-        patch_accuracy = PatchAccuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        patch_accuracy.to(DEVICE)
+        accuracy, iou, multi_accuracy_metric, patch_accuracy = self.get_metrics()
 
         total_loss = 0.
 
@@ -187,6 +182,7 @@ class Engine:
             multi_accuracy_metric.update(prediction_probabilities, targets)
             accuracy.update(prediction_probabilities, targets.int())
             patch_accuracy.update(prediction_probabilities, targets)
+            iou.update(prediction_probabilities, targets.int())
 
             # update tqdm progressbar
             loop.set_postfix(loss=loss.item())
@@ -197,6 +193,7 @@ class Engine:
         train_loss = total_loss / len(data_loader)
         train_acc = accuracy.compute()
         train_patch_acc = patch_accuracy.compute()
+        train_iou_score = iou.compute()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix='train')
@@ -204,16 +201,21 @@ class Engine:
         self.tensorboard.add_scalar("Loss/train", train_loss, epoch)
         self.tensorboard.add_scalar("Accuracy/train", train_acc, epoch)
         self.tensorboard.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
+        self.tensorboard.add_scalar("IoU/train", train_iou_score, epoch)
         # Comet
         if self.experiment is not None:
             self.experiment.log_metric('train_loss', train_loss)
             self.experiment.log_metric('train_acc', train_acc)
             self.experiment.log_metric('train_patch_acc', train_patch_acc)
+            self.experiment.log_metric('train_iou_score', train_iou_score)
         # Logfile
         Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                         f", accuracy: {train_acc:.5f}",
-                        f", patch-acc: {train_patch_acc:.5f}")
-        return {'train_loss': total_loss, 'train_acc': accuracy.compute(), 'train_patch_acc': patch_accuracy.compute()}
+                        f", patch-acc: {train_patch_acc:.5f}",
+                        f", IoU: {train_iou_score:.5f}")
+
+        return {'train_loss': total_loss, 'train_acc': accuracy.compute(), 'train_patch_acc': patch_accuracy.compute(),
+                'train_iou_score': train_iou_score}
 
     def evaluate(self, model, data_loader, epoch, log_model_name='', log_postfix_path='val'):
         """
@@ -222,13 +224,7 @@ class Engine:
         model.eval()
 
         # initialize metrics
-        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
-
-        accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        accuracy.to(DEVICE)
-
-        patch_accuracy = PatchAccuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        patch_accuracy.to(DEVICE)
+        accuracy, iou, multi_accuracy_metric, patch_accuracy = self.get_metrics()
 
         total_loss = 0.
 
@@ -249,11 +245,13 @@ class Engine:
                 multi_accuracy_metric.update(prediction_probabilities, targets)
                 accuracy.update(prediction_probabilities, targets.int())
                 patch_accuracy.update(prediction_probabilities, targets)
+                iou.update(prediction_probabilities, targets.int())
 
         # compute epoch scores
         val_loss = total_loss / len(data_loader)
         val_acc = accuracy.compute()
         val_patch_acc = patch_accuracy.compute()
+        val_iou_score = iou.compute()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix=log_postfix_path)
@@ -261,17 +259,32 @@ class Engine:
         self.tensorboard.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
         self.tensorboard.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
         self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
+        self.tensorboard.add_scalar("IoU/val", val_iou_score, epoch)
         # Comet
         if self.experiment is not None:
             self.experiment.log_metric(log_postfix_path + '_loss', val_loss)
             self.experiment.log_metric(log_postfix_path + '_acc', val_acc)
             self.experiment.log_metric(log_postfix_path + '_patch_acc', val_patch_acc)
+            self.experiment.log_metric('val_iou_score', val_iou_score)
         # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
-                        f", patch-acc: {val_patch_acc:.5f}")
+                        f", patch-acc: {val_patch_acc:.5f}",
+                        f", IoU: {val_iou_score:.5f}")
 
-        return {'val_loss': total_loss, 'val_acc': val_acc, 'val_patch_acc': val_patch_acc}
+        return {'val_loss': total_loss, 'val_acc': val_acc, 'val_patch_acc': val_patch_acc,
+                'val_iou_score': val_iou_score}
+
+    def get_metrics(self):
+        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
+        foreground_threshold = Configuration.get('training.general.foreground_threshold')
+        accuracy = torchmetrics.Accuracy(threshold=foreground_threshold)
+        accuracy.to(DEVICE)
+        patch_accuracy = PatchAccuracy(threshold=foreground_threshold)
+        patch_accuracy.to(DEVICE)
+        iou = IoU(num_classes=2, threshold=foreground_threshold)
+        iou.to(DEVICE)
+        return accuracy, iou, multi_accuracy_metric, patch_accuracy
 
     def save_model(self, epoch_nr):
         """ This function saves entire model incl. modelstructure"""
