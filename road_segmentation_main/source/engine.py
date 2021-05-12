@@ -299,11 +299,26 @@ class Engine:
         self.model = torch.load(path)
         self.model.eval()  # Todo: check if needed
 
-    def load_checkpints(self, path=None):
+    def load_checkpoints(self, path=None, reset_lr=False):
+        """
+        Loads a checkpoint.
+
+        :param path: path to checkpoint file.
+        :param reset_lr: True = resets the learning rate of the optimizer to the configuration values.
+        :return:
+        """
+        Logcreator.info("Loading checkpoint file:", path)
+
         checkpoint = torch.load(path)
         # Todo: check if to device should be called somewhere
         self.model.load_state_dict(checkpoint['model_state_dict'])
+
+        initial_lr = self.get_lr()
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if reset_lr:
+            self.optimizer.param_groups[0]["lr"] = initial_lr
+            Logcreator.info(f"Reseted learning rate to: {self.get_lr():e}")
+
         epoch = checkpoint['epoch']
         train_loss = checkpoint['train_loss']
         train_accuracy = checkpoint['train_accuracy']

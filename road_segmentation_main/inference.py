@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     #Init engine
     engine = Engine()
-    engine.load_checkpints(args.weights)
+    engine.load_checkpoints(args.weights)
 
     #Run predictions
 

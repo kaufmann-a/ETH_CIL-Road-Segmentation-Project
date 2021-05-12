@@ -33,6 +33,10 @@ if __name__ == "__main__":
                         help="Working directory (default: current directory).")
     parser.add_argument('--weights', default='', type=str,
                         help="Optional pretrained weights of a model to continue training.")
+    parser.add_argument('--resetlr',
+                        default=False,
+                        type=argumenthelper.boolean_string,
+                        help="Optional: Reset the learning rate when the --weights parameter is set to load a checkpoint.")
 
     args = argumenthelper.parse_args(parser)
     start = time.time()
@@ -48,7 +52,7 @@ if __name__ == "__main__":
     engine = Engine()
 
     if args.weights:
-        epoch, train_loss, train_acc, val_loss, val_acc = engine.load_checkpints(args.weights)
+        epoch, train_loss, train_acc, val_loss, val_acc = engine.load_checkpoints(args.weights, args.resetlr)
         engine.train(epoch)
     else:
         engine.train()
