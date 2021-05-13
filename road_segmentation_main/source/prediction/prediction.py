@@ -31,7 +31,8 @@ from source.helpers.predictionhelper import runpostprocessing
 class Prediction(object):
 
     def __init__(self, engine, images, device, threshold, postprocessing, use_original_image_size,
-                 enable_postprocessing=False):
+                 enable_postprocessing=False,
+                 use_submission_masks=False):
         """
 
         :param engine:
@@ -49,6 +50,7 @@ class Prediction(object):
         self.enable_postprocessing = enable_postprocessing
         self.postprocessing = postprocessing
         self.use_original_image_size = use_original_image_size
+        self.use_submission_mask = use_submission_masks
 
     def patch_image_together(self, cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
         width = total_width
@@ -67,25 +69,23 @@ class Prediction(object):
 
         return new_image
 
-    def patch_masks_together(self, cropped_images,
-                             total_width=608, total_height=608, stride=(400, 400),
+    def patch_masks_together(self, cropped_images, out_image_size=(608, 608), stride=(400, 400),
                              mode='avg', debug=False):
         """
         Stitches a image mask together from multiple cropped image masks.
 
-        @param cropped_images: list of 2d-image tensors
-        @param total_width: output image width
-        @param total_height: output image height
-        @param stride: size of cropped images
-        @param mode: 'avg': take the average of the overlapping areas,
+        :param cropped_images: list of 2d-image tensors
+        :param out_image_size: (output image width, output image height)
+        :param stride: size of cropped images
+        :param mode: 'avg': take the average of the overlapping areas,
                      'max': take the maximum of the overlapping areas,
                      'overwrite': overwrite the overlapping areas
-        @param debug: True = plot images
+        :param debug: True = plot images
 
-        @return: the combined image
+        :return: the combined image
         """
-        width = total_width
-        height = total_height
+        width = out_image_size[0]
+        height = out_image_size[1]
 
         out_array = torch.zeros(size=(width, height)).to(self.device)
         out_overlap_count = torch.ones(size=(width, height)).to(self.device)  # stores nr of intersection at pixels
@@ -94,8 +94,8 @@ class Prediction(object):
         image_idx = 0
         for i in range(math.ceil(height / stride[0])):
             for j in range(math.ceil(width / stride[1])):
-                mem_lower = lower if mem_lower < lower < total_height else mem_lower
-                mem_right = right if mem_right < right < total_width else mem_right
+                mem_lower = lower if mem_lower < lower < height else mem_lower
+                mem_right = right if mem_right < right < width else mem_right
                 left, upper, right, lower = get_crop_box(i, j, height, width, stride)
 
                 # TODO how to patch together: addition, average, smooth corners, ...?
@@ -212,7 +212,15 @@ class Prediction(object):
                             crops_list.append(torch.squeeze(pred_masks[j]))
 
                         # for every package call patch_image_together to get the original size image
-                        out_image = self.patch_masks_together(cropped_images=crops_list, stride=cropped_image_size)
+                        test_image_size = (608, 608)
+                        out_patch_size = cropped_image_size
+                        if self.use_submission_mask:
+                            test_image_size = [x // 16 for x in test_image_size]
+                            out_patch_size = [x // 16 for x in out_patch_size]
+                        out_image = self.patch_masks_together(cropped_images=crops_list,
+                                                              out_image_size=test_image_size,
+                                                              stride=out_patch_size,
+                                                              )
                         out_image_list.append(out_image)
 
                         # and then convert mask to string
@@ -228,7 +236,8 @@ class Prediction(object):
         out_preds_list = save_masks_as_images(out_image_list, image_number_list,
                                               folder=Configuration.output_directory,
                                               is_prob=True,
-                                              pixel_threshold=self.foreground_threshold)
+                                              pixel_threshold=self.foreground_threshold,
+                                              save_submission_img=not self.use_submission_mask)
 
         if self.enable_postprocessing:
             runpostprocessing(out_preds_list,

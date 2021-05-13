@@ -17,20 +17,23 @@ class LRSchedulerFactory(object):
     optimizer = None
 
     @staticmethod
-    def build(optimizer):
+    def build(optimizer, last_epoch=-1):
         LRSchedulerFactory.optimizer = optimizer
         scheduler = Configuration.get('training.lr_scheduler.name')
-        return getattr(LRSchedulerFactory, scheduler)(LRSchedulerFactory, Configuration.get('training.lr_scheduler'))
+        return getattr(LRSchedulerFactory, scheduler)(LRSchedulerFactory, Configuration.get('training.lr_scheduler'),
+                                                      last_epoch)
 
-    def stepLR(self, options):
+    def stepLR(self, options, last_epoch=-1):
         return optim.lr_scheduler.StepLR(self.optimizer,
                                          step_size=options.stepLR.step_size,
-                                         gamma=options.stepLR.gamma)
+                                         gamma=options.stepLR.gamma,
+                                         last_epoch=last_epoch)
 
-    def multiStepLR(self, options):
+    def multiStepLR(self, options, last_epoch=-1):
         return optim.lr_scheduler.MultiStepLR(self.optimizer,
                                               milestones=options.multiStepLR.milestones,
-                                              gamma=options.multiStepLR.gamma)
+                                              gamma=options.multiStepLR.gamma,
+                                              last_epoch=last_epoch)
 
     @staticmethod
     def get_members():

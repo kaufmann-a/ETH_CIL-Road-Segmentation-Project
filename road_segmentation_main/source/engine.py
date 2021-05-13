@@ -19,6 +19,7 @@ import torch
 from torch.optim.swa_utils import AveragedModel
 import torchmetrics
 from torch.utils.data import DataLoader
+from torchmetrics import IoU
 
 from torchsummary import summary
 from tqdm import tqdm
@@ -52,7 +53,8 @@ class Engine:
         self.loss_function = LossFunctionFactory.build(self.model)
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
         self.submission_loss = Configuration.get("training.general.submission_loss")
-        Logcreator.info("Following device will be used for training: " + DEVICE)
+        Logcreator.info("Following device will be used for training: " + DEVICE,
+                        torch.cuda.get_device_name(0) if torch.cuda.is_available() else "")
 
         # stochastic model weight averaging
         # https://pytorch.org/docs/stable/optim.html#constructing-averaged-models
@@ -70,6 +72,9 @@ class Engine:
 
         # Print model summary
         self.print_modelsummary()
+
+    def get_lr(self):
+        return self.optimizer.param_groups[0]['lr']
 
     def train(self, epoch_nr=0):
         training_data, validation_data, test_data = DataPreparator.load()
@@ -89,7 +94,7 @@ class Engine:
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         while epoch < train_parms.num_epochs:
-            Logcreator.info(f"Epoch {epoch}")
+            Logcreator.info(f"Epoch {epoch}, lr: {self.get_lr():.3e}, lr-step: {self.lr_scheduler.last_epoch}")
 
             train_metrics = self.train_step(train_loader, epoch)
             val_metrics = self.evaluate(self.model, val_loader, epoch)
@@ -143,13 +148,7 @@ class Engine:
         self.model.train()
 
         # initialize metrics
-        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
-
-        accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        accuracy.to(DEVICE)
-
-        patch_accuracy = PatchAccuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        patch_accuracy.to(DEVICE)
+        accuracy, iou, multi_accuracy_metric, patch_accuracy = self.get_metrics()
 
         total_loss = 0.
 
@@ -183,6 +182,7 @@ class Engine:
             multi_accuracy_metric.update(prediction_probabilities, targets)
             accuracy.update(prediction_probabilities, targets.int())
             patch_accuracy.update(prediction_probabilities, targets)
+            iou.update(prediction_probabilities, targets.int())
 
             # update tqdm progressbar
             loop.set_postfix(loss=loss.item())
@@ -193,6 +193,7 @@ class Engine:
         train_loss = total_loss / len(data_loader)
         train_acc = accuracy.compute()
         train_patch_acc = patch_accuracy.compute()
+        train_iou_score = iou.compute()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix='train')
@@ -200,16 +201,21 @@ class Engine:
         self.tensorboard.add_scalar("Loss/train", train_loss, epoch)
         self.tensorboard.add_scalar("Accuracy/train", train_acc, epoch)
         self.tensorboard.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
+        self.tensorboard.add_scalar("IoU/train", train_iou_score, epoch)
         # Comet
         if self.experiment is not None:
             self.experiment.log_metric('train_loss', train_loss)
             self.experiment.log_metric('train_acc', train_acc)
             self.experiment.log_metric('train_patch_acc', train_patch_acc)
+            self.experiment.log_metric('train_iou_score', train_iou_score)
         # Logfile
         Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                         f", accuracy: {train_acc:.5f}",
-                        f", patch-acc: {train_patch_acc:.5f}")
-        return {'train_loss': total_loss, 'train_acc': accuracy.compute(), 'train_patch_acc': patch_accuracy.compute()}
+                        f", patch-acc: {train_patch_acc:.5f}",
+                        f", IoU: {train_iou_score:.5f}")
+
+        return {'train_loss': total_loss, 'train_acc': accuracy.compute(), 'train_patch_acc': patch_accuracy.compute(),
+                'train_iou_score': train_iou_score}
 
     def evaluate(self, model, data_loader, epoch, log_model_name='', log_postfix_path='val'):
         """
@@ -218,13 +224,7 @@ class Engine:
         model.eval()
 
         # initialize metrics
-        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
-
-        accuracy = torchmetrics.Accuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        accuracy.to(DEVICE)
-
-        patch_accuracy = PatchAccuracy(threshold=Configuration.get('training.general.foreground_threshold'))
-        patch_accuracy.to(DEVICE)
+        accuracy, iou, multi_accuracy_metric, patch_accuracy = self.get_metrics()
 
         total_loss = 0.
 
@@ -245,11 +245,13 @@ class Engine:
                 multi_accuracy_metric.update(prediction_probabilities, targets)
                 accuracy.update(prediction_probabilities, targets.int())
                 patch_accuracy.update(prediction_probabilities, targets)
+                iou.update(prediction_probabilities, targets.int())
 
         # compute epoch scores
         val_loss = total_loss / len(data_loader)
         val_acc = accuracy.compute()
         val_patch_acc = patch_accuracy.compute()
+        val_iou_score = iou.compute()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix=log_postfix_path)
@@ -257,17 +259,32 @@ class Engine:
         self.tensorboard.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
         self.tensorboard.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
         self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
+        self.tensorboard.add_scalar("IoU/val", val_iou_score, epoch)
         # Comet
         if self.experiment is not None:
             self.experiment.log_metric(log_postfix_path + '_loss', val_loss)
             self.experiment.log_metric(log_postfix_path + '_acc', val_acc)
             self.experiment.log_metric(log_postfix_path + '_patch_acc', val_patch_acc)
+            self.experiment.log_metric('val_iou_score', val_iou_score)
         # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
-                        f", patch-acc: {val_patch_acc:.5f}")
+                        f", patch-acc: {val_patch_acc:.5f}",
+                        f", IoU: {val_iou_score:.5f}")
 
-        return {'val_loss': total_loss, 'val_acc': val_acc, 'val_patch_acc': val_patch_acc}
+        return {'val_loss': total_loss, 'val_acc': val_acc, 'val_patch_acc': val_patch_acc,
+                'val_iou_score': val_iou_score}
+
+    def get_metrics(self):
+        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
+        foreground_threshold = Configuration.get('training.general.foreground_threshold')
+        accuracy = torchmetrics.Accuracy(threshold=foreground_threshold)
+        accuracy.to(DEVICE)
+        patch_accuracy = PatchAccuracy(threshold=foreground_threshold)
+        patch_accuracy.to(DEVICE)
+        iou = IoU(num_classes=2, threshold=foreground_threshold)
+        iou.to(DEVICE)
+        return accuracy, iou, multi_accuracy_metric, patch_accuracy
 
     def save_model(self, epoch_nr):
         """ This function saves entire model incl. modelstructure"""
@@ -296,12 +313,32 @@ class Engine:
         self.model = torch.load(path)
         self.model.eval()  # Todo: check if needed
 
-    def load_checkpints(self, path=None):
+    def load_checkpoints(self, path=None, reset_lr=False):
+        """
+        Loads a checkpoint.
+
+        :param path: path to checkpoint file.
+        :param reset_lr: True = resets the learning rate of the optimizer to the configuration values.
+        :return:
+        """
+        Logcreator.info("Loading checkpoint file:", path)
+
         checkpoint = torch.load(path)
         # Todo: check if to device should be called somewhere
         self.model.load_state_dict(checkpoint['model_state_dict'])
+
+        initial_lr = self.get_lr()
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if reset_lr:
+            self.optimizer.param_groups[0]["lr"] = initial_lr
+            Logcreator.info(f"Reseted learning rate to: {self.get_lr():e}")
+
         epoch = checkpoint['epoch']
+
+        # TODO should we do this or should we start from zero or save the scheduler?
+        # init the step count of the learning rate scheduler
+        self.lr_scheduler = LRSchedulerFactory.build(self.optimizer, last_epoch=epoch + 1)
+
         train_loss = checkpoint['train_loss']
         train_accuracy = checkpoint['train_accuracy']
         val_loss = checkpoint['val_loss']
