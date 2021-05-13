@@ -60,3 +60,17 @@ Software Versions used for this Project (Proposal by Andreas):
 - New window: `Ctrl+b c`
 - Switch windows back and forth: `Ctrl+b p`, `Ctrl+b n` or `Ctrl+b WindowNr`
 - Toggle a pane fullscreen and embeded: `Ctrl+b z`
+
+## Preprocessing
+
+### Transformations
+
+- To transform the original images, run the script `augmentations.py`
+ 
+### Additional Training data
+
+After downloading the folders from OneDrive, rename them as follows: "github_ale", "github_mat", "github_jkf" and rename the folders within these: "images" and "masks".
+There are two possible approaches for including them:
+1. Train only on the additional data, then use these pretrained weights (change param "main_folder_name" and "transform_folders")
+2. Train on our data + additional data together, then use the additional folder in "additional_training_folders". For this, all images need to be of the same size. "github_jkf" is 608x608, so you can run the script preprocessing/crop_images.py
+``
