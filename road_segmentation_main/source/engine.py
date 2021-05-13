@@ -133,12 +133,15 @@ class Engine:
 
         # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
         # save predicted validation images
-        save_predictions_as_imgs(val_loader, self.model,
-                                 folder=os.path.join(Configuration.output_directory, "prediction-validation-set"),
-                                 device=DEVICE,
-                                 is_prob=False,
-                                 pixel_threshold=Configuration.get("inference.general.foreground_threshold"))
 
+
+        save_imgs = Configuration.get("data_collection.save_imgs")
+        if save_imgs:
+            save_predictions_as_imgs(val_loader, self.model,
+                                     folder=os.path.join(Configuration.output_directory, "prediction-validation-set"),
+                                     device=DEVICE,
+                                     is_prob=False,
+                                     pixel_threshold=Configuration.get("inference.general.foreground_threshold"))
         return 0
 
     def train_step(self, data_loader, epoch):

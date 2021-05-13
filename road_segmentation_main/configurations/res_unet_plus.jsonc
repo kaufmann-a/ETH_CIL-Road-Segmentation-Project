@@ -15,6 +15,7 @@
         "test_data_count" : 0,
         "validation_ratio" : 0.2,
         "include_val_transforms" : false,
+        "save_imgs" : true,
     },
     "training": {
         "general" : {

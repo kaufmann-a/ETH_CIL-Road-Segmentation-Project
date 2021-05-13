@@ -10,11 +10,12 @@
         "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                 ],
-        "additional_training_folders" : ["github_jkf"],
+        "additional_training_folders" : ["github_ale"],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
         "validation_ratio" : 0.3,
-        "include_val_transforms" : true
+        "include_val_transforms" : true,
+        "save_imgs" : true,
     },
     "training": {
         "general" : {
