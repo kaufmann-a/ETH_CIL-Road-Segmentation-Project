@@ -156,7 +156,7 @@ class Engine:
         total_loss = 0.
 
         # progressbar
-        loop = tqdm(data_loader)
+        loop = tqdm(data_loader, file=sys.stdout, colour='green')
 
         # for all batches
         for batch_idx, (data, targets) in enumerate(loop):
