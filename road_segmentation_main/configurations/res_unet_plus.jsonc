@@ -32,7 +32,7 @@
                 "on" : false,
                 "start_epoch" : 40
             },
-            "log_to_comet" : false,
+            "log_to_comet" : true,
         },
         "model": {
             "name": "ResUnetPlusPlus",

@@ -67,7 +67,7 @@ class Engine:
         #          anneal_strategy="linear", anneal_epochs=5, swa_lr=0.05)
 
         # Init comet and tensorboard
-        self.experiment = metricslogging.init_comet()
+        self.comet = metricslogging.init_comet()
         self.tensorboard = metricslogging.init_tensorboard()
 
         # Print model summary
@@ -206,11 +206,11 @@ class Engine:
         self.tensorboard.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
         self.tensorboard.add_scalar("IoU/train", train_iou_score, epoch)
         # Comet
-        if self.experiment is not None:
-            self.experiment.log_metric('train_loss', train_loss)
-            self.experiment.log_metric('train_acc', train_acc)
-            self.experiment.log_metric('train_patch_acc', train_patch_acc)
-            self.experiment.log_metric('train_iou_score', train_iou_score)
+        if self.comet is not None:
+            self.comet.log_metric('train_loss', train_loss)
+            self.comet.log_metric('train_acc', train_acc)
+            self.comet.log_metric('train_patch_acc', train_patch_acc)
+            self.comet.log_metric('train_iou_score', train_iou_score)
         # Logfile
         Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                         f", accuracy: {train_acc:.5f}",
@@ -264,11 +264,11 @@ class Engine:
         self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
         self.tensorboard.add_scalar("IoU/val", val_iou_score, epoch)
         # Comet
-        if self.experiment is not None:
-            self.experiment.log_metric(log_postfix_path + '_loss', val_loss)
-            self.experiment.log_metric(log_postfix_path + '_acc', val_acc)
-            self.experiment.log_metric(log_postfix_path + '_patch_acc', val_patch_acc)
-            self.experiment.log_metric('val_iou_score', val_iou_score)
+        if self.comet is not None:
+            self.comet.log_metric(log_postfix_path + '_loss', val_loss)
+            self.comet.log_metric(log_postfix_path + '_acc', val_acc)
+            self.comet.log_metric(log_postfix_path + '_patch_acc', val_patch_acc)
+            self.comet.log_metric('val_iou_score', val_iou_score)
         # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
