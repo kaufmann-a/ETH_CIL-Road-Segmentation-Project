@@ -3,23 +3,23 @@
 
 import os
 import torch
-import torchvision
+import torchvision as torchvision
 
 from source.helpers.maskconverthelper import mask_to_submission_mask
 from comet_ml import Experiment
 
 
-def save_predictions_to_comet(loader, model, epoch, pixel_threshold, device, is_prob, nr_saves):
-    model.eval()
+def save_predictions_to_comet(engine, loader, epoch, pixel_threshold, device, is_prob, nr_saves):
+    engine.model.eval()
 
     pred_img_idx = 0
 
     for idx, (x, y) in enumerate(loader):
         x = x.to(device=device)
-        y = y.to(device).float().unsqueeze(1)
+        y = y.to(device).float()
 
         with torch.no_grad():
-            preds = model(x)
+            preds = engine.model(x)
             if not is_prob:
                 preds = torch.sigmoid(preds)
             # probabilities to 0/1
@@ -28,12 +28,14 @@ def save_predictions_to_comet(loader, model, epoch, pixel_threshold, device, is_
             for i in range(0, preds.shape[0]):
                 if i % 10 == 0:
                     if nr_saves == 0:
-                        model.comet.log_image(x[i], f"{pred_img_idx}_input.png", image_format="png")
-                        model.comet.log_image(y[i], f"{pred_img_idx}_true.png", image_format="png")
-                    model.comet.log_image(preds[i], f"{pred_img_idx}_pred_epoch_{epoch}.png", image_format="png")
+                        engine.comet.log_image(torchvision.transforms.ToPILImage()(x[i]),
+                                               f"{pred_img_idx}_input.png", image_format="png")
+                        engine.comet.log_image(torchvision.transforms.ToPILImage()(y[i]),
+                                               f"{pred_img_idx}_true.png", image_format="png")
+                    engine.comet.log_image(preds[i], f"{pred_img_idx}_pred_epoch_{epoch}.png", image_format="png")
                 pred_img_idx += 1
 
-    model.train()
+    engine.model.train()
 
 
 def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", pixel_threshold=0.5, device="cuda",

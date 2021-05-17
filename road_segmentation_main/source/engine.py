@@ -118,8 +118,8 @@ class Engine:
                 self.save_checkpoint(epoch, train_metrics['train_loss'], train_metrics['train_acc'],
                                      val_metrics['val_loss'], val_metrics['val_acc'])
                 if self.comet is not None:
-                    imagesavehelper.save_predictions_to_comet(val_loader,
-                                                              self.model,
+                    imagesavehelper.save_predictions_to_comet(self,
+                                                              val_loader,
                                                               epoch,
                                                               Configuration.get(
                                                                   "inference.general.foreground_threshold"),
