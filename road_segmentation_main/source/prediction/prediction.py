@@ -239,6 +239,14 @@ class Prediction(object):
                                 foreground_threshold=self.foreground_threshold,
                                 path_prefix=path_prefix)
 
+    def run_prediction(self, model, loader, image_number_list, cropped_image_size, nr_crops_per_image, file_prefix=''):
+        mask_probabilistic_list = self.run_prediction_loop(model=model,
+                                                           loader=loader,
+                                                           cropped_image_size=cropped_image_size,
+                                                           nr_crops_per_image=nr_crops_per_image)
+
+        self.run_post_prediction_tasks(mask_probabilistic_list, image_number_list, file_prefix)
+
     def predict(self):
         if self.use_original_image_size:
             cropped_image_size = TEST_IMAGE_SIZE
@@ -251,14 +259,9 @@ class Prediction(object):
         dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations())
         loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
+        self.run_prediction(self.model, loader, image_number_list, cropped_image_size, nr_crops_per_image)
+
         if self.use_swa_model:
-            self.model = self.swa_model
-
-        mask_probabilistic_list = self.run_prediction_loop(model=self.model,
-                                                           loader=loader,
-                                                           cropped_image_size=cropped_image_size,
-                                                           nr_crops_per_image=nr_crops_per_image)
-
-        file_prefix = ''
-
-        self.run_post_prediction_tasks(mask_probabilistic_list, image_number_list, file_prefix)
+            Logcreator.info("Stochastic Weight Averaging prediction run")
+            self.run_prediction(self.swa_model, loader, image_number_list, cropped_image_size, nr_crops_per_image,
+                                file_prefix='swa-')

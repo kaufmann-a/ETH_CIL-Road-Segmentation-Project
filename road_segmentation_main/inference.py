@@ -18,7 +18,6 @@ import torch
 from source.configuration import Configuration
 from source.engine import Engine
 from source.logcreator.logcreator import Logcreator
-from source.helpers import argumenthelper
 from source.helpers import filehelper
 from source.prediction.prediction import Prediction
 
@@ -69,7 +68,7 @@ if __name__ == "__main__":
 
     # Init engine
     engine = Engine()
-    engine.load_checkpoints(args.weights)
+    epoch, train_loss, train_accuracy, val_loss, val_accuracy = engine.load_checkpoints(args.weights)
 
     # Run predictions
 
@@ -80,7 +79,8 @@ if __name__ == "__main__":
                            postprocessing=Configuration.get('inference.postprocessing'),
                            use_original_image_size=Configuration.get('inference.general.use_original_image_size'),
                            enable_postprocessing=Configuration.get('inference.general.enable_postprocessing'),
-                           use_submission_masks=Configuration.get("training.general.use_submission_masks")
+                           use_submission_masks=Configuration.get("training.general.use_submission_masks"),
+                           use_swa_model=Configuration.get("training.general.stochastic_weight_averaging.on")
                            )
 
     predictor.predict()
