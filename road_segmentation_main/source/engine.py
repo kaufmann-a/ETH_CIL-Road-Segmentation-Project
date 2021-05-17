@@ -35,6 +35,7 @@ from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
 from source.scheduler.lr_schedulerfactory import LRSchedulerFactory
+import source.helpers.imagesavehelper as imagesavehelper
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -100,11 +101,20 @@ class Engine:
             val_metrics = self.evaluate(self.model, val_loader, epoch)
 
             # save model
+            nr_saves = 0
             if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
                     epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
                 self.save_model(epoch)
                 self.save_checkpoint(self.model, epoch, train_metrics['train_loss'], train_metrics['train_acc'],
                                      val_metrics['val_loss'], val_metrics['val_acc'])
+                if self.comet is not None:
+                    imagesavehelper.save_predictions_to_comet(val_loader,
+                                                              self.model,
+                                                              epoch,
+                                                              Configuration.get("inference.general.foreground_threshold"),
+                                                              DEVICE, False,
+                                                              nr_saves)
+                nr_saves += 1
 
             # swa model
             if self.swa_enabled and epoch >= self.swa_start_epoch:
@@ -281,12 +291,9 @@ class Engine:
     def get_metrics(self):
         multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
         foreground_threshold = Configuration.get('training.general.foreground_threshold')
-        accuracy = torchmetrics.Accuracy(threshold=foreground_threshold)
-        accuracy.to(DEVICE)
-        patch_accuracy = PatchAccuracy(threshold=foreground_threshold)
-        patch_accuracy.to(DEVICE)
-        iou = IoU(num_classes=2, threshold=foreground_threshold)
-        iou.to(DEVICE)
+        accuracy = torchmetrics.Accuracy(threshold=foreground_threshold).to(DEVICE)
+        patch_accuracy = PatchAccuracy(threshold=foreground_threshold).to(DEVICE)
+        iou = IoU(num_classes=2, threshold=foreground_threshold).to(DEVICE)
         return accuracy, iou, multi_accuracy_metric, patch_accuracy
 
     def save_model(self, epoch_nr):
