@@ -87,7 +87,7 @@ class Engine:
                                   pin_memory=True, shuffle=train_parms.shuffle_data)
         val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
                                 pin_memory=True,
-                                shuffle=False)  # TODO: check what shuffle exactly does and how to use it
+                                shuffle=False)
         self.test_data = test_data
 
         epoch = 0
@@ -104,7 +104,8 @@ class Engine:
             if self.swa_enabled and epoch >= self.swa_start_epoch:
                 self.swa_model.update_parameters(self.model)
                 # update batch normalization statistics for the swa_model
-                torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
+                torch.optim.swa_utils.update_bn(tqdm(train_loader, desc="SWA BN update", file=sys.stdout),
+                                                self.swa_model, device=DEVICE)
                 # evaluate on validation set
                 swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch,
                                                 log_model_name="SWA-", log_postfix_path='val_swa')
