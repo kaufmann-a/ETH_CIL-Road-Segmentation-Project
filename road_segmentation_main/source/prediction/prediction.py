@@ -17,16 +17,15 @@ from matplotlib import pyplot
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import source.helpers.predictionhelper
-
 from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
 from source.data.transformation import get_transformations
-from source.helpers import predictionhelper
+from source.helpers import predictionhelper, imagesavehelper
 from source.helpers.image_cropping import get_crop_box, ImageCropper
-from source.helpers.imagesavehelper import save_masks_as_images
-from source.helpers.predictionhelper import runpostprocessing
+from source.helpers.predictionhelper import run_post_processing
 from source.logcreator.logcreator import Logcreator
+
+PATCH_SIZE = 16
 
 TEST_IMAGE_SIZE = (608, 608)
 
@@ -178,60 +177,17 @@ class Prediction(object):
 
         return out_image_list, image_number_list
 
-    def predict(self):
-        if self.use_original_image_size:
-            cropped_image_size = TEST_IMAGE_SIZE
-        else:
-            cropped_image_size = Configuration.get("training.general.cropped_image_size")
+    def run_prediction_loop(self, model, loader, cropped_image_size, nr_crops_per_image):
+        mask_probabilistic_list = []
 
-        image_list, image_number_list = self.load_test_images(self.images_folder, stride=cropped_image_size)
-        nr_crops_per_image = int(len(image_list) / len(image_number_list))
-
-        dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations())
-        loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
-
-        patch_size = 16
-
-        if self.use_swa_model:
-            self.model = self.swa_model
-
-        out_image_list = self.run_prediction_loop(loader,
-                                                  cropped_image_size=cropped_image_size,
-                                                  nr_crops_per_image=nr_crops_per_image)
-
-        Logcreator.info("Saving submission file")
-        predictionhelper.images_to_submission_file(out_image_list, image_number_list,
-                                                   patch_size=patch_size,
-                                                   foreground_threshold=self.foreground_threshold,
-                                                   file_path=os.path.join(Configuration.output_directory,
-                                                                          'submission.csv'))
-
-        out_preds_list = save_masks_as_images(out_image_list, image_number_list,
-                                              folder=Configuration.output_directory,
-                                              is_prob=True,
-                                              pixel_threshold=self.foreground_threshold,
-                                              save_submission_img=not self.use_submission_mask)
-
-        if self.enable_postprocessing:
-            Logcreator.info("Running post processing")
-            runpostprocessing(out_preds_list,
-                              folder=Configuration.output_directory,
-                              postprocessingparams=self.postprocessing,
-                              image_number_list=image_number_list,
-                              patch_size=patch_size,
-                              foreground_threshold=self.foreground_threshold)
-
-    def run_prediction_loop(self, loader, cropped_image_size, nr_crops_per_image):
-        out_image_list = []
-
-        self.model.eval()
+        model.eval()
 
         loop = tqdm(loader)
         for idx, x in enumerate(loop):
             x = x.to(device=self.device)
 
             with torch.no_grad():
-                preds = self.model(x)
+                preds = model(x)
 
                 # We need it because our models are constructed without sigmoid at the end
                 preds = torch.sigmoid(preds)
@@ -245,17 +201,64 @@ class Prediction(object):
                         crops_list.append(torch.squeeze(pred_masks[j]))
 
                     # for every package call patch_image_together to get the original size image
-                    test_image_size = (608, 608)
+                    input_image_size = TEST_IMAGE_SIZE
                     out_patch_size = cropped_image_size
                     if self.use_submission_mask:
-                        test_image_size = [x // 16 for x in test_image_size]
-                        out_patch_size = [x // 16 for x in out_patch_size]
-                    out_image = self.patch_masks_together(cropped_images=crops_list,
-                                                          out_image_size=test_image_size,
-                                                          stride=out_patch_size,
-                                                          )
-                    out_image_list.append(out_image)
+                        input_image_size = [x // PATCH_SIZE for x in input_image_size]
+                        out_patch_size = [x // PATCH_SIZE for x in out_patch_size]
+                    out_mask = self.patch_masks_together(cropped_images=crops_list,
+                                                         out_image_size=input_image_size,
+                                                         stride=out_patch_size)
+                    mask_probabilistic_list.append(out_mask)
 
-            loop.set_postfix(image_nr=len(out_image_list) - 1)
+            loop.set_postfix(image_nr=len(mask_probabilistic_list))
 
-        return out_image_list
+        return mask_probabilistic_list
+
+    def run_post_prediction_tasks(self, mask_probabilistic_list, image_number_list, path_prefix):
+        Logcreator.info("Saving submission file")
+        predictionhelper.images_to_submission_file(mask_probabilistic_list, image_number_list,
+                                                   patch_size=PATCH_SIZE,
+                                                   foreground_threshold=self.foreground_threshold,
+                                                   folder=Configuration.output_directory,
+                                                   file_prefix=path_prefix)
+
+        mask_binary_list = imagesavehelper.save_masks_as_images(mask_probabilistic_list, image_number_list,
+                                                                folder=Configuration.output_directory,
+                                                                is_prob=True,
+                                                                pixel_threshold=self.foreground_threshold,
+                                                                save_submission_img=not self.use_submission_mask,
+                                                                folder_prefix=path_prefix)
+        if self.enable_postprocessing:
+            Logcreator.info("Running post processing")
+            run_post_processing(mask_binary_list,
+                                folder=Configuration.output_directory,
+                                postprocessing_params=self.postprocessing,
+                                image_number_list=image_number_list,
+                                patch_size=PATCH_SIZE,
+                                foreground_threshold=self.foreground_threshold,
+                                path_prefix=path_prefix)
+
+    def predict(self):
+        if self.use_original_image_size:
+            cropped_image_size = TEST_IMAGE_SIZE
+        else:
+            cropped_image_size = Configuration.get("training.general.cropped_image_size")
+
+        image_list, image_number_list = self.load_test_images(self.images_folder, stride=cropped_image_size)
+        nr_crops_per_image = int(len(image_list) / len(image_number_list))
+
+        dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations())
+        loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
+
+        if self.use_swa_model:
+            self.model = self.swa_model
+
+        mask_probabilistic_list = self.run_prediction_loop(model=self.model,
+                                                           loader=loader,
+                                                           cropped_image_size=cropped_image_size,
+                                                           nr_crops_per_image=nr_crops_per_image)
+
+        file_prefix = ''
+
+        self.run_post_prediction_tasks(mask_probabilistic_list, image_number_list, file_prefix)

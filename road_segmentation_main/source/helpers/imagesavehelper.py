@@ -1,6 +1,3 @@
-
-
-
 import os
 import torch
 import torchvision as torchvision
@@ -95,7 +92,8 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
     model.train()
 
 
-def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True, save_submission_img=True):
+def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True, save_submission_img=True,
+                         folder_prefix=''):
     """
     Save the predictions of the model as images.
 
@@ -107,12 +105,12 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
     :return:
 
     """
-    folder_normal_size = os.path.join(folder, "pred-masks-original")
+    folder_normal_size = os.path.join(folder, folder_prefix + "pred-masks-original")
     if not os.path.exists(folder_normal_size):
         os.makedirs(folder_normal_size)
 
     if save_submission_img:
-        folder_small_size = os.path.join(folder, "pred-mask-submission")
+        folder_small_size = os.path.join(folder, folder_prefix + "pred-mask-submission")
         if not os.path.exists(folder_small_size):
             os.makedirs(folder_small_size)
 
