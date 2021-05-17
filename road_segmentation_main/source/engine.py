@@ -114,7 +114,7 @@ class Engine:
             # save model
             if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
                     epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
-                self.save_model(epoch)
+                # self.save_model(epoch)
                 self.save_checkpoint(epoch, train_metrics['train_loss'], train_metrics['train_acc'],
                                      val_metrics['val_loss'], val_metrics['val_acc'])
                 if self.comet is not None:
@@ -316,7 +316,6 @@ class Engine:
 
     def load_model(self, path=None):
         self.model = torch.load(path)
-        self.model.eval()  # Todo: check if needed
 
     def load_checkpoints(self, path=None, reset_lr=False, overwrite_model_with_swa=False):
         """
