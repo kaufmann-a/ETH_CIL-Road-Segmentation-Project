@@ -22,8 +22,8 @@ import source.helpers.predictionhelper
 from source.configuration import Configuration
 from source.data.dataset import RoadSegmentationDatasetInference
 from source.data.transformation import get_transformations
+from source.helpers import predictionhelper
 from source.helpers.image_cropping import get_crop_box, ImageCropper
-from source.helpers.predictionhelper import mask_to_submission_strings
 from source.helpers.imagesavehelper import save_masks_as_images
 from source.helpers.predictionhelper import runpostprocessing
 from source.logcreator.logcreator import Logcreator
@@ -200,16 +200,11 @@ class Prediction(object):
                                                   nr_crops_per_image=nr_crops_per_image)
 
         Logcreator.info("Saving submission file")
-        with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
-            f.write('id,prediction\n')
-
-            for image_nr_list_idx, out_image in enumerate(out_image_list):
-                # and then convert mask to string
-                f.writelines('{}\n'.format(s)
-                             for s in mask_to_submission_strings(image=out_image,
-                                                                 patch_size=patch_size,
-                                                                 image_nr=image_number_list[image_nr_list_idx],
-                                                                 foreground_threshold=self.foreground_threshold))
+        predictionhelper.images_to_submission_file(out_image_list, image_number_list,
+                                                   patch_size=patch_size,
+                                                   foreground_threshold=self.foreground_threshold,
+                                                   file_path=os.path.join(Configuration.output_directory,
+                                                                          'submission.csv'))
 
         out_preds_list = save_masks_as_images(out_image_list, image_number_list,
                                               folder=Configuration.output_directory,
@@ -218,6 +213,7 @@ class Prediction(object):
                                               save_submission_img=not self.use_submission_mask)
 
         if self.enable_postprocessing:
+            Logcreator.info("Running post processing")
             runpostprocessing(out_preds_list,
                               folder=Configuration.output_directory,
                               postprocessingparams=self.postprocessing,
