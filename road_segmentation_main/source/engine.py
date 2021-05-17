@@ -94,6 +94,7 @@ class Engine:
         if epoch_nr != 0:  # Check if continued training
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
+        nr_saves = 0
         while epoch < train_parms.num_epochs:
             Logcreator.info(f"Epoch {epoch}, lr: {self.get_lr():.3e}, lr-step: {self.lr_scheduler.last_epoch}")
 
@@ -111,7 +112,6 @@ class Engine:
                                                 log_model_name="SWA-", log_postfix_path='val_swa')
 
             # save model
-            nr_saves = 0
             if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
                     epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
                 self.save_model(epoch)
@@ -192,9 +192,9 @@ class Engine:
 
         # compute epoch scores
         train_loss = total_loss / len(data_loader)
-        train_acc = accuracy.compute()
-        train_patch_acc = patch_accuracy.compute()
-        train_iou_score = iou.compute()
+        train_acc = accuracy.compute().item()
+        train_patch_acc = patch_accuracy.compute().item()
+        train_iou_score = iou.compute().item()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix='train')
@@ -250,9 +250,9 @@ class Engine:
 
         # compute epoch scores
         val_loss = total_loss / len(data_loader)
-        val_acc = accuracy.compute()
-        val_patch_acc = patch_accuracy.compute()
-        val_iou_score = iou.compute()
+        val_acc = accuracy.compute().item()
+        val_patch_acc = patch_accuracy.compute().item()
+        val_iou_score = iou.compute().item()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix=log_postfix_path)

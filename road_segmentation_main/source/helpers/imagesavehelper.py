@@ -26,14 +26,14 @@ def save_predictions_to_comet(engine, loader, epoch, pixel_threshold, device, is
             preds = (preds > pixel_threshold).float()
             # save every prediction separately
             for i in range(0, preds.shape[0]):
-                if i % 10 == 0:
+                if i % 10 == 0: # Just every 10th image is saved
                     with engine.comet.context_manager(f"img_nr_{pred_img_idx}"):
                         if nr_saves == 0:
                             engine.comet.log_image(torchvision.transforms.ToPILImage()(x[i]),
-                                                   f"{pred_img_idx}_input.png", image_format="png")
+                                                   f"{pred_img_idx}_1_input.png", image_format="png")
                             engine.comet.log_image(torchvision.transforms.ToPILImage()(y[i]),
-                                                   f"{pred_img_idx}_true.png", image_format="png")
-                        engine.comet.log_image(torchvision.transforms.ToPILImage()(preds[i]), f"{pred_img_idx}_pred_epoch_{epoch}.png", image_format="png")
+                                                   f"{pred_img_idx}_2_true.png", image_format="png")
+                        engine.comet.log_image(torchvision.transforms.ToPILImage()(preds[i]), f"{pred_img_idx}_3_pred_epoch_{epoch}.png", image_format="png")
                 pred_img_idx += 1
 
     engine.model.train()
