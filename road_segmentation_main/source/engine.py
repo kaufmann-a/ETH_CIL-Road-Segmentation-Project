@@ -207,10 +207,10 @@ class Engine:
         self.tensorboard.add_scalar("IoU/train", train_iou_score, epoch)
         # Comet
         if self.comet is not None:
-            self.comet.log_metric('train_loss', train_loss, step=epoch)
-            self.comet.log_metric('train_acc', train_acc, step=epoch)
-            self.comet.log_metric('train_patch_acc', train_patch_acc, step=epoch)
-            self.comet.log_metric('train_iou_score', train_iou_score, step=epoch)
+            self.comet.log_metric('train_loss', train_loss, epoch=epoch)
+            self.comet.log_metric('train_acc', train_acc, epoch=epoch)
+            self.comet.log_metric('train_patch_acc', train_patch_acc, epoch=epoch)
+            self.comet.log_metric('train_iou_score', train_iou_score, epoch=epoch)
         # Logfile
         Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                         f", accuracy: {train_acc:.5f}",
@@ -265,10 +265,10 @@ class Engine:
         self.tensorboard.add_scalar("IoU/val", val_iou_score, epoch)
         # Comet
         if self.comet is not None:
-            self.comet.log_metric(log_postfix_path + '_loss', val_loss, step=epoch)
-            self.comet.log_metric(log_postfix_path + '_acc', val_acc, step=epoch)
-            self.comet.log_metric(log_postfix_path + '_patch_acc', val_patch_acc, step=epoch)
-            self.comet.log_metric('val_iou_score', val_iou_score, step=epoch)
+            self.comet.log_metric(log_postfix_path + '_loss', val_loss, epoch=epoch)
+            self.comet.log_metric(log_postfix_path + '_acc', val_acc, epoch=epoch)
+            self.comet.log_metric(log_postfix_path + '_patch_acc', val_patch_acc, epoch=epoch)
+            self.comet.log_metric('val_iou_score', val_iou_score, epoch=epoch)
         # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
