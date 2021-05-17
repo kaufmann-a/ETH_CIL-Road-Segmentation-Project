@@ -26,6 +26,7 @@ from source.helpers.image_cropping import get_crop_box, ImageCropper
 from source.helpers.predictionhelper import mask_to_submission_strings
 from source.helpers.imagesavehelper import save_masks_as_images
 from source.helpers.predictionhelper import runpostprocessing
+from source.logcreator.logcreator import Logcreator
 
 TEST_IMAGE_SIZE = (608, 608)
 
@@ -190,56 +191,25 @@ class Prediction(object):
         loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
         patch_size = 16
-        out_image_list = []
 
         if self.use_swa_model:
             self.model = self.swa_model
 
+        out_image_list = self.run_prediction_loop(loader,
+                                                  cropped_image_size=cropped_image_size,
+                                                  nr_crops_per_image=nr_crops_per_image)
+
+        Logcreator.info("Saving submission file")
         with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
             f.write('id,prediction\n')
 
-            self.model.eval()
-
-            loop = tqdm(loader)
-            image_nr_list_idx = 0
-            for idx, x in enumerate(loop):
-                x = x.to(device=self.device)
-
-                with torch.no_grad():
-                    preds = self.model(x)
-
-                    # We need it because our models are constructed without sigmoid at the end
-                    preds = torch.sigmoid(preds)
-
-                    # go through all images of current batch; an image consists of multiple cropped images
-                    for i in range(preds.shape[0] // nr_crops_per_image):
-                        # split tensor into packages of "nr_crops_per_image" crops and then
-                        pred_masks = preds[i * nr_crops_per_image:i * nr_crops_per_image + nr_crops_per_image]
-                        crops_list = []
-                        for j in range(nr_crops_per_image):
-                            crops_list.append(torch.squeeze(pred_masks[j]))
-
-                        # for every package call patch_image_together to get the original size image
-                        test_image_size = (608, 608)
-                        out_patch_size = cropped_image_size
-                        if self.use_submission_mask:
-                            test_image_size = [x // 16 for x in test_image_size]
-                            out_patch_size = [x // 16 for x in out_patch_size]
-                        out_image = self.patch_masks_together(cropped_images=crops_list,
-                                                              out_image_size=test_image_size,
-                                                              stride=out_patch_size,
-                                                              )
-                        out_image_list.append(out_image)
-
-                        # and then convert mask to string
-                        f.writelines('{}\n'.format(s)
-                                     for s in mask_to_submission_strings(image=out_image,
-                                                                         patch_size=patch_size,
-                                                                         image_nr=image_number_list[image_nr_list_idx],
-                                                                         foreground_threshold=self.foreground_threshold))
-                        image_nr_list_idx += 1
-
-                loop.set_postfix(image_nr=image_nr_list_idx)
+            for image_nr_list_idx, out_image in enumerate(out_image_list):
+                # and then convert mask to string
+                f.writelines('{}\n'.format(s)
+                             for s in mask_to_submission_strings(image=out_image,
+                                                                 patch_size=patch_size,
+                                                                 image_nr=image_number_list[image_nr_list_idx],
+                                                                 foreground_threshold=self.foreground_threshold))
 
         out_preds_list = save_masks_as_images(out_image_list, image_number_list,
                                               folder=Configuration.output_directory,
@@ -254,3 +224,42 @@ class Prediction(object):
                               image_number_list=image_number_list,
                               patch_size=patch_size,
                               foreground_threshold=self.foreground_threshold)
+
+    def run_prediction_loop(self, loader, cropped_image_size, nr_crops_per_image):
+        out_image_list = []
+
+        self.model.eval()
+
+        loop = tqdm(loader)
+        for idx, x in enumerate(loop):
+            x = x.to(device=self.device)
+
+            with torch.no_grad():
+                preds = self.model(x)
+
+                # We need it because our models are constructed without sigmoid at the end
+                preds = torch.sigmoid(preds)
+
+                # go through all images of current batch; an image consists of multiple cropped images
+                for i in range(preds.shape[0] // nr_crops_per_image):
+                    # split tensor into packages of "nr_crops_per_image" crops and then
+                    pred_masks = preds[i * nr_crops_per_image:i * nr_crops_per_image + nr_crops_per_image]
+                    crops_list = []
+                    for j in range(nr_crops_per_image):
+                        crops_list.append(torch.squeeze(pred_masks[j]))
+
+                    # for every package call patch_image_together to get the original size image
+                    test_image_size = (608, 608)
+                    out_patch_size = cropped_image_size
+                    if self.use_submission_mask:
+                        test_image_size = [x // 16 for x in test_image_size]
+                        out_patch_size = [x // 16 for x in out_patch_size]
+                    out_image = self.patch_masks_together(cropped_images=crops_list,
+                                                          out_image_size=test_image_size,
+                                                          stride=out_patch_size,
+                                                          )
+                    out_image_list.append(out_image)
+
+            loop.set_postfix(image_nr=len(out_image_list) - 1)
+
+        return out_image_list
