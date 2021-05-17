@@ -11,6 +11,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import os
 
 import random
+import numpy as np
 
 from source.configuration import Configuration
 from source.data.transformation import get_transformations
@@ -24,65 +25,70 @@ class DataPreparator(object):
     def load(path='', main_folder_name='', test_data_count=None):
         if not path:
             path = Configuration.get_path('data_collection.folder', False)
-        if not main_folder_name:
-            main_folder_name = str(Configuration.get('data_collection.main_folder_name'))
-
-        # split original images into val and train
+        # if not main_folder_name:
+        #     main_folder_name = str(Configuration.get('data_collection.main_folder_name'))
+        transform_folders = Configuration.get('data_collection.transform_folders')
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
-
-        originals_list = os.listdir(os.path.join(path, main_folder_name, 'images'))
-        originals = [image for image in originals_list if (image.endswith('.png') or image.endswith('.jpg'))]
-
-        random.seed(0)
-        originals_val = random.sample(originals, int(len(originals) * val_ratio))
-        originals_train = [image for image in originals if image not in originals_val]
-
-        # make sure there is no intersection
-        if len(list(set(originals_val) & set(originals_train))) > 0:
-            Logcreator.warn("Intersection between train and validation set.")
-
-        # get folder names of transformed images
-        folders = Configuration.get('data_collection.transform_folders')
-
-        image_paths_train = []
-        mask_paths_train = []
-        image_paths_val = []
-        mask_paths_val = []
-
         include_val_transforms = Configuration.get('data_collection.include_val_transforms')
-        # include_val_transforms = True
 
-        # paths to images (original and transformed) for training set
-        for folder in folders:
-            for file in os.listdir(os.path.join(path, folder, "images")):
-                filename = os.fsdecode(file)
-                if filename.endswith(".png") or filename.endswith(".jpg"):
-                    if filename in originals_train:
-                        image_paths_train.append(os.path.join(path, folder, "images", filename))
-                        mask_paths_train.append(os.path.join(path, folder, "masks", filename))
-                    if filename in originals_val:
-                        if include_val_transforms:
-                            image_paths_val.append(os.path.join(path, folder, "images", filename))
-                            mask_paths_val.append(os.path.join(path, folder, "masks", filename))
+        collections_folders_orig = [os.path.join(path, cur_collection, "original") for cur_collection in os.listdir(path)]
+        transform_folders = [os.path.join(path, cur_collection, cur_transformation)
+                             for cur_transformation in transform_folders
+                             for cur_collection in os.listdir(path)
+                             if os.path.exists(os.path.join(path, cur_collection, cur_transformation))]
 
-        if not include_val_transforms:  # only include originals in validation set
-            image_paths_val = [os.path.join(path, main_folder_name, 'images', filename) for filename in originals_val]
-            mask_paths_val = [os.path.join(path, main_folder_name, 'masks', filename) for filename in originals_val]
+        # originals_list = os.listdir(os.path.join(path, main_folder_name, 'images'))
+        # originals = [image for image in originals_list if (image.endswith('.png') or image.endswith('.jpg'))]
 
-        # add additional training folders to training data
-        additional_training_folders = Configuration.get('data_collection.additional_training_folders')
-        if len(additional_training_folders) > 0:
-            for folder in additional_training_folders:
-                for file in os.listdir(os.path.join(path, folder, "images")):
-                    image_paths_train.append(os.path.join(path, folder, "images", file))
-                    mask_paths_train.append(os.path.join(path, folder, "masks", file))
+        train_set_images_orig = []
+        train_set_masks_orig = []
+        train_set_images_trans = []
+        train_set_masks_trans = []
+        for orig_folder in collections_folders_orig:
+            train_set_images_orig += [os.path.join(orig_folder, "images", img) for img in
+                                      os.listdir(os.path.join(orig_folder, "images"))
+                                      if img.endswith('.png') or img.endswith('.jpg')]
+            train_set_masks_orig += [os.path.join(orig_folder, "masks", img) for img in
+                                     os.listdir(os.path.join(orig_folder, "masks"))
+                                     if img.endswith('.png') or img.endswith('.jpg')]
+        for transform_folder in transform_folders:
+            train_set_images_trans += [os.path.join(transform_folder, "images", img) for img in
+                                       os.listdir(os.path.join(transform_folder, "images"))
+                                       if img.endswith('.png') or img.endswith('.jpg')]
+            train_set_masks_trans += [os.path.join(transform_folder, "masks", img) for img in
+                                      os.listdir(os.path.join(transform_folder, "masks"))
+                                      if img.endswith('.png') or img.endswith('.jpg')]
 
-        Logcreator.debug("Found %d images for training and %d images for validation."
-                         % (len(image_paths_train), len(image_paths_val)))
+        train_set_images = []
+        train_set_masks = []
+        val_set_images = []
+        val_set_masks = []
+        if include_val_transforms:
+            train_set_images_orig += train_set_images_trans
+            train_set_masks_orig += train_set_masks_trans
 
-        if len(image_paths_train) == 0:
+        size_val_set = int(len(train_set_images_orig) * val_ratio)
+        mask = np.full(len(train_set_images_orig), False)
+        mask[:size_val_set] = True
+        np.random.seed(0)
+        np.random.shuffle(mask)
+
+        for idx, add_to_val_set in enumerate(mask):
+            if add_to_val_set:
+                val_set_images.append(train_set_images_orig[idx])
+                val_set_masks.append(train_set_masks_orig[idx])
+            else:
+                train_set_images.append(train_set_images_orig[idx])
+                train_set_masks.append(train_set_masks_orig[idx])
+
+        if not include_val_transforms: #wrong, check val set orig if img contained there if not add to set
+            train_set_images += train_set_images_trans
+            train_set_masks += train_set_masks_trans
+
+
+        if len(train_set_images) == 0:
             Logcreator.warn("No training files assigned.")
-        if len(image_paths_val) == 0:
+        if len(val_set_images) == 0:
             Logcreator.warn("No validation files assigned.")
 
         # test images
@@ -93,14 +99,11 @@ class DataPreparator(object):
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
         use_submission_masks = Configuration.get("training.general.use_submission_masks")
 
-        train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train, foreground_threshold, transform,
+        train_ds = RoadSegmentationDataset(train_set_images, train_set_masks, foreground_threshold, transform,
                                            crop_size=cropped_image_size,
                                            use_submission_masks=use_submission_masks)
-        val_ds = RoadSegmentationDataset(image_paths_val, mask_paths_val, foreground_threshold, transform,
+        val_ds = RoadSegmentationDataset(val_set_images, val_set_masks, foreground_threshold, transform,
                                          crop_size=cropped_image_size,
                                          use_submission_masks=use_submission_masks)
-        test_ds = RoadSegmentationDataset([], [], foreground_threshold, transform,
-                                          crop_size=cropped_image_size,
-                                          use_submission_masks=use_submission_masks)
 
-        return train_ds, val_ds, test_ds
+        return train_ds, val_ds
