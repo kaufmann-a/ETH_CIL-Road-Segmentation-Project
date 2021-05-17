@@ -27,12 +27,15 @@ from source.helpers.predictionhelper import mask_to_submission_strings
 from source.helpers.imagesavehelper import save_masks_as_images
 from source.helpers.predictionhelper import runpostprocessing
 
+TEST_IMAGE_SIZE = (608, 608)
+
 
 class Prediction(object):
 
     def __init__(self, engine, images, device, threshold, postprocessing, use_original_image_size,
                  enable_postprocessing=False,
-                 use_submission_masks=False):
+                 use_submission_masks=False,
+                 use_swa_model=False):
         """
 
         :param engine:
@@ -44,6 +47,7 @@ class Prediction(object):
 
         self.device = device
         self.model = engine.model
+        self.swa_model = engine.swa_model
         self.model.to(device)
         self.images_folder = images
         self.foreground_threshold = threshold
@@ -51,6 +55,7 @@ class Prediction(object):
         self.postprocessing = postprocessing
         self.use_original_image_size = use_original_image_size
         self.use_submission_mask = use_submission_masks
+        self.use_swa_model = use_swa_model
 
     def patch_image_together(self, cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
         width = total_width
@@ -174,7 +179,7 @@ class Prediction(object):
 
     def predict(self):
         if self.use_original_image_size:
-            cropped_image_size = (608, 608)
+            cropped_image_size = TEST_IMAGE_SIZE
         else:
             cropped_image_size = Configuration.get("training.general.cropped_image_size")
 
@@ -186,6 +191,9 @@ class Prediction(object):
 
         patch_size = 16
         out_image_list = []
+
+        if self.use_swa_model:
+            self.model = self.swa_model
 
         with open(os.path.join(Configuration.output_directory, 'submission.csv'), 'w') as f:
             f.write('id,prediction\n')
