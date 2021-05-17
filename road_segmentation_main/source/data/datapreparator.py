@@ -28,8 +28,7 @@ class DataPreparator(object):
 
         transform_folders = Configuration.get('data_collection.transform_folders')
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
-        include_val_transforms = Configuration.get('data_collection.include_val_transforms')
-
+        
         collections_folders_orig = [os.path.join(path, cur_collection, "original") for cur_collection in os.listdir(path)]
         transform_folders = [os.path.join(path, cur_collection, cur_transformation)
                              for cur_transformation in transform_folders
