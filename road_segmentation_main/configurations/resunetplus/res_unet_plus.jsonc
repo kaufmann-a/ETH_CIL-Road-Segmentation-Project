@@ -7,15 +7,12 @@
     "data_collection" : {
         "folder" : "D:/temp/data",
         "collection_names" : ["eth_dataset", "jkfrie", "osm_roadtracer"],
-        //"main_folder_name" : "original",
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                "crop_random", "rotate_random"],
-        //"additional_training_folders" : ["/cluster/scratch/ankaufmann/osm_data_1streetwidth"],
         "test_images_folder" : "../data/test_images",
         "test_data_count" : 0,
         "validation_ratio" : 0.2,
-        "include_val_transforms" : false,
         "save_imgs" : false,
     },
     "training": {
