@@ -100,22 +100,6 @@ class Engine:
             train_metrics = self.train_step(train_loader, epoch)
             val_metrics = self.evaluate(self.model, val_loader, epoch)
 
-            # save model
-            nr_saves = 0
-            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
-                    epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
-                self.save_model(epoch)
-                self.save_checkpoint(self.model, epoch, train_metrics['train_loss'], train_metrics['train_acc'],
-                                     val_metrics['val_loss'], val_metrics['val_acc'])
-                if self.comet is not None:
-                    imagesavehelper.save_predictions_to_comet(val_loader,
-                                                              self.model,
-                                                              epoch,
-                                                              Configuration.get("inference.general.foreground_threshold"),
-                                                              DEVICE, False,
-                                                              nr_saves)
-                nr_saves += 1
-
             # swa model
             if self.swa_enabled and epoch >= self.swa_start_epoch:
                 self.swa_model.update_parameters(self.model)
@@ -125,26 +109,29 @@ class Engine:
                 swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch,
                                                 log_model_name="SWA-", log_postfix_path='val_swa')
 
-                # save model
-                if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
-                        epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
-                    if self.swa_enabled and epoch >= self.swa_start_epoch:
-                        # update batch normalization statistics for the swa_model at the end
-                        torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
-                        # save swa model separately
-                        self.save_checkpoint(self.swa_model, epoch, train_metrics['train_loss'],
-                                             train_metrics['train_acc'], swa_val_metrics['val_loss'],
-                                             swa_val_metrics['val_acc'], file_name="swa_checkpoint.pth")
+            # save model
+            nr_saves = 0
+            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
+                    epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
+                self.save_model(epoch)
+                self.save_checkpoint(epoch, train_metrics['train_loss'], train_metrics['train_acc'],
+                                     val_metrics['val_loss'], val_metrics['val_acc'])
+                if self.comet is not None:
+                    imagesavehelper.save_predictions_to_comet(val_loader,
+                                                              self.model,
+                                                              epoch,
+                                                              Configuration.get(
+                                                                  "inference.general.foreground_threshold"),
+                                                              DEVICE, False,
+                                                              nr_saves)
+                nr_saves += 1
 
-            # Flus tensorboard
+            # Flush tensorboard
             self.tensorboard.flush()
 
             epoch += 1
 
-        # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
         # save predicted validation images
-
-
         save_imgs = Configuration.get("data_collection.save_imgs")
         if save_imgs:
             save_predictions_as_imgs(val_loader, self.model,
@@ -304,14 +291,21 @@ class Engine:
         file_name = str(epoch_nr) + "_whole_model_serialized.pth"
         torch.save(self.model, os.path.join(Configuration.model_save_folder, file_name))
 
-    def save_checkpoint(self, model, epoch, tl, ta, vl, va, file_name="checkpoint.pth"):
+    def save_checkpoint(self, epoch, tl, ta, vl, va, file_name="checkpoint.pth"):
         Configuration.weights_save_folder = os.path.join(Configuration.output_directory, "weights_checkpoint")
         if not os.path.exists(Configuration.weights_save_folder):
             os.makedirs(Configuration.weights_save_folder)
         file_name = str(epoch) + "_" + file_name
+
+        if self.swa_enabled and epoch >= self.swa_start_epoch:
+            swa_model_state_dict = self.swa_model.state_dict()
+        else:
+            swa_model_state_dict = None
+
         torch.save({
             'epoch': epoch,
-            'model_state_dict': model.state_dict(),
+            'model_state_dict': self.model.state_dict(),
+            'swa_model_state_dict': swa_model_state_dict,
             'optimizer_state_dict': self.optimizer.state_dict(),
             'train_loss': tl,
             'train_accuracy': ta,
@@ -323,7 +317,7 @@ class Engine:
         self.model = torch.load(path)
         self.model.eval()  # Todo: check if needed
 
-    def load_checkpoints(self, path=None, reset_lr=False):
+    def load_checkpoints(self, path=None, reset_lr=False, overwrite_model_with_swa=False):
         """
         Loads a checkpoint.
 
@@ -334,8 +328,19 @@ class Engine:
         Logcreator.info("Loading checkpoint file:", path)
 
         checkpoint = torch.load(path)
-        # Todo: check if to device should be called somewhere
+
         self.model.load_state_dict(checkpoint['model_state_dict'])
+
+        # load swa model if saved in checkpoint
+        if 'swa_model_state_dict' in checkpoint and checkpoint['swa_model_state_dict'] is not None:
+            # Load the swa model
+            self.swa_model.load_state_dict(checkpoint['swa_model_state_dict'])
+        else:
+            self.swa_model = AveragedModel(self.model)
+
+        if overwrite_model_with_swa:
+            # Overwrite the model with the swa model
+            self.model.load_state_dict(self.swa_model.module.state_dict())
 
         initial_lr = self.get_lr()
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
