@@ -8,6 +8,9 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
+MEAN_TRAIN_IMAGES = [0.3151, 0.3108, 0.2732]
+STD_TRAIN_IMAGES = [0.1721, 0.1637, 0.1632]
+
 
 def get_transformations(use_train_statistics=False):
     if use_train_statistics:
