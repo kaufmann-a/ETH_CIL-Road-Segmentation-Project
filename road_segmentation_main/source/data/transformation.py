@@ -9,13 +9,20 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
 
-def get_transformations():
+def get_transformations(use_train_statistics=False):
+    if use_train_statistics:
+        mean = MEAN_TRAIN_IMAGES
+        std = STD_TRAIN_IMAGES
+    else:
+        mean = [0.0, 0.0, 0.0],
+        std = [1.0, 1.0, 1.0],
+
     transform = A.Compose(
         [
             # A.Resize(height=400, width=400), # commented because we generally do not want to resize
             A.Normalize(
-                mean=[0.0, 0.0, 0.0],
-                std=[1.0, 1.0, 1.0],
+                mean=mean,
+                std=std,
                 max_pixel_value=255.0,
             ),
             ToTensorV2(),
