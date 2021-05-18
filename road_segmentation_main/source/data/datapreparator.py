@@ -17,7 +17,7 @@ from source.configuration import Configuration
 from source.data.transformation import get_transformations
 from source.logcreator.logcreator import Logcreator
 from source.data.dataset import RoadSegmentationDataset
-
+from source.exceptions.configurationerror import DatasetError
 
 class DataPreparator(object):
 
@@ -40,13 +40,16 @@ class DataPreparator(object):
         train_set_masks_orig = []
 
         # Read in original imges
-        for orig_folder in collections_folders_orig:
-            train_set_images_orig += [os.path.join(orig_folder, "images", img) for img in
-                                      os.listdir(os.path.join(orig_folder, "images"))
-                                      if img.endswith('.png') or img.endswith('.jpg')]
-            train_set_masks_orig += [os.path.join(orig_folder, "masks", img) for img in
-                                     os.listdir(os.path.join(orig_folder, "masks"))
-                                     if img.endswith('.png') or img.endswith('.jpg')]
+        try:
+            for orig_folder in collections_folders_orig:
+                train_set_images_orig += [os.path.join(orig_folder, "images", img) for img in
+                                          os.listdir(os.path.join(orig_folder, "images"))
+                                          if img.endswith('.png') or img.endswith('.jpg')]
+                train_set_masks_orig += [os.path.join(orig_folder, "masks", img) for img in
+                                         os.listdir(os.path.join(orig_folder, "masks"))
+                                         if img.endswith('.png') or img.endswith('.jpg')]
+        except:
+            raise DatasetError()
 
         #Create mask for validation set
         train_set_images = []
