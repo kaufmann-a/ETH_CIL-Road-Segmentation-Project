@@ -4,6 +4,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
+from torchvision import transforms
 
 from source.helpers.image_cropping import ImageCropper
 from source.helpers.maskconverthelper import mask_to_submission_mask
@@ -130,3 +131,17 @@ class RoadSegmentationDatasetInference(Dataset):
         augmentations = self.transform(image=np.array(self.images[index]))
 
         return augmentations["image"]
+
+
+class SimpleToTensorDataset(Dataset):
+    def __init__(self, image_path_list):
+        self.img_path_list = image_path_list
+        self.transform = transforms.Compose([transforms.ToTensor()])
+
+    def __len__(self):
+        return len(self.img_path_list)
+
+    def __getitem__(self, index):
+        img = Image.open(self.img_path_list[index]).convert("RGB")
+        img = np.array(img)
+        return self.transform(img)
