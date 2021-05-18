@@ -33,10 +33,11 @@ class MyPanel extends Comet.Panel {
       result.metadata = await this.api.experimentMetadata(experimentKey);
       result.parameters = await this.api.experimentParameters(experimentKey);
       result.metrics = await this.api.experimentMetricsSummary(experimentKey);
+      
       //this.print(".", false);
       return result;
     });
-
+   
     const results = await Promise.all(promises);
     //console.log(results);
     const data = results.map(result => {
@@ -52,8 +53,8 @@ class MyPanel extends Comet.Panel {
         val_acc: this.find_metric_max(result.metrics, "val_acc"),
         val_patch_acc: this.find_metric_max(result.metrics, "val_patch_acc"),
         model: this.find_par(result.parameters, "Model"),
-        main_train_dataset: this.find_par(result.parameters, "Main Train-Dataset"),
-        add_train_dataset: this.find_par(result.parameters, "Add Train-Dataset"),
+        train_collections: this.find_par(result.parameters, "Training Collections"),
+        transformations: this.find_par(result.parameters, "Transformations"),
         img_size: this.find_par(result.parameters, "Img size"),
         frg_thrsh: this.find_par(result.parameters, "Foreground Threshold"),
         loss_fun: this.find_par(result.parameters, "Loss-Function"),
@@ -64,17 +65,17 @@ class MyPanel extends Comet.Panel {
     });
 
     this.print("<h5>Summary of all experiments</h5>");
-	console.log(data);
+	//console.log(data);
     new Table(
       data,
-      ["exp", "val_loss", "val_acc", "val_patch_acc", "model", "main_train_dataset", "add_train_dataset", "img_size", "frg_thrsh", "optim", "optim_lr", "lr_sched", "loss_fun" ],
+      ["exp", "val_loss", "val_acc", "val_patch_acc", "model", "train_collections", "transformations", "img_size", "frg_thrsh", "optim", "optim_lr", "lr_sched", "loss_fun" ],
       { exp: "Experiment Id", 
        val_loss: "Val loss", 
        val_acc: "Val acc",  
        val_patch_acc: " Val patch acc", 
        model: "Model",
-       main_train_dataset: "Main Ds",
-       add_train_dataset: "Add Ds",
+       train_collections: "Training Collections",
+       transformations: "Transformations",
        img_size: "Img size",
        frg_thrsh: "Frg Thresh.",
        loss_fun : "Loss function",
