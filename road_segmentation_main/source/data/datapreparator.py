@@ -13,9 +13,10 @@ import os
 import random
 
 from source.configuration import Configuration
+from source.data import transformation
 from source.data.transformation import get_transformations
 from source.logcreator.logcreator import Logcreator
-from source.data.dataset import RoadSegmentationDataset
+from source.data.dataset import RoadSegmentationDataset, SimpleToTensorDataset
 
 
 class DataPreparator(object):
@@ -85,9 +86,8 @@ class DataPreparator(object):
         if len(image_paths_val) == 0:
             Logcreator.warn("No validation files assigned.")
 
-        # test images
-
-        transform = get_transformations()
+        # Create datasets
+        transform = DataPreparator.compute_transformations(image_paths_train)
 
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
@@ -96,6 +96,10 @@ class DataPreparator(object):
         train_ds = RoadSegmentationDataset(image_paths_train, mask_paths_train, foreground_threshold, transform,
                                            crop_size=cropped_image_size,
                                            use_submission_masks=use_submission_masks)
+
+        mean_after, std_after = transformation.get_mean_std(train_ds)
+        Logcreator.info(f"Mean and std after transformations: mean {mean_after}, std {std_after}")
+
         val_ds = RoadSegmentationDataset(image_paths_val, mask_paths_val, foreground_threshold, transform,
                                          crop_size=cropped_image_size,
                                          use_submission_masks=use_submission_masks)
@@ -104,3 +108,17 @@ class DataPreparator(object):
                                           use_submission_masks=use_submission_masks)
 
         return train_ds, val_ds, test_ds
+
+    @staticmethod
+    def compute_transformations(image_paths_train, set_train_norm_statistics=False):
+        if set_train_norm_statistics:
+            simple_dataset = SimpleToTensorDataset(image_paths_train)
+
+            mean, std = transformation.get_mean_std(simple_dataset)
+            Logcreator.info(f"Mean and std on training set: mean {mean}, std {std}")
+
+            transform = transformation.get_transformations(mean=mean, std=std)
+        else:
+            transform = transformation.get_transformations()
+
+        return transform
