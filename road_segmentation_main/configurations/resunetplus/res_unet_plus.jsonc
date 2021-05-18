@@ -5,8 +5,8 @@
         "log_file" : "logs.txt",
     },
     "data_collection" : {
-        "folder" : "D:/temp/data",
-        "collection_names" : ["eth_dataset", "jkfrie", "osm_roadtracer"],
+        "folder" : "D:/temp/training",
+        "collection_names" : ["alessiapacca", "eth_dataset", "jkfrie", "matejsladek", "osm_roadtracer"],
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                "crop_random", "rotate_random"],

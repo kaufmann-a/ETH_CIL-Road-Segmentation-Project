@@ -26,19 +26,18 @@ class DataPreparator(object):
         if not path:
             path = Configuration.get_path('data_collection.folder', False)
 
+        collection_folders = Configuration.get('data_collection.collection_names')
         transform_folders = Configuration.get('data_collection.transform_folders')
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
-        
-        collections_folders_orig = [os.path.join(path, cur_collection, "original") for cur_collection in os.listdir(path)]
+
+        collections_folders_orig = [os.path.join(path, cur_collection, "original") for cur_collection in collection_folders]
         transform_folders = [os.path.join(path, cur_collection, cur_transformation)
                              for cur_transformation in transform_folders
-                             for cur_collection in os.listdir(path)
+                             for cur_collection in collection_folders
                              if os.path.exists(os.path.join(path, cur_collection, cur_transformation))]
 
         train_set_images_orig = []
         train_set_masks_orig = []
-        train_set_images_trans = []
-        train_set_masks_trans = []
 
         # Read in original imges
         for orig_folder in collections_folders_orig:
@@ -69,6 +68,8 @@ class DataPreparator(object):
                 train_set_images.append(train_set_images_orig[idx])
                 train_set_masks.append(train_set_masks_orig[idx])
 
+        train_set_images_trans = []
+        train_set_masks_trans = []
         # Read all transformation images
         for transform_folder in transform_folders:
             train_set_images_trans += [os.path.join(transform_folder, "images", img) for img in
