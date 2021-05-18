@@ -84,9 +84,7 @@ class DataPreparator(object):
 
         # Add transformations to training set
         for idx, image_path in enumerate(train_set_images_trans):
-            Logcreator.info(os.path.normpath(image_path))
-            split_path = os.path.normpath(image_path).split('\\')
-            Logcreator.info(split_path)
+            split_path = os.path.normpath(image_path).split(os.sep)
             img_name = split_path[-1]
             collection = split_path[-4]
             red_list = list(filter(lambda j: img_name in j, list(filter(lambda k: collection in k, val_set_images))))
