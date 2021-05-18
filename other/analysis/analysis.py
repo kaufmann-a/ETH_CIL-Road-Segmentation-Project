@@ -134,7 +134,7 @@ if __name__ == '__main__':
     print("TEST IMAGES")
     dirTestImages = "../../data/test_images/"
     test_list = read_images(dirTestImages)
-    get_mean_std(img_list)
+    get_mean_std(test_list)
 
     print("COMBINED")
     get_mean_std(img_list + test_list)
