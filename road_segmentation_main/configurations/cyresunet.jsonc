@@ -1,0 +1,76 @@
+{
+    "environment": {
+        "name" : "Name of the run - this is just a default config file",
+        "output_path": "trainings",
+        "log_file" : "logs.txt"
+    },
+    "data_collection" : {
+        "folder" : "../data/training",
+        "main_folder_name" : "original",
+        "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
+                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+                               ], // "crop_random", "rotate_random"],
+        "additional_training_folders" : [],
+        "test_images_folder" : "../data/test_images",
+        "test_data_count" : 0,
+        "validation_ratio" : 0.2,
+        "include_val_transforms" : false,
+        "save_imgs" : true,
+    },
+    "training": {
+        "general" : {
+            "batch_size":2,
+            "num_epochs" : 10,
+            "checkpoint_save_interval" : 10,
+            "num_workers" : 1,
+            "shuffle_data" : true,
+            "foreground_threshold" : 0.25,
+            "cropped_image_size" : [400, 400],
+            "submission_loss" : false,
+            "use_submission_masks" : false,
+            "stochastic_weight_averaging" : {
+                "on" : false,
+                "start_epoch" : 20
+            },
+            "log_to_comet" : false,
+        },
+        "model": {
+            "name": "CyResUnet",
+            "in_channels" : 3,
+            "out_channels" : 1,
+            "features" : [64, 128, 256, 512]
+        },
+        "loss_function": "dice_loss",
+        "optimizer": {
+            "name": "adam",
+            "lr": 0.0001
+        },
+        "lr_scheduler": {
+            "name": "stepLR",
+            "stepLR": {
+                "step_size" : 10,
+                "gamma" : 0.1,
+            },
+            "multiStepLR": {
+                "milestones" : [15,20],
+                "gamma" : 0.1,
+            }
+        },
+    },
+    "inference" : {
+        "general" : {
+            "foreground_threshold" : 0.25,
+            "use_original_image_size" : false,
+            "enable_postprocessing" : true,
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":2,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        }
+    }
+}
