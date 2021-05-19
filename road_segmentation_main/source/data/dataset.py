@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 
 from source.helpers.image_cropping import ImageCropper
 from source.helpers.maskconverthelper import mask_to_submission_mask
+from source.logcreator.logcreator import Logcreator
 
 
 class RoadSegmentationDataset(Dataset):
@@ -23,7 +24,6 @@ class RoadSegmentationDataset(Dataset):
         # preload images into memory to not read from drive everytime
         self.images_preloaded = list()
         self.masks_preloaded = list()
-
 
         for image_path, mask_path in zip(self.images, self.masks):
             image = Image.open(image_path).convert("RGB")
@@ -42,6 +42,7 @@ class RoadSegmentationDataset(Dataset):
 
             # set to one since we preload all sub-patches
             self.nr_segments_per_image = 1
+        Logcreator.info("Nr. of cropped image in total" + str(len(self.images_preloaded)))
 
     def __len__(self):
 
