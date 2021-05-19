@@ -74,4 +74,6 @@ After downloading the folders from OneDrive, rename them as follows: "github_ale
 There are two possible approaches for including them:
 1. Train only on the additional data, then use these pretrained weights (change param "main_folder_name" and "transform_folders")
 2. Train on our data + additional data together, then use the additional folder in "additional_training_folders". For this, all images need to be of the same size. "github_jkf" is 608x608, so you can run the script preprocessing/crop_images.py
+
+To use the images from "jkfrie", run the following script first: `data/rename_masks.sh`. This renames the masks such that images and masks share the same names.
 ``
