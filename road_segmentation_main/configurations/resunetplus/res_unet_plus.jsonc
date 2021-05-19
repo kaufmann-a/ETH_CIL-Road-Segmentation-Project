@@ -1,7 +1,7 @@
 {
     "environment": {
         "name" : "Basic config for res unet plus plus",
-        "output_path": "/cluster/scratch/ankaufmann/trainings",
+        "output_path": "getenv('OUTPUT_DIR')",
         "log_file" : "logs.txt",
     },
     "data_collection" : {
@@ -12,7 +12,7 @@
                                "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
         "validation_ratio" : 0.2,
-        "include_val_transforms" : true,
+        "include_val_transforms" : false,
         "save_imgs" : false,
     },
     "training": {
