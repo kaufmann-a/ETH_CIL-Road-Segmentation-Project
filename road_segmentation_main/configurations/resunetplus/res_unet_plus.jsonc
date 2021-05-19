@@ -6,10 +6,8 @@
     },
     "data_collection" : {
         "folder" : "getenv('DATA_COLLECTION_DIR')",
-        "collection_names" : ["alessiapacca", "eth_dataset", "jkfrie", "matejsladek", "osm_roadtracer"],
-        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
-                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
-                               "crop_random", "rotate_random"],
+        "collection_names" : ["osm_roadtracer"],
+        "transform_folders" : [],
         "test_images_folder" : "../data/test_images",
         "validation_ratio" : 0.2,
         "include_val_transforms" : false,
@@ -18,8 +16,8 @@
     "training": {
         "general" : {
             "batch_size": 8,
-            "num_epochs" : 200,
-            "checkpoint_save_interval" : 8,
+            "num_epochs" : 50,
+            "checkpoint_save_interval" : 5,
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
@@ -35,19 +33,19 @@
         "model": {
             "name": "ResUnetPlusPlus",
         },
-        "loss_function": "bce_with_logits_loss",
+        "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
             "lr": 0.0001
         },
         "lr_scheduler": {
-            "name": "stepLR",
+            "name": "multiStepLR",
             "stepLR": {
                 "step_size" : 15,
                 "gamma" : 0.9,
             },
             "multiStepLR": {
-                "milestones" : [10,40],
+                "milestones" : [10,20,30,40],
                 "gamma" : 0.1,
             }
         },
