@@ -8,6 +8,7 @@ Thrown if configuration is missing or invalid.
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
+from source.logcreator.logcreator import Logcreator
 
 class ConfigurationError(Exception):
 
@@ -18,3 +19,9 @@ class ConfigurationError(Exception):
             super().__init__("Invalid or missing configuration for key '%s'." % key)
         else:
             super().__init__("Configuration missing or not initialized.")
+
+
+class DatasetError(Exception):
+    def __init__(self):
+        Logcreator.error("One or multiple datasets not existing")
+        super().__init__("One or multiple datasets not existing")

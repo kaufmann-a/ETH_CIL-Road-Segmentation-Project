@@ -78,7 +78,7 @@ class Engine:
         return self.optimizer.param_groups[0]['lr']
 
     def train(self, epoch_nr=0):
-        training_data, validation_data, test_data = DataPreparator.load()
+        training_data, validation_data = DataPreparator.load()
 
         # Load training parameters from config file
         train_parms = Configuration.get('training.general')
@@ -88,7 +88,6 @@ class Engine:
         val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
                                 pin_memory=True,
                                 shuffle=False)
-        self.test_data = test_data
 
         epoch = 0
         if epoch_nr != 0:  # Check if continued training

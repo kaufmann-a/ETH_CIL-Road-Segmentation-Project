@@ -1,0 +1,71 @@
+{
+    "environment": {
+        "name" : "Basic config for res unet plus plus",
+        "output_path": "getenv('OUTPUT_DIR')",
+        "log_file" : "logs.txt",
+    },
+    "data_collection" : {
+        "folder" : "getenv('DATA_COLLECTION_DIR')",
+        "collection_names" : ["alessiapacca", "eth_dataset", "jkfrie", "matejsladek", "osm_roadtracer"],
+        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
+                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+                               "crop_random", "rotate_random"],
+        "test_images_folder" : "../data/test_images",
+        "validation_ratio" : 0.2,
+        "include_val_transforms" : false,
+        "save_imgs" : false,
+    },
+    "training": {
+        "general" : {
+            "batch_size": 8,
+            "num_epochs" : 200,
+            "checkpoint_save_interval" : 8,
+            "num_workers" : 2,
+            "shuffle_data" : true,
+            "foreground_threshold" : 0.25,
+            "cropped_image_size" : [400, 400],
+            "submission_loss" : false,
+            "use_submission_masks" : false,
+            "stochastic_weight_averaging" : {
+                "on" : false,
+                "start_epoch" : 40
+            },
+            "log_to_comet" : true,
+        },
+        "model": {
+            "name": "ResUnetPlusPlus",
+        },
+        "loss_function": "bce_with_logits_loss",
+        "optimizer": {
+            "name": "adam",
+            "lr": 0.0001
+        },
+        "lr_scheduler": {
+            "name": "stepLR",
+            "stepLR": {
+                "step_size" : 15,
+                "gamma" : 0.9,
+            },
+            "multiStepLR": {
+                "milestones" : [10,40],
+                "gamma" : 0.1,
+            }
+        },
+    },
+    "inference" : {
+        "general" : {
+            "foreground_threshold" : 0.25,
+            "use_original_image_size" : false,
+            "enable_postprocessing" : true,
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":2,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        }
+    }
+}

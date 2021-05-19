@@ -49,9 +49,9 @@ rotate_random = A.Compose([A.Rotate(always_apply=True)])
 # TODO is transformations used?
 transformations = [flip_hor, flip_ver]
 
-IMAGE_DIR = "../data/training/original/images"
-MASK_DIR = "../data/training/original/masks"
-DIR = "../data/training"
+IMAGE_DIR = "D:/OneDrive/GMapsImages/eth_dataset/original/images"
+MASK_DIR = "D:/OneDrive/GMapsImages/eth_dataset/original/masks"
+DIR = "D:/GitHub/cil-road-segmentation/data/training/eth_dataset"
 
 
 def transform_and_save(image, mask, name, transform):

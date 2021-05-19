@@ -30,8 +30,8 @@ def init_comet():
         data_collection_params = Configuration.get('data_collection')
 
         experiment.log_parameter("Model", parameters.model.name)
-        experiment.log_parameter("Main Train-Dataset", data_collection_params.main_folder_name)
-        experiment.log_parameter("Add Train-Dataset", data_collection_params.additional_training_folders)
+        experiment.log_parameter("Training Collections", data_collection_params.collection_names)
+        experiment.log_parameter("Transformations", data_collection_params.transform_folders)
         experiment.log_parameter("Img size", parameters.general.cropped_image_size)
         experiment.log_parameter("Foreground Threshold", parameters.general.foreground_threshold)
         experiment.log_parameter("Augmentations", data_collection_params.transform_folders)
