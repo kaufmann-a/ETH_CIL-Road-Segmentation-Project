@@ -32,8 +32,9 @@ Software Versions used for this Project (Proposal by Andreas):
 3. Edit the configuration file to your needs
     - `vim ./configurations/default.jsonc`
 4. Run job on GPU
-   - `bsub -n 1 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
+   - shorter run: `bsub -n 2 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
         - change the configuration file name if you use a different one `--configuration ./configurations/default.jsonc`
+   - longer run with larger dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
    - check job status `bbjobs` 
    - peek stdout log `bpeek`
 5. Find your training results with `ls ./trainings/`
