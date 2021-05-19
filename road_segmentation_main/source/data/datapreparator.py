@@ -91,6 +91,10 @@ class DataPreparator(object):
             if len(red_list) == 0:
                 train_set_images.append(image_path)
                 train_set_masks.append(train_set_masks_trans[idx])
+            else:
+                if Configuration.get('data_collection.include_val_transforms'):
+                    val_set_images.append(image_path)
+                    val_set_masks.append(train_set_masks_trans[idx])
 
         Logcreator.info("Trainingset contains " + str(len(train_set_images)) + " images")
         Logcreator.info("Validationset constains " + str(len(val_set_images)) + " iamges")
