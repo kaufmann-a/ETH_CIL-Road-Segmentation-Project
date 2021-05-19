@@ -4,6 +4,7 @@
 
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
 
 
 class ResidualConv(nn.Module):
@@ -141,3 +142,29 @@ class AttentionBlock(nn.Module):
         out = self.conv_encoder(x1) + self.conv_decoder(x2)
         out = self.conv_attn(out)
         return out * x2
+
+
+class PPM(nn.Module):
+    """
+    Pyramid Pooling Module - PPM
+    Based on: https://github.com/hszhao/semseg/blob/master/model/pspnet.py
+    """
+
+    def __init__(self, in_dim, reduction_dim, bins):
+        super(PPM, self).__init__()
+        self.features = []
+        for bin in bins:
+            self.features.append(nn.Sequential(
+                nn.AdaptiveAvgPool2d(bin),
+                nn.Conv2d(in_dim, reduction_dim, kernel_size=1, bias=False),
+                nn.BatchNorm2d(reduction_dim),
+                nn.ReLU(inplace=True)
+            ))
+        self.features = nn.ModuleList(self.features)
+
+    def forward(self, x):
+        x_size = x.size()
+        out = [x]
+        for f in self.features:
+            out.append(F.interpolate(f(x), x_size[2:], mode='bilinear', align_corners=True))
+        return torch.cat(out, 1)
