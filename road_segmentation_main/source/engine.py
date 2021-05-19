@@ -35,6 +35,7 @@ from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
 from source.scheduler.lr_schedulerfactory import LRSchedulerFactory
+import source.helpers.imagesavehelper as imagesavehelper
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -67,7 +68,7 @@ class Engine:
         #          anneal_strategy="linear", anneal_epochs=5, swa_lr=0.05)
 
         # Init comet and tensorboard
-        self.experiment = metricslogging.init_comet()
+        self.comet = metricslogging.init_comet()
         self.tensorboard = metricslogging.init_tensorboard()
 
         # Print model summary
@@ -86,55 +87,53 @@ class Engine:
                                   pin_memory=True, shuffle=train_parms.shuffle_data)
         val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
                                 pin_memory=True,
-                                shuffle=False)  # TODO: check what shuffle exactly does and how to use it
+                                shuffle=False)
         self.test_data = test_data
 
         epoch = 0
         if epoch_nr != 0:  # Check if continued training
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
+        nr_saves = 0
         while epoch < train_parms.num_epochs:
             Logcreator.info(f"Epoch {epoch}, lr: {self.get_lr():.3e}, lr-step: {self.lr_scheduler.last_epoch}")
 
             train_metrics = self.train_step(train_loader, epoch)
             val_metrics = self.evaluate(self.model, val_loader, epoch)
 
-            # save model
-            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
-                    epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
-                self.save_model(epoch)
-                self.save_checkpoint(self.model, epoch, train_metrics['train_loss'], train_metrics['train_acc'],
-                                     val_metrics['val_loss'], val_metrics['val_acc'])
-
             # swa model
             if self.swa_enabled and epoch >= self.swa_start_epoch:
                 self.swa_model.update_parameters(self.model)
                 # update batch normalization statistics for the swa_model
-                torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
+                with torch.no_grad():
+                    torch.optim.swa_utils.update_bn(tqdm(train_loader, desc="SWA BN update", file=sys.stdout),
+                                                    self.swa_model, device=DEVICE)
                 # evaluate on validation set
                 swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch,
                                                 log_model_name="SWA-", log_postfix_path='val_swa')
 
-                # save model
-                if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
-                        epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
-                    if self.swa_enabled and epoch >= self.swa_start_epoch:
-                        # update batch normalization statistics for the swa_model at the end
-                        torch.optim.swa_utils.update_bn(train_loader, self.swa_model, device=DEVICE)
-                        # save swa model separately
-                        self.save_checkpoint(self.swa_model, epoch, train_metrics['train_loss'],
-                                             train_metrics['train_acc'], swa_val_metrics['val_loss'],
-                                             swa_val_metrics['val_acc'], file_name="swa_checkpoint.pth")
+            # save model
+            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
+                    epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
+                # self.save_model(epoch)
+                self.save_checkpoint(epoch, train_metrics['train_loss'], train_metrics['train_acc'],
+                                     val_metrics['val_loss'], val_metrics['val_acc'])
+                if self.comet is not None:
+                    imagesavehelper.save_predictions_to_comet(self,
+                                                              val_loader,
+                                                              epoch,
+                                                              Configuration.get(
+                                                                  "inference.general.foreground_threshold"),
+                                                              DEVICE, False,
+                                                              nr_saves)
+                nr_saves += 1
 
-            # Flus tensorboard
+            # Flush tensorboard
             self.tensorboard.flush()
 
             epoch += 1
 
-        # TODO: Maybe save the images also in tensorbaord log (every other epoch?)
         # save predicted validation images
-
-
         save_imgs = Configuration.get("data_collection.save_imgs")
         if save_imgs:
             save_predictions_as_imgs(val_loader, self.model,
@@ -156,7 +155,7 @@ class Engine:
         total_loss = 0.
 
         # progressbar
-        loop = tqdm(data_loader)
+        loop = tqdm(data_loader, file=sys.stdout, colour='green')
 
         # for all batches
         for batch_idx, (data, targets) in enumerate(loop):
@@ -194,9 +193,9 @@ class Engine:
 
         # compute epoch scores
         train_loss = total_loss / len(data_loader)
-        train_acc = accuracy.compute()
-        train_patch_acc = patch_accuracy.compute()
-        train_iou_score = iou.compute()
+        train_acc = accuracy.compute().item()
+        train_patch_acc = patch_accuracy.compute().item()
+        train_iou_score = iou.compute().item()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix='train')
@@ -206,11 +205,11 @@ class Engine:
         self.tensorboard.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
         self.tensorboard.add_scalar("IoU/train", train_iou_score, epoch)
         # Comet
-        if self.experiment is not None:
-            self.experiment.log_metric('train_loss', train_loss)
-            self.experiment.log_metric('train_acc', train_acc)
-            self.experiment.log_metric('train_patch_acc', train_patch_acc)
-            self.experiment.log_metric('train_iou_score', train_iou_score)
+        if self.comet is not None:
+            self.comet.log_metric('train_loss', train_loss, epoch=epoch)
+            self.comet.log_metric('train_acc', train_acc, epoch=epoch)
+            self.comet.log_metric('train_patch_acc', train_patch_acc, epoch=epoch)
+            self.comet.log_metric('train_iou_score', train_iou_score, epoch=epoch)
         # Logfile
         Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                         f", accuracy: {train_acc:.5f}",
@@ -252,9 +251,9 @@ class Engine:
 
         # compute epoch scores
         val_loss = total_loss / len(data_loader)
-        val_acc = accuracy.compute()
-        val_patch_acc = patch_accuracy.compute()
-        val_iou_score = iou.compute()
+        val_acc = accuracy.compute().item()
+        val_patch_acc = patch_accuracy.compute().item()
+        val_iou_score = iou.compute().item()
 
         # log scores
         multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix=log_postfix_path)
@@ -264,11 +263,11 @@ class Engine:
         self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
         self.tensorboard.add_scalar("IoU/val", val_iou_score, epoch)
         # Comet
-        if self.experiment is not None:
-            self.experiment.log_metric(log_postfix_path + '_loss', val_loss)
-            self.experiment.log_metric(log_postfix_path + '_acc', val_acc)
-            self.experiment.log_metric(log_postfix_path + '_patch_acc', val_patch_acc)
-            self.experiment.log_metric('val_iou_score', val_iou_score)
+        if self.comet is not None:
+            self.comet.log_metric(log_postfix_path + '_loss', val_loss, epoch=epoch)
+            self.comet.log_metric(log_postfix_path + '_acc', val_acc, epoch=epoch)
+            self.comet.log_metric(log_postfix_path + '_patch_acc', val_patch_acc, epoch=epoch)
+            self.comet.log_metric('val_iou_score', val_iou_score, epoch=epoch)
         # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
@@ -281,12 +280,9 @@ class Engine:
     def get_metrics(self):
         multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
         foreground_threshold = Configuration.get('training.general.foreground_threshold')
-        accuracy = torchmetrics.Accuracy(threshold=foreground_threshold)
-        accuracy.to(DEVICE)
-        patch_accuracy = PatchAccuracy(threshold=foreground_threshold)
-        patch_accuracy.to(DEVICE)
-        iou = IoU(num_classes=2, threshold=foreground_threshold)
-        iou.to(DEVICE)
+        accuracy = torchmetrics.Accuracy(threshold=foreground_threshold).to(DEVICE)
+        patch_accuracy = PatchAccuracy(threshold=foreground_threshold).to(DEVICE)
+        iou = IoU(num_classes=2, threshold=foreground_threshold).to(DEVICE)
         return accuracy, iou, multi_accuracy_metric, patch_accuracy
 
     def save_model(self, epoch_nr):
@@ -297,14 +293,21 @@ class Engine:
         file_name = str(epoch_nr) + "_whole_model_serialized.pth"
         torch.save(self.model, os.path.join(Configuration.model_save_folder, file_name))
 
-    def save_checkpoint(self, model, epoch, tl, ta, vl, va, file_name="checkpoint.pth"):
+    def save_checkpoint(self, epoch, tl, ta, vl, va, file_name="checkpoint.pth"):
         Configuration.weights_save_folder = os.path.join(Configuration.output_directory, "weights_checkpoint")
         if not os.path.exists(Configuration.weights_save_folder):
             os.makedirs(Configuration.weights_save_folder)
         file_name = str(epoch) + "_" + file_name
+
+        if self.swa_enabled and epoch >= self.swa_start_epoch:
+            swa_model_state_dict = self.swa_model.state_dict()
+        else:
+            swa_model_state_dict = None
+
         torch.save({
             'epoch': epoch,
-            'model_state_dict': model.state_dict(),
+            'model_state_dict': self.model.state_dict(),
+            'swa_model_state_dict': swa_model_state_dict,
             'optimizer_state_dict': self.optimizer.state_dict(),
             'train_loss': tl,
             'train_accuracy': ta,
@@ -314,9 +317,8 @@ class Engine:
 
     def load_model(self, path=None):
         self.model = torch.load(path)
-        self.model.eval()  # Todo: check if needed
 
-    def load_checkpoints(self, path=None, reset_lr=False):
+    def load_checkpoints(self, path=None, reset_lr=False, overwrite_model_with_swa=False):
         """
         Loads a checkpoint.
 
@@ -327,8 +329,19 @@ class Engine:
         Logcreator.info("Loading checkpoint file:", path)
 
         checkpoint = torch.load(path)
-        # Todo: check if to device should be called somewhere
+
         self.model.load_state_dict(checkpoint['model_state_dict'])
+
+        # load swa model if saved in checkpoint
+        if 'swa_model_state_dict' in checkpoint and checkpoint['swa_model_state_dict'] is not None:
+            # Load the swa model
+            self.swa_model.load_state_dict(checkpoint['swa_model_state_dict'])
+        else:
+            self.swa_model = AveragedModel(self.model)
+
+        if overwrite_model_with_swa:
+            # Overwrite the model with the swa model
+            self.model.load_state_dict(self.swa_model.module.state_dict())
 
         initial_lr = self.get_lr()
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

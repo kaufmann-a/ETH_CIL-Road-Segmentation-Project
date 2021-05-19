@@ -23,13 +23,28 @@ def mask_to_submission_strings(image, image_nr, patch_size=16, foreground_thresh
             yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
 
+def images_to_submission_file(out_image_list, image_number_list, patch_size, foreground_threshold, folder, file_prefix):
+    file_path = os.path.join(folder, file_prefix + 'submission.csv')
+    with open(file_path, 'w') as f:
+        f.write('id,prediction\n')
+
+        for image_nr_list_idx, out_image in enumerate(out_image_list):
+            # and then convert mask to string
+            f.writelines('{}\n'.format(s)
+                         for s in mask_to_submission_strings(image=out_image,
+                                                             patch_size=patch_size,
+                                                             image_nr=image_number_list[image_nr_list_idx],
+                                                             foreground_threshold=foreground_threshold))
+
+
 # TODO: Handle if morphological operations aren't defined.
-def runpostprocessing(preds_list, folder, postprocessingparams, image_number_list, patch_size, foreground_threshold):
-    folder_postprocessed = os.path.join(folder, "pred-masks-postprocessed")
+def run_post_processing(preds_list, folder, postprocessing_params, image_number_list, patch_size, foreground_threshold,
+                        path_prefix):
+    folder_postprocessed = os.path.join(folder, path_prefix + "pred-masks-postprocessed")
     if not os.path.exists(folder_postprocessed):
         os.makedirs(folder_postprocessed)
 
-    with open(os.path.join(folder, 'postprocessed_submission.csv'), 'w') as f:
+    with open(os.path.join(folder, path_prefix + 'postprocessed_submission.csv'), 'w') as f:
         f.write('id,prediction\n')
         image_nr_list_idx = 0
 
@@ -37,7 +52,7 @@ def runpostprocessing(preds_list, folder, postprocessingparams, image_number_lis
             preds = preds_list[i]
             preds = preds.cpu().numpy()
             preds = preds.astype('uint8')
-            postprocessed_img = postprocess(preds, postprocessingparams.morphology)
+            postprocessed_img = postprocess(preds, postprocessing_params.morphology)
             cv2.imwrite(f"{folder_postprocessed}/pred_{image_number_list[i]}.png", 255 * postprocessed_img)
             postprocessed_img = torch.tensor(postprocessed_img)
             postprocessed_img = postprocessed_img.to(torch.double)

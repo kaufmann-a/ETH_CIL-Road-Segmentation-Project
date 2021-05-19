@@ -1,9 +1,13 @@
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
+import sys
+
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
+from torchvision import transforms
+from tqdm import tqdm
 
 from source.helpers.image_cropping import ImageCropper
 from source.helpers.maskconverthelper import mask_to_submission_mask
@@ -37,7 +41,8 @@ class RoadSegmentationDataset(Dataset):
         self.masks_preloaded = list()
 
         if self.preload_images:
-            for image_path, mask_path in zip(self.images, self.masks):
+            loop = tqdm(zip(self.images, self.masks), total=len(self.images), file=sys.stdout, desc="Preload images")
+            for image_path, mask_path in loop:
                 image = Image.open(image_path).convert("RGB")
                 mask = Image.open(mask_path).convert("L")
 
@@ -130,3 +135,17 @@ class RoadSegmentationDatasetInference(Dataset):
         augmentations = self.transform(image=np.array(self.images[index]))
 
         return augmentations["image"]
+
+
+class SimpleToTensorDataset(Dataset):
+    def __init__(self, image_path_list):
+        self.img_path_list = image_path_list
+        self.transform = transforms.Compose([transforms.ToTensor()])
+
+    def __len__(self):
+        return len(self.img_path_list)
+
+    def __getitem__(self, index):
+        img = Image.open(self.img_path_list[index]).convert("RGB")
+        img = np.array(img)
+        return self.transform(img)

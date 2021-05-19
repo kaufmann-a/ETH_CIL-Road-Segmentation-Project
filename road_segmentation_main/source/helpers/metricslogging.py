@@ -25,7 +25,21 @@ def init_comet():
         )
         experiment.set_name(os.path.basename(os.path.normpath(Configuration.output_directory)))
         experiment.add_tag(Configuration.get('training.model.name'))
-        experiment.log_parameters(Configuration.get('training'))
+
+        parameters = Configuration.get('training')
+        data_collection_params = Configuration.get('data_collection')
+
+        experiment.log_parameter("Model", parameters.model.name)
+        experiment.log_parameter("Main Train-Dataset", data_collection_params.main_folder_name)
+        experiment.log_parameter("Add Train-Dataset", data_collection_params.additional_training_folders)
+        experiment.log_parameter("Img size", parameters.general.cropped_image_size)
+        experiment.log_parameter("Foreground Threshold", parameters.general.foreground_threshold)
+        experiment.log_parameter("Augmentations", data_collection_params.transform_folders)
+        experiment.log_parameter("Loss-Function", parameters.loss_function)
+        experiment.log_parameter("Optimizer", parameters.optimizer.name)
+        experiment.log_parameter("Optimizer-LR", parameters.optimizer.lr)
+        experiment.log_parameter("lr-sched.", parameters.lr_scheduler.name)
+
         return experiment
     except ValueError:
         Logcreator.error("Comet initialization was not successful, the following information was missing:")
