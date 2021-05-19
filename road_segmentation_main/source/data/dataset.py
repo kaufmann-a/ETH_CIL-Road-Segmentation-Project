@@ -30,8 +30,9 @@ class RoadSegmentationDataset(Dataset):
         self.masks_preloaded = list()
 
 
-        loop = tqdm(zip(self.images, self.masks), total=len(self.images), file=sys.stdout, desc="Preload images")
+
         for image_path, mask_path in zip(self.images, self.masks):
+            loop = tqdm(zip(self.images, self.masks), total=len(self.images), file=sys.stdout, desc="Preload images")
             image = Image.open(image_path).convert("RGB")
             mask = Image.open(mask_path).convert("L")
 
