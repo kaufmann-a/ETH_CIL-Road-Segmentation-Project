@@ -76,11 +76,14 @@ class Configuration(object):
                     raise EnvironmentError(
                         "Invalid key"
                     )
+                if isinstance(value, str):
+                    if 'getenv' in value:
+                        return eval('os.' + value)
                 return value
             except:
                 if not optional:
                     raise EnvironmentError(
-                        "Invalid key"
+                        "Invalid key or wrong key specification"
                     )
         return default
 
