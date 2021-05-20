@@ -13,3 +13,4 @@ tensorboard~=2.4
 hiddenlayer~=0.3
 ipython~=7.22.0
 comet-ml~=3.9.1
+focal-loss-torch~=0.0.7
