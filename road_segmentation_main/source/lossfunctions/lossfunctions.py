@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-
+from torch.autograd import Function
 
 class DiceBCELoss(nn.Module):
     """
@@ -55,6 +55,40 @@ class DiceLoss(nn.Module):
         dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
 
         return 1 - dice
+
+
+class Focal_Tversky(nn.Module):
+    """
+    Based on: https://github.com/shruti-jadon/Semantic-Segmentation-Loss-Functions/blob/master/loss_functions.py
+    """
+
+    def __init__(self, weight=None, size_average=True):
+        super(Focal_Tversky, self).__init__()
+
+    def tversky_index(self, y_true, y_pred):
+        smooth = 1
+        y_true_pos = torch.flatten(y_true)
+        y_pred_pos = torch.flatten(y_pred)
+        true_pos = torch.sum(y_true_pos * y_pred_pos)
+        false_neg = torch.sum(y_true_pos * (1 - y_pred_pos))
+        false_pos = torch.sum((1 - y_true_pos) * y_pred_pos)
+        alpha = 0.7
+        return (true_pos + smooth) / (true_pos + alpha * false_neg + (
+                    1 - alpha) * false_pos + smooth)
+
+
+    def forward(self, inputs, targets, smooth=1):
+
+        inputs = torch.sigmoid(inputs)
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        pt_1 = self.tversky_index(inputs, targets)
+        gamma = 0.75
+        return torch.pow((1 - pt_1), gamma)
+
 
 #https://github.com/Hsuxu/Loss_ToolBox-PyTorch/blob/master/FocalLoss/focal_loss.py
 class BinaryFocalLoss(nn.Module):
@@ -115,3 +149,4 @@ class BinaryFocalLoss(nn.Module):
         loss = pos_loss + neg_loss
 
         return loss
+
