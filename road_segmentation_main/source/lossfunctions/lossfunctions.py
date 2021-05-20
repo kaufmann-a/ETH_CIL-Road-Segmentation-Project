@@ -57,13 +57,13 @@ class DiceLoss(nn.Module):
         return 1 - dice
 
 
-class Focal_Tversky(nn.Module):
+class FocalTverskyLoss(nn.Module):
     """
     Based on: https://github.com/shruti-jadon/Semantic-Segmentation-Loss-Functions/blob/master/loss_functions.py
     """
 
     def __init__(self, weight=None, size_average=True):
-        super(Focal_Tversky, self).__init__()
+        super(FocalTverskyLoss, self).__init__()
 
     def tversky_index(self, y_true, y_pred):
         smooth = 1
@@ -76,6 +76,50 @@ class Focal_Tversky(nn.Module):
         return (true_pos + smooth) / (true_pos + alpha * false_neg + (
                     1 - alpha) * false_pos + smooth)
 
+    def forward(self, inputs, targets, smooth=1):
+
+        inputs = torch.sigmoid(inputs)
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        pt_1 = self.tversky_index(targets, inputs)
+        gamma = 0.75
+        return torch.pow((1 - pt_1), gamma)
+
+
+class LogCoshDiceLoss(nn.Module):
+    """
+    Based on: https://github.com/shruti-jadon/Semantic-Segmentation-Loss-Functions/blob/master/loss_functions.py
+    """
+
+    def __init__(self, weight=None, size_average=True):
+        super(LogCoshDiceLoss, self).__init__()
+
+    def generalized_dice_coefficient(self, y_true, y_pred):
+        smooth = 1.
+        y_true_f = torch.flatten(y_true)
+        y_pred_f = torch.flatten(y_pred)
+        intersection = torch.sum(y_true_f * y_pred_f)
+        score = (2. * intersection + smooth) / (
+                    torch.sum(y_true_f) + torch.sum(y_pred_f) + smooth)
+        return score
+
+    def dice_loss(self, y_true, y_pred):
+        loss = 1 - self.generalized_dice_coefficient(y_true, y_pred)
+        return loss
+
+    def tversky_index(self, y_true, y_pred):
+        smooth = 1
+        y_true_pos = torch.flatten(y_true)
+        y_pred_pos = torch.flatten(y_pred)
+        true_pos = torch.sum(y_true_pos * y_pred_pos)
+        false_neg = torch.sum(y_true_pos * (1 - y_pred_pos))
+        false_pos = torch.sum((1 - y_true_pos) * y_pred_pos)
+        alpha = 0.7
+        return (true_pos + smooth) / (true_pos + alpha * false_neg + (
+                    1 - alpha) * false_pos + smooth)
 
     def forward(self, inputs, targets, smooth=1):
 
@@ -85,9 +129,8 @@ class Focal_Tversky(nn.Module):
         inputs = inputs.view(-1)
         targets = targets.view(-1)
 
-        pt_1 = self.tversky_index(inputs, targets)
-        gamma = 0.75
-        return torch.pow((1 - pt_1), gamma)
+        x = self.dice_loss(targets, inputs)
+        return torch.log((torch.exp(x) + torch.exp(-1*x)) / 2.0)
 
 
 #https://github.com/Hsuxu/Loss_ToolBox-PyTorch/blob/master/FocalLoss/focal_loss.py
@@ -149,4 +192,3 @@ class BinaryFocalLoss(nn.Module):
         loss = pos_loss + neg_loss
 
         return loss
-
