@@ -7,8 +7,7 @@
     "data_collection" : {
         "folder" : "../data/training",
 		"collection_names" : ["eth_dataset"],
-        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
-                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+        "transform_folders" : ["original",
                                ], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
         "validation_ratio" : 0.2,
@@ -17,9 +16,9 @@
     },
     "training": {
         "general" : {
-            "batch_size": 8,
-            "num_epochs" : 50,
-            "checkpoint_save_interval" : 25,
+            "batch_size": 2,
+            "num_epochs" : 1,
+            "checkpoint_save_interval" : 1,
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
@@ -38,7 +37,7 @@
             "out_channels" : 1,
             "features" : [64, 128, 256, 512]
         },
-        "loss_function": "bce_with_logits_loss",
+        "loss_function": "binary_focal_loss",
         "optimizer": {
             "name": "adam",
             "lr": 0.001
