@@ -1,4 +1,6 @@
 import os
+import random
+import sys
 
 import albumentations as A
 import cv2
@@ -46,58 +48,73 @@ flip_ver_90 = A.Compose([A.VerticalFlip(always_apply=True),
 crop_random = A.Compose([A.RandomCrop(always_apply=True, width=400, height=400)])
 rotate_random = A.Compose([A.Rotate(always_apply=True)])
 
-# TODO is transformations used?
-transformations = [flip_hor, flip_ver]
 
-IMAGE_DIR = "D:/OneDrive/GMapsImages/eth_dataset/original/images"
-MASK_DIR = "D:/OneDrive/GMapsImages/eth_dataset/original/masks"
-DIR = "D:/GitHub/cil-road-segmentation/data/training/eth_dataset"
-
-
-def transform_and_save(image, mask, name, transform):
+def transform_and_save(image, mask, name, transform, directory, filename):
     transformed = transform(image=image, mask=mask)
-    aug_filename = filename
 
-    aug_image_dir = os.path.join(DIR, name, "images")
-    aug_mask_dir = os.path.join(DIR, name, "masks")
+    aug_image_dir = os.path.join(directory, name, "images")
+    aug_mask_dir = os.path.join(directory, name, "masks")
 
     if not os.path.exists(aug_image_dir):
-        os.makedirs(os.path.join(DIR, name, "images"))
+        os.makedirs(aug_image_dir)
     if not os.path.exists(aug_mask_dir):
-        os.makedirs(os.path.join(DIR, name, "masks"))
+        os.makedirs(aug_mask_dir)
 
     cv2.imwrite(
-        filename=os.path.join(aug_image_dir, aug_filename),
+        filename=os.path.join(aug_image_dir, filename),
         img=transformed["image"],
     )
 
     cv2.imwrite(
-        filename=os.path.join(aug_mask_dir, aug_filename),
+        filename=os.path.join(aug_mask_dir, filename),
         img=transformed["mask"],
     )
 
 
-if __name__ == '__main__':
-    for file in os.listdir(IMAGE_DIR):
+def apply_all_transformations(directory):
+    image_dir = os.path.join(directory, "original", "images")
+    mask_dir = os.path.join(directory, "original", "masks")
+
+    for file in os.listdir(image_dir):
         filename = os.fsdecode(file)
-        if filename.endswith(".png"):
-            image = cv2.imread(os.path.join(IMAGE_DIR, filename))
-            mask = cv2.imread(os.path.join(MASK_DIR, filename))
+        if filename.endswith(".png") or filename.endswith(".jpg"):
+            image = cv2.imread(os.path.join(image_dir, filename))
+            mask = cv2.imread(os.path.join(mask_dir, filename))
             print(f"{filename}")
 
             # apply the transformations
             # rotations
-            transform_and_save(image, mask, name="rotate_90", transform=rotate_90)
-            transform_and_save(image, mask, name="rotate_180", transform=rotate_180)
-            transform_and_save(image, mask, name="rotate_270", transform=rotate_270)
+            transform_and_save(image, mask, name="rotate_90", transform=rotate_90, directory=directory, filename=filename)
+            transform_and_save(image, mask, name="rotate_180", transform=rotate_180, directory=directory, filename=filename)
+            transform_and_save(image, mask, name="rotate_270", transform=rotate_270, directory=directory, filename=filename)
 
             # flipped image plus rotations
-            transform_and_save(image, mask, name="flip_hor", transform=flip_hor)
-            transform_and_save(image, mask, name="flip_hor_90", transform=flip_hor_90)
-            transform_and_save(image, mask, name="flip_ver", transform=flip_ver)  # flipped + 180
-            transform_and_save(image, mask, name="flip_ver_90", transform=flip_ver_90)  # flipped + 270
+            transform_and_save(image, mask, name="flip_hor", transform=flip_hor, directory=directory, filename=filename)
+            transform_and_save(image, mask, name="flip_hor_90", transform=flip_hor_90, directory=directory, filename=filename)
+            transform_and_save(image, mask, name="flip_ver", transform=flip_ver, directory=directory, filename=filename)  # flipped + 180
+            transform_and_save(image, mask, name="flip_ver_90", transform=flip_ver_90, directory=directory, filename=filename)  # flipped + 270
 
-            # TODO fix random seed
+            # fix random seed
+            random.seed(17)
+
             # random
-            transform_and_save(image, mask, name="crop_random", transform=crop_random)
-            transform_and_save(image, mask, name="rotate_random", transform=rotate_random)
+            transform_and_save(image, mask, name="crop_random", transform=crop_random, directory=directory, filename=filename)
+            transform_and_save(image, mask, name="rotate_random", transform=rotate_random, directory=directory, filename=filename)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        DIR = sys.argv[1]
+    else:
+        DIR = "../data/training"
+
+    datasets_dir = ["eth_dataset", "jkfrie", "matejsladek", "ottawa", "alessiapacca"]  # "osm_raodtracer",
+
+    for dataset in datasets_dir:
+        print("===============")
+        print(dataset)
+        print("---------------")
+        directory = os.path.join(DIR, dataset)
+        apply_all_transformations(directory)
+
+
