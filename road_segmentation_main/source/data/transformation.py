@@ -124,18 +124,40 @@ if __name__ == '__main__':
                              create_output_train=False,
                              create_output_inf=False)
 
-    # A.CLAHE()
-    # A.ColorJitter()
-    #
-    # A.ChannelShuffle()
-    # A.ChannelDropout()
-    #
-    # A.ShiftScaleRotate()
-    # A.GaussianBlur()
-    #
-    # A.RandomFog()
-    # A.RandomContrast()
-    #
-    # A.HueSaturationValue()
+    from PIL import Image
+    import numpy
+    import matplotlib.pyplot as plt
 
-    get_transformations()
+    image = Image.open("../../../data/training/eth_dataset/original/images/satImage_001.png").convert("RGB")
+
+    LOAD_FROM_CONFIG = True
+    if LOAD_FROM_CONFIG:
+        transform = get_transformations()
+    else:
+        transform_list = []
+        transform_list += [
+            A.CLAHE(p=1.0),
+            # A.HueSaturationValue(p=1.0),
+            # A.ColorJitter(p=1.0),
+            # A.ChannelShuffle(p=1.0),
+            # A.ChannelDropout(p=1.0),
+            # A.ShiftScaleRotate(p=1.0),
+            # A.GaussianBlur(p=1.0),
+            # A.RandomFog(fog_coef_upper=0.5, p=1.0),
+            # A.RandomContrast(p=1.0),
+            A.Normalize(
+                mean=[0.0, 0.0, 0.0],
+                std=[1.0, 1.0, 1.0],
+                max_pixel_value=255.0,
+            ),
+            ToTensorV2()
+        ]
+
+        transform = A.Compose(transforms=transform_list)
+
+    for i in range(0, 10):
+        augmentations = transform(image=numpy.array(image))
+        aug_image = augmentations["image"]
+
+        plt.imshow(aug_image.permute(1, 2, 0))
+        plt.show()
