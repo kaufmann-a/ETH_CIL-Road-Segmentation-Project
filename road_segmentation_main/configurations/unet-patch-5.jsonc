@@ -1,0 +1,80 @@
+{
+    "environment": {
+        "name" : "Unet",
+        "output_path": "/cluster/scratch/fluebeck/trainings",
+        "log_file" : "logs.txt"
+    },
+    "data_collection" : {
+        "folder" : "../data/training",
+		"collection_names" : ["eth_dataset", "jkfrie_cropped_400"],
+        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
+                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+                               ],
+        "test_images_folder" : "../data/test_images",
+        "test_data_count" : 0,
+        "validation_ratio" : 0.3,
+        "include_val_transforms" : true,
+        "save_imgs" : false,
+    },
+    "patch" : {
+        "sigmoid_pixel" : false,
+        "binary_pixel" : false,
+        "binary_patch" : false,
+    },
+    "training": {
+        "general" : {
+            "batch_size": 8,
+            "num_epochs" : 12,
+            "checkpoint_save_interval" : 12,
+            "num_workers" : 2,
+            "shuffle_data" : true,
+            "foreground_threshold" : 0.25,
+            "cropped_image_size" : [400, 400],
+            "submission_loss" : true,
+            "use_submission_masks" : false,
+            "stochastic_weight_averaging" : {
+                "on" : false,
+                "start_epoch" : 40
+            },
+            "log_to_comet" : true,
+        },
+        "model": {
+            "name": "unet",
+            "in_channels" : 3,
+            "out_channels" : 1,
+            "features" : [64, 128, 256, 512]
+        },
+        "loss_function": "dice_loss",
+        "optimizer": {
+            "name": "adam",
+            "lr": 0.001
+        },
+        "lr_scheduler": {
+            "name": "stepLR",
+            "stepLR": {
+                "step_size" : 10,
+                "gamma" : 0.1,
+            },
+            "multiStepLR": {
+                "milestones" : [10,40],
+                "gamma" : 0.1,
+            }
+        },
+    },
+    "inference" : {
+        "general" : {
+            "foreground_threshold" : 0.25,
+            "use_original_image_size" : false,
+            "enable_postprocessing" : false,
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":2,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        }
+    }
+}

@@ -364,9 +364,26 @@ class Engine:
 
     def compute_loss(self, predictions, targets):
         if self.submission_loss:
+
+            # unsure (I): sigmoid on pixel level
+            sigmoid_pixel = Configuration.get("patch.sigmoid_pixel")
+            if sigmoid_pixel:
+                predictions = torch.sigmoid(predictions)
+                # unsure (II): transform to binary?
+                binary_pixel = Configuration.get("patch.binary_pixel")
+                if binary_pixel:
+                    predictions = (predictions >= 0.5).int()
+
+            # pooling -> 16x16 patches
             avgPool = torch.nn.AvgPool2d(16, stride=16)
             predictions = avgPool(predictions)
             targets = avgPool(targets)
+
+            # unsure (III): transform to binary based on threshold?
+            binary_patch = Configuration.get("patch.binary_patch")
+            if binary_patch:
+                foreground_threshold = Configuration.get('training.general.foreground_threshold')
+                predictions = (predictions >= foreground_threshold).int()
 
         return self.loss_function(predictions, targets)
 
