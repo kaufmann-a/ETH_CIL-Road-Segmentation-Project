@@ -51,12 +51,7 @@ class DataPreparator(object):
                                          os.listdir(os.path.join(orig_folder, "masks"))
                                          if img.endswith('.png') or img.endswith('.jpg')]
 
-                for i, m in zip(train_set_images_orig, train_set_masks_orig):
-                    import ntpath
-                    i = ntpath.basename(i)
-                    m = ntpath.basename(m)
-                    if i != m:
-                        Logcreator.warn(f"Image {i} and mask {m} have a different name")
+                DataPreparator.check_file_name_equality(train_set_images_orig, train_set_masks_orig)
 
         except:
             raise DatasetError()
@@ -91,6 +86,8 @@ class DataPreparator(object):
             train_set_masks_trans += [os.path.join(transform_folder, "masks", img) for img in
                                       os.listdir(os.path.join(transform_folder, "masks"))
                                       if img.endswith('.png') or img.endswith('.jpg')]
+
+            DataPreparator.check_file_name_equality(train_set_images_orig, train_set_masks_orig)
 
         # Add transformations to training set
         for idx, image_path in enumerate(train_set_images_trans):
@@ -133,6 +130,15 @@ class DataPreparator(object):
                                          use_submission_masks=use_submission_masks)
 
         return train_ds, val_ds
+
+    @staticmethod
+    def check_file_name_equality(train_set_images_orig, train_set_masks_orig):
+        for i, m in zip(train_set_images_orig, train_set_masks_orig):
+            import ntpath
+            i = ntpath.basename(i)
+            m = ntpath.basename(m)
+            if i != m:
+                Logcreator.warn(f"Image {i} and mask {m} have a different name")
 
     @staticmethod
     def compute_transformations(image_paths_train, set_train_norm_statistics=False):
