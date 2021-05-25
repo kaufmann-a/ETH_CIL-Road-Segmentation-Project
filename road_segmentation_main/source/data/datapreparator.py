@@ -50,6 +50,14 @@ class DataPreparator(object):
                 train_set_masks_orig += [os.path.join(orig_folder, "masks", img) for img in
                                          os.listdir(os.path.join(orig_folder, "masks"))
                                          if img.endswith('.png') or img.endswith('.jpg')]
+
+                for i, m in zip(train_set_images_orig, train_set_masks_orig):
+                    import ntpath
+                    i = ntpath.basename(i)
+                    m = ntpath.basename(m)
+                    if i != m:
+                        Logcreator.warn(f"Image {i} and mask {m} have a different name")
+
         except:
             raise DatasetError()
 
