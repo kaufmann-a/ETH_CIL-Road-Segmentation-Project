@@ -69,7 +69,7 @@
                 "start_epoch": 40
             },
             "comet": {
-                "log_to_comet": false,
+                "log_to_comet": true,
                 "tags": [
                     "augmentation"
                 ]
