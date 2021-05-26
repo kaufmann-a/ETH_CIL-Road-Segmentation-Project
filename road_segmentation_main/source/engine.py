@@ -373,7 +373,7 @@ class Engine:
                 # unsure (II): transform to binary?
                 binary_pixel = Configuration.get("patch.binary_pixel")
                 if binary_pixel:
-                    predictions = torch.where(predictions >= 0.5, 1, 0).int()
+                    predictions = torch.where(predictions >= 0.5, 1, 0).float()
                     print(type(predictions))
 
             # pooling -> 16x16 patches
