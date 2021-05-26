@@ -372,7 +372,7 @@ class Engine:
                 # unsure (II): transform to binary?
                 binary_pixel = Configuration.get("patch.binary_pixel")
                 if binary_pixel:
-                    predictions = (predictions >= 0.5).int()
+                    predictions = torch.where(predictions >= 0.5, 1, 0)
 
             # pooling -> 16x16 patches
             avgPool = torch.nn.AvgPool2d(16, stride=16)
@@ -383,7 +383,7 @@ class Engine:
             binary_patch = Configuration.get("patch.binary_patch")
             if binary_patch:
                 foreground_threshold = Configuration.get('training.general.foreground_threshold')
-                predictions = (predictions >= foreground_threshold).int()
+                predictions = np.where(predictions >= foreground_threshold, 1, 0)
 
         return self.loss_function(predictions, targets)
 
