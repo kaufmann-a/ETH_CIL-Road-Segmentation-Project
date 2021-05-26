@@ -9,7 +9,7 @@ __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
 from comet_ml import Experiment
-
+import comet_ml
 import sys
 import os
 import numpy as np
