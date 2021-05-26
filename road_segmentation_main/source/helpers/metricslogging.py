@@ -6,7 +6,7 @@ from source.configuration import Configuration
 from source.logcreator.logcreator import Logcreator
 
 def init_comet():
-    if not Configuration.get('training.general.log_to_comet'):
+    if not Configuration.get('training.general.comet.log_to_comet'):
         return None
 
     api_key = os.getenv('COMET_API_KEY')
@@ -25,6 +25,7 @@ def init_comet():
         )
         experiment.set_name(os.path.basename(os.path.normpath(Configuration.output_directory)))
         experiment.add_tag(Configuration.get('training.model.name'))
+        experiment.add_tags(Configuration.get('training.general.comet.tags'))
 
         parameters = Configuration.get('training')
         data_collection_params = Configuration.get('data_collection')

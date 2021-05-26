@@ -30,7 +30,10 @@
                 "on" : false,
                 "start_epoch" : 40
             },
-            "log_to_comet" : false,
+            "comet" : {
+                "log_to_comet" : false,
+                "tags" : []
+            }
         },
         "model": {
             "name": "gcdcnn",
