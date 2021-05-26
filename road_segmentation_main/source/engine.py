@@ -377,14 +377,15 @@ class Engine:
 
             # pooling -> 16x16 patches
             avgPool = torch.nn.AvgPool2d(16, stride=16)
-            predictions = avgPool(predictions, requires_grad=True)
-            targets = avgPool(targets, requires_grad=True)
+            predictions = avgPool(predictions)
+            targets = avgPool(targets)
 
             # unsure (III): transform to binary based on threshold?
             binary_patch = Configuration.get("patch.binary_patch")
             if binary_patch:
                 foreground_threshold = Configuration.get('training.general.foreground_threshold')
                 predictions = torch.where(predictions >= foreground_threshold, 1, 0)
+                predictions = torch.tensor(predictions, requires_grad=True)
 
         return self.loss_function(predictions, targets)
 
