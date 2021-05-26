@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     directory = "configurations/augmentations"
     GPU_2080TI = False
-    TIME = '06:00'
+    TIME = '02:00'
     DEBUG = False
 
     for file in os.listdir(directory):
@@ -30,8 +30,10 @@ if __name__ == '__main__':
 
             command += " 'python train.py --configuration " + file_path + "'"
 
+            print(command)
+
             # new method
-            # process = subprocess.run(command.split(), stdout=sys.stdout, stderr=sys.stderr)
+            # process = subprocess.run(command.split(), stdout=sys.stdout, stderr=sys.stderr, shell=True)
 
             # old method but working
             os.system(command)
