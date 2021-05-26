@@ -384,8 +384,8 @@ class Engine:
             binary_patch = Configuration.get("patch.binary_patch")
             if binary_patch:
                 foreground_threshold = Configuration.get('training.general.foreground_threshold')
-                predictions = torch.where(predictions >= foreground_threshold, 1, 0)
-                predictions = torch.tensor(predictions, requires_grad=True)
+                predictions = torch.where(predictions >= foreground_threshold, 1, 0).float()
+                #predictions = torch.tensor(predictions, requires_grad=True)
 
         return self.loss_function(predictions, targets)
 
