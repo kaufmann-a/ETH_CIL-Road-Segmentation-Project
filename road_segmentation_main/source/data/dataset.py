@@ -91,7 +91,7 @@ class RoadSegmentationDataset(Dataset):
     def set_stage(self, stage=0):
         print("Setting stage: ", stage)
         if stage < 3:
-            self.noise = A.Compose([Blur(blur_limit=3, p=0.1)])
+            self.noise = A.Compose([Blur(blur_limit=3, p=0.0)])
         else:
             self.noise = A.Compose([Blur(blur_limit=stage, p=0.1)])
 

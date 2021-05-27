@@ -82,6 +82,7 @@ class Engine:
 
         # Load training parameters from config file
         train_parms = Configuration.get('training.general')
+        noise = Configuration.get('training.noise')
 
         epoch = 0
         if epoch_nr != 0:  # Check if continued training
@@ -91,7 +92,21 @@ class Engine:
         while epoch < train_parms.num_epochs:
 
             # set the stage of the training dataset
-            noise_level = train_parms.num_epochs - epoch + 3
+            if noise.decay == 'linear':
+                noise_level = train_parms.num_epochs - epoch + 3 - noise.epochs_no_noise
+            if noise.decay == 'phase':
+                if epoch <= ((train_parms.num_epochs - noise.epochs_no_noise) / 4):
+                    noise_level = 10
+                elif epoch <= 2*((train_parms.num_epochs - noise.epochs_no_noise) / 4):
+                    noise_level = 6
+                elif epoch <= 3*((train_parms.num_epochs - noise.epochs_no_noise) / 4):
+                    noise_level = 3
+                else:
+                    noise_level = 0
+            if noise.decay == 'no':
+                noise_level = 0
+
+
             training_data.set_stage(noise_level)
 
             train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
