@@ -7,7 +7,7 @@
     "data_collection" : {
         "folder" : "../data/training",
 		"collection_names" : ["eth_dataset", "jkfrie_cropped_400"],
-        "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270"
+        "transform_folders" : ["original", "rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90"],
         "test_images_folder" : "../data/test_images",
         "validation_ratio" : 0.3,
