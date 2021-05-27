@@ -5,6 +5,7 @@ import sys
 
 import numpy as np
 from PIL import Image
+import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 from tqdm import tqdm
@@ -12,6 +13,9 @@ from tqdm import tqdm
 from source.helpers.image_cropping import ImageCropper
 from source.helpers.maskconverthelper import mask_to_submission_mask
 from source.logcreator.logcreator import Logcreator
+
+import albumentations as A
+from albumentations.augmentations.transforms import Blur
 
 
 class RoadSegmentationDataset(Dataset):
@@ -28,6 +32,10 @@ class RoadSegmentationDataset(Dataset):
         # preload images into memory to not read from drive everytime
         self.images_preloaded = list()
         self.masks_preloaded = list()
+
+        # set initial stage to 0
+        self.noise = None
+        self.set_stage(0)
 
         loop = tqdm(zip(self.images, self.masks), total=len(self.images), file=sys.stdout, desc="Preload images")
         for image_path, mask_path in loop:
@@ -73,7 +81,20 @@ class RoadSegmentationDataset(Dataset):
             if self.use_submission_masks:  # use submission masks for training
                 mask = mask_to_submission_mask(mask, threshold=self.foreground_threshold)
 
+        if self.noise is not None:
+            augmentations = self.noise(image=image.numpy(), mask=mask.numpy())
+            image = torch.from_numpy(augmentations["image"])
+            mask = torch.from_numpy(augmentations["mask"])
+
         return image, mask
+
+    def set_stage(self, stage=0):
+        print("Setting stage: ", stage)
+        if stage < 3:
+            self.noise = A.Compose([Blur(blur_limit=3, p=0.1)])
+        else:
+            self.noise = A.Compose([Blur(blur_limit=stage, p=0.1)])
+
 
 
 class RoadSegmentationDatasetInference(Dataset):

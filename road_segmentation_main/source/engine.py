@@ -83,18 +83,22 @@ class Engine:
         # Load training parameters from config file
         train_parms = Configuration.get('training.general')
 
-        train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
-                                  pin_memory=True, shuffle=train_parms.shuffle_data)
-        val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
-                                pin_memory=True,
-                                shuffle=False)
-
         epoch = 0
         if epoch_nr != 0:  # Check if continued training
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         nr_saves = 0
         while epoch < train_parms.num_epochs:
+
+            # set the stage of the training dataset
+            noise_level = train_parms.num_epochs - epoch + 3
+            training_data.set_stage(noise_level)
+
+            train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
+                                      pin_memory=True, shuffle=train_parms.shuffle_data)
+            val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
+                                    pin_memory=True, shuffle=False)
+
             Logcreator.info(f"Epoch {epoch}, lr: {self.get_lr():.3e}, lr-step: {self.lr_scheduler.last_epoch}")
 
             train_metrics = self.train_step(train_loader, epoch)
@@ -152,7 +156,6 @@ class Engine:
         accuracy, iou, multi_accuracy_metric, patch_accuracy = self.get_metrics()
 
         total_loss = 0.
-
         # progressbar
         loop = tqdm(data_loader, file=sys.stdout, colour='green')
 
