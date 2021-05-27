@@ -48,7 +48,7 @@ class DataPreparator(object):
                                           os.listdir(os.path.join(orig_folder, "images"))
                                           if img.endswith('.png') or img.endswith('.jpg')]
                 train_set_masks_orig += [os.path.join(orig_folder, "masks", img) for img in
-                                         os.listdir(os.path.join(orig_folder, "masks"))
+                                         os.listdir(os.path.join(orig_folder, "images"))
                                          if img.endswith('.png') or img.endswith('.jpg')]
 
                 DataPreparator.check_file_name_equality(train_set_images_orig, train_set_masks_orig)
@@ -84,7 +84,7 @@ class DataPreparator(object):
                                        os.listdir(os.path.join(transform_folder, "images"))
                                        if img.endswith('.png') or img.endswith('.jpg')]
             train_set_masks_trans += [os.path.join(transform_folder, "masks", img) for img in
-                                      os.listdir(os.path.join(transform_folder, "masks"))
+                                      os.listdir(os.path.join(transform_folder, "images"))
                                       if img.endswith('.png') or img.endswith('.jpg')]
 
             DataPreparator.check_file_name_equality(train_set_images_orig, train_set_masks_orig)
