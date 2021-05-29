@@ -38,30 +38,9 @@ class DataPreparator(object):
                              for cur_collection in collection_folders
                              if os.path.exists(os.path.join(path, cur_collection, cur_transformation))]
 
-        train_set_images_orig = []
-        train_set_masks_orig = []
-
         # Read in original imges
         try:
-            for orig_folder in collections_folders_orig:
-                train_set_img_cur_dataset = [os.path.join(orig_folder, "images", img) for img in
-                                          os.listdir(os.path.join(orig_folder, "images"))
-                                          if img.endswith('.png') or img.endswith('.jpg')]
-
-                train_set_masks_cur_dataset = []
-                mask_image_names = os.listdir(os.path.join(orig_folder, "masks"))
-                delete_mask = []
-                for img in train_set_img_cur_dataset:
-                    if os.path.basename(img) in mask_image_names:
-                        train_set_masks_cur_dataset.append(os.path.join(orig_folder, "masks", os.path.basename(img)))
-                        delete_mask.append(False)
-                    else:
-                        delete_mask.append(True)
-                        Logcreator.warn("Attention, image ", img, " was found in images but not in masks, it is removed from trainingset")
-                train_set_img_cur_dataset = [img for idx, img in enumerate(train_set_img_cur_dataset) if not delete_mask[idx]]
-
-                train_set_images_orig += train_set_img_cur_dataset
-                train_set_masks_orig += train_set_masks_cur_dataset
+            train_set_images_orig, train_set_masks_orig = DataPreparator.assign_masks_to_images(collections_folders_orig)
         except ValueError:
             raise DatasetError()
 
@@ -85,29 +64,9 @@ class DataPreparator(object):
                 train_set_images.append(train_set_images_orig[idx])
                 train_set_masks.append(train_set_masks_orig[idx])
 
-        train_set_images_trans = []
-        train_set_masks_trans = []
+
         # Read all transformation images
-        for transform_folder in transform_folders:
-            train_set_img_trans_cur_folder = [os.path.join(transform_folder, "images", img) for img in
-                                       os.listdir(os.path.join(transform_folder, "images"))
-                                       if img.endswith('.png') or img.endswith('.jpg')]
-
-            train_set_masks_trans_cur_dataset = []
-            mask_trans_image_names = os.listdir(os.path.join(transform_folder, "masks"))
-            delete_trans_mask = []
-
-            for trans_img in train_set_img_trans_cur_folder:
-                if os.path.basename(trans_img) in mask_trans_image_names:
-                    train_set_masks_trans_cur_dataset.append(os.path.join(transform_folder, "masks", os.path.basename(trans_img)))
-                    delete_trans_mask.append(False)
-                else:
-                    delete_trans_mask.append(True)
-                    Logcreator.warn("Attention, image ", trans_img, " was found in images but not in masks, it is removed from trainingset")
-            train_set_img_trans_cur_folder = [img for idx, img in enumerate(train_set_img_trans_cur_folder) if not delete_trans_mask[idx]]
-
-            train_set_images_trans += train_set_img_trans_cur_folder
-            train_set_masks_trans += train_set_masks_trans_cur_dataset
+        train_set_images_trans, train_set_masks_trans = DataPreparator.assign_masks_to_images(transform_folders)
 
         # Add transformations to training set
         for idx, image_path in enumerate(train_set_images_trans):
@@ -150,6 +109,35 @@ class DataPreparator(object):
                                          use_submission_masks=use_submission_masks)
 
         return train_ds, val_ds
+
+    @staticmethod
+    def assign_masks_to_images(imgs_folders):
+        imgs = []
+        masks = []
+        for cur_imgs_folder in imgs_folders:
+            imgs_cur_imgs_folder = [os.path.join(cur_imgs_folder, "images", img) for img in
+                                              os.listdir(os.path.join(cur_imgs_folder, "images"))
+                                              if img.endswith('.png') or img.endswith('.jpg')]
+
+            found_masks_cur_folder = []
+            avaliable_masks_cur_folder = os.listdir(os.path.join(cur_imgs_folder, "masks"))
+            imgs_to_delete = []
+
+            for cur_image in imgs_cur_imgs_folder:
+                if os.path.basename(cur_image) in avaliable_masks_cur_folder:
+                    found_masks_cur_folder.append(
+                        os.path.join(cur_imgs_folder, "masks", os.path.basename(cur_image)))
+                    imgs_to_delete.append(False)
+                else:
+                    imgs_to_delete.append(True)
+                    Logcreator.warn("Attention, image ", cur_image,
+                                    " was found in images but not in masks, it is removed from trainingset")
+            imgs_cur_imgs_folder = [img for idx, img in enumerate(imgs_cur_imgs_folder) if
+                                              not imgs_to_delete[idx]]
+
+            imgs += imgs_cur_imgs_folder
+            masks += found_masks_cur_folder
+        return imgs, masks
 
     @staticmethod
     def compute_transformations(image_paths_train, set_train_norm_statistics=False):
