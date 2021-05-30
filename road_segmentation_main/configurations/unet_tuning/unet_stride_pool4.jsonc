@@ -41,11 +41,11 @@
             "out_channels" : 1,
             "features" : [64, 128, 256, 512],
             "filtersize": 3,
-            "pool_kernelsize" : 2,
+            "pool_kernelsize" : 3,
             "pool_stride" : 2,
             "stride" : 1,
             "dilation" : 1,
-            "pool_padding": 0,
+            "pool_padding": 1,
         },
         "loss_function": "dice_loss",
         "optimizer": {
