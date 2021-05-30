@@ -68,12 +68,18 @@ Software Versions used for this Project (Proposal by Andreas):
 
 - To transform the original images, run the script `augmentations.py`
  
-### Additional Training data
+### Prepare additional Training data on cluster scratch
 
-After downloading the folders from OneDrive, rename them as follows: "github_ale", "github_mat", "github_jkf" and rename the folders within these: "images" and "masks".
-There are two possible approaches for including them:
-1. Train only on the additional data, then use these pretrained weights (change param "main_folder_name" and "transform_folders")
-2. Train on our data + additional data together, then use the additional folder in "additional_training_folders". For this, all images need to be of the same size. "github_jkf" is 608x608, so you can run the script preprocessing/crop_images.py
+1. Connect to leonhard and navigate to the scratch `cd /cluster/scartch/...`
+2. load a newer version of curl: `module load curl`
+3. Open your browser (chrome, firefox) and navigate to oneDrive
+4. Open developer tools: `CTRL+SHIFT+I`
+5. Navigate to the  "Networks" tab and enter "zip?" in the filter (networkstack might now be empty)
+6. Select all folders you like to download and click on "Download"
+7. cancel the download
+8. Now there should be one entry in the Networks tab
+9. Right click on it: Copy -> Copy as cURL
+10. Paste the command into your leonhard terminal and add `-o data.zip` to specify the output file
+11. Hit enter and wait
+12. Unzip the data `unzip data.zip`  (with -d to add target directory path)
 
-To use the images from "jkfrie", run the following script first: `data/rename_masks.sh`. This renames the masks such that images and masks share the same names.
-``
