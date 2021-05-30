@@ -40,6 +40,7 @@ def init_comet():
         experiment.log_parameter("Optimizer", parameters.optimizer.name)
         experiment.log_parameter("Optimizer-LR", parameters.optimizer.lr)
         experiment.log_parameter("lr-sched.", parameters.lr_scheduler.name)
+        experiment.log_parameter("Whole configfile", parameters)
 
         return experiment
     except ValueError:
