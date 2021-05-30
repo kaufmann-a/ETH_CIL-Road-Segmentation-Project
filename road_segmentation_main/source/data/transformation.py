@@ -131,13 +131,13 @@ if __name__ == '__main__':
 
     image = Image.open("../../../data/training/eth_dataset/original/images/satImage_001.png").convert("RGB")
 
-    LOAD_FROM_CONFIG = True
+    LOAD_FROM_CONFIG = False
     if LOAD_FROM_CONFIG:
         transform = get_transformations(is_train=True)
     else:
         transform_list = []
         transform_list += [
-            A.CLAHE(p=1.0),
+            # A.CLAHE(p=1.0),
             # A.HueSaturationValue(p=1.0),
             # A.ColorJitter(p=1.0),
             # A.ChannelShuffle(p=1.0),
@@ -146,6 +146,8 @@ if __name__ == '__main__':
             # A.GaussianBlur(p=1.0),
             # A.RandomFog(fog_coef_upper=0.5, p=1.0),
             # A.RandomContrast(p=1.0),
+            A.MedianBlur(),
+            A.GaussNoise(p=1),
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
                 std=[1.0, 1.0, 1.0],

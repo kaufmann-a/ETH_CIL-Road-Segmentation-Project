@@ -1,0 +1,108 @@
+{
+    "environment": {
+        "name": "augmentation test",
+        "output_path": "getenv('OUTPUT_DIR')",
+        "log_file": "logs.txt"
+    },
+    "data_collection": {
+        "folder": "getenv('DATA_COLLECTION_DIR')",
+        "collection_names": [
+            "eth_dataset",
+            "jkfrie"
+        ],
+        "transform_folders": [
+            "rotate_90",
+            "rotate_180",
+            "rotate_270",
+            "flip_hor",
+            "flip_hor_90",
+            "flip_ver",
+            "flip_ver_90"
+        ],
+        "test_images_folder": "../data/test_images",
+        "validation_ratio": 0.2,
+        "include_val_transforms": false,
+        "save_imgs": true,
+        "augmentations": {
+            "list": [
+                {
+                    "name": "ChannelShuffle",
+                    "params": {
+                        "p": 0.5
+                    }
+                }
+            ],
+            "use_train_statistics": false
+        }
+    },
+    "training": {
+        "general": {
+            "batch_size": 8,
+            "num_epochs": 60,
+            "checkpoint_save_interval": 10,
+            "num_workers": 8,
+            "shuffle_data": true,
+            "foreground_threshold": 0.5,
+            "cropped_image_size": [
+                400,
+                400
+            ],
+            "submission_loss": false,
+            "use_submission_masks": false,
+            "stochastic_weight_averaging": {
+                "on": false,
+                "start_epoch": 40
+            },
+            "comet": {
+                "log_to_comet": true,
+                "tags": [
+                    "augmentation",
+                    "low_lr",
+                    "jkfrie"
+                ]
+            }
+        },
+        "model": {
+            "name": "ResUnet",
+            "in_channels": 3,
+            "out_channels": 1,
+            "features": [
+                64,
+                128,
+                256,
+                512
+            ]
+        },
+        "loss_function": "dice_loss",
+        "optimizer": {
+            "name": "adam",
+            "lr": 0.0001
+        },
+        "lr_scheduler": {
+            "name": "multiStepLR",
+            "multiStepLR": {
+                "milestones": [
+                    20,
+                    40
+                ],
+                "gamma": 0.1
+            }
+        }
+    },
+    "inference": {
+        "general": {
+            "foreground_threshold": 0.25,
+            "use_original_image_size": true,
+            "enable_postprocessing": true
+        },
+        "postprocessing": {
+            "morphology": {
+                "numdilate": 2,
+                "numerode": 2,
+                "nummedian": 1,
+                "kernelsz": 4,
+                "mediansz": 3
+            }
+        }
+    }
+}
