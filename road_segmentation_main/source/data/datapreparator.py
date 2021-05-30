@@ -117,7 +117,7 @@ class DataPreparator(object):
         for cur_imgs_folder in imgs_folders:
             imgs_cur_imgs_folder = [os.path.join(cur_imgs_folder, "images", img) for img in
                                               os.listdir(os.path.join(cur_imgs_folder, "images"))
-                                              if img.endswith('.png') or img.endswith('.jpg')]
+                                              if img.endswith('.png') or img.endswith('.jpg') or img.endswith('.png')]
 
             found_masks_cur_folder = []
             avaliable_masks_cur_folder = os.listdir(os.path.join(cur_imgs_folder, "masks"))
