@@ -1,25 +1,25 @@
 {
     "environment": {
         "name" : "Unet, 300",
-        "output_path": "trainings",
+        "output_path": "getenv('OUTPUT_DIR')",
         "log_file" : "logs.txt"
     },
     "data_collection" : {
-        "folder" : "../data/training",
-		"collection_names" : ["eth_dataset", "alessiapacca"],
+        "folder" : "getenv('DATA_COLLECTION_DIR')",
+		"collection_names" : ["eth_dataset"],
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                 ],
         "test_images_folder" : "../data/test_images",
-        "validation_ratio" : 0.3,
+        "validation_ratio" : 0.2,
         "include_val_transforms" : true,
         "save_imgs" : true,
     },
     "training": {
         "general" : {
             "batch_size": 8,
-            "num_epochs" : 12,
-            "checkpoint_save_interval" : 12,
+            "num_epochs" : 15,
+            "checkpoint_save_interval" : 14,
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
@@ -31,8 +31,8 @@
                 "start_epoch" : 40
             },
             "comet" : {
-                "log_to_comet" : false,
-                "tags" : []
+                "log_to_comet" : true,
+                "tags" : ["tuning"]
             }
         },
         "model": {
@@ -52,7 +52,7 @@
             "lr": 0.001
         },
         "lr_scheduler": {
-            "name": "stepLR",
+            "name": "multiStepLR",
             "stepLR": {
                 "step_size" : 10,
                 "gamma" : 0.1,

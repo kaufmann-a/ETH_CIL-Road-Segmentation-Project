@@ -13,13 +13,15 @@ import torchvision.transforms.functional as TF
 from source.models.basemodel import BaseModel
 
 class DoubleConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, config):
         super(DoubleConv, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, 1, 1, bias=False),
+            nn.Conv2d(in_channels, out_channels, kernel_size=config.filtersize,
+                      stride=config.stride, padding=config.filtersize-2, dilation=config.dilation, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, 3, 1, 1, bias=False),
+            nn.Conv2d(out_channels, out_channels, kernel_size=config.filtersize,
+                      stride=config.stride, padding=config.filtersize-2, dilation=config.dilation,  bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
@@ -37,24 +39,23 @@ class UNET(BaseModel):
         self.out_channels = config.out_channels
         self.features = config.features
 
-
         self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.pool = nn.MaxPool2d(kernel_size=config.pool_kernelsize, stride=config.pool_stride)
 
         # Down part of UNET
         for feature in self.features:
-            self.downs.append(DoubleConv(self.in_channels, feature))
+            self.downs.append(DoubleConv(self.in_channels, feature, config))
             self.in_channels = feature
 
         # Up part of UNET
         for feature in reversed(self.features):
             self.ups.append(
-                nn.ConvTranspose2d(feature * 2, feature, kernel_size=2, stride=2, )
+                nn.ConvTranspose2d(feature * 2, feature, kernel_size=config.pool_kernelsize, stride=config.pool_stride)
             )
-            self.ups.append(DoubleConv(feature * 2, feature))
+            self.ups.append(DoubleConv(feature * 2, feature, config))
 
-        self.bottleneck = DoubleConv(self.features[-1], self.features[-1] * 2)
+        self.bottleneck = DoubleConv(self.features[-1], self.features[-1] * 2, config)
 
         # Choose output kernel size
         if not config.use_submission_masks:
