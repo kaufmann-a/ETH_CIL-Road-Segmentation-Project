@@ -115,7 +115,7 @@ if __name__ == '__main__':
         DIR = sys.argv[1]
     else:
         DIR = "../data/training"
-
+    print("Now crawling thorugh: ", DIR)
     datasets_dir = ["eth_dataset", "jkfrie", "matejsladek", "ottawa", "alessiapacca", "osm_roadtracer"]
 
     for dataset in datasets_dir:
