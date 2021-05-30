@@ -41,7 +41,7 @@ class UNET(BaseModel):
 
         self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
-        self.pool = nn.MaxPool2d(kernel_size=config.pool_kernelsize, stride=config.pool_stride)
+        self.pool = nn.MaxPool2d(kernel_size=config.pool_kernelsize, stride=config.pool_stride, padding=config.pool_padding)
 
         # Down part of UNET
         for feature in self.features:
