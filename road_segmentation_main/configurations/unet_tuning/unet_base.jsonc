@@ -18,7 +18,7 @@
     "training": {
         "general" : {
             "batch_size": 8,
-            "num_epochs" : 15,
+            "num_epochs" : 30,
             "checkpoint_save_interval" : 14,
             "num_workers" : 2,
             "shuffle_data" : true,
