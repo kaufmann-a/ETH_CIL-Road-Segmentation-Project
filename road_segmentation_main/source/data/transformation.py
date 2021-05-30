@@ -77,7 +77,7 @@ def get_default_config():
     return cfg
 
 
-def get_transformations(mean=None, std=None, use_train_statistics=False):
+def get_transformations(mean=None, std=None, use_train_statistics=False, is_train=False):
     if mean is None:
         mean = [0.0, 0.0, 0.0]
     if std is None:
@@ -91,15 +91,16 @@ def get_transformations(mean=None, std=None, use_train_statistics=False):
 
     transform_list = list()
 
-    # dynamically load augmentations according to config
-    for method in cfg.list:
-        aug_class = eval("A." + method["name"])
-        if "params" in method:
-            aug_instance = aug_class(**method["params"])
-        else:
-            aug_instance = aug_class()
+    if is_train:
+        # dynamically load augmentations according to config
+        for method in cfg.list:
+            aug_class = eval("A." + method["name"])
+            if "params" in method:
+                aug_instance = aug_class(**method["params"])
+            else:
+                aug_instance = aug_class()
 
-        transform_list.append(aug_instance)
+            transform_list.append(aug_instance)
 
     transform_list += [
         # A.Resize(height=400, width=400), # commented because we generally do not want to resize
@@ -113,7 +114,7 @@ def get_transformations(mean=None, std=None, use_train_statistics=False):
 
     transforms = A.Compose(transforms=transform_list)
 
-    Logcreator.info("Applied transformations:", transforms)
+    Logcreator.info(f"Applied transformations (is_train={is_train}):", transforms)
 
     return transforms
 
@@ -132,7 +133,7 @@ if __name__ == '__main__':
 
     LOAD_FROM_CONFIG = True
     if LOAD_FROM_CONFIG:
-        transform = get_transformations()
+        transform = get_transformations(is_train=True)
     else:
         transform_list = []
         transform_list += [

@@ -91,20 +91,21 @@ class DataPreparator(object):
             Logcreator.warn("No validation files assigned.")
 
         # Create datasets
-        transform = DataPreparator.compute_transformations(train_set_images)
+        transform_train = DataPreparator.compute_transformations(train_set_images, is_train=True)
+        transform_val = DataPreparator.compute_transformations(train_set_images, is_train=False)
 
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
         use_submission_masks = Configuration.get("training.general.use_submission_masks")
 
-        train_ds = RoadSegmentationDataset(train_set_images, train_set_masks, foreground_threshold, transform,
+        train_ds = RoadSegmentationDataset(train_set_images, train_set_masks, foreground_threshold, transform_train,
                                            crop_size=cropped_image_size,
                                            use_submission_masks=use_submission_masks)
 
         mean_after, std_after = transformation.get_mean_std(train_ds)
         Logcreator.info(f"Mean and std after transformations: mean {mean_after}, std {std_after}")
 
-        val_ds = RoadSegmentationDataset(val_set_images, val_set_masks, foreground_threshold, transform,
+        val_ds = RoadSegmentationDataset(val_set_images, val_set_masks, foreground_threshold, transform_val,
                                          crop_size=cropped_image_size,
                                          use_submission_masks=use_submission_masks)
 
@@ -140,15 +141,15 @@ class DataPreparator(object):
         return imgs, masks
 
     @staticmethod
-    def compute_transformations(image_paths_train, set_train_norm_statistics=False):
+    def compute_transformations(image_paths_train, set_train_norm_statistics=False, is_train=True):
         if set_train_norm_statistics:
             simple_dataset = SimpleToTensorDataset(image_paths_train)
 
             mean, std = transformation.get_mean_std(simple_dataset)
             Logcreator.info(f"Mean and std on training set: mean {mean}, std {std}")
 
-            transform = transformation.get_transformations(mean=mean, std=std)
+            transform = transformation.get_transformations(mean=mean, std=std, is_train=is_train)
         else:
-            transform = transformation.get_transformations()
+            transform = transformation.get_transformations(is_train=is_train)
 
         return transform
