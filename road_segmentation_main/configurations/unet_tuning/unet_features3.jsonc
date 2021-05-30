@@ -13,7 +13,7 @@
         "test_images_folder" : "../data/test_images",
         "validation_ratio" : 0.2,
         "include_val_transforms" : true,
-        "save_imgs" : true,
+        "save_imgs" : false,
     },
     "training": {
         "general" : {
