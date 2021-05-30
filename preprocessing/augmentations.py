@@ -75,14 +75,17 @@ def apply_all_transformations(directory):
     image_dir = os.path.join(directory, "original", "images")
     mask_dir = os.path.join(directory, "original", "masks")
 
-    for file in os.listdir(image_dir):
+    for idx, file in enumerate(os.listdir(image_dir)):
         filename = os.fsdecode(file)
         if filename.endswith(".png") or filename.endswith(".jpg"):
 
             try:
                 image = cv2.imread(os.path.join(image_dir, filename))
                 mask = cv2.imread(os.path.join(mask_dir, filename))
-                print(f"{filename}")
+                if idx % 100 == 99:
+                    print(".")
+                else:
+                    print(".", end="", flush=True)
 
                 # apply the transformations
                 # rotations
@@ -103,11 +106,14 @@ def apply_all_transformations(directory):
                 transform_and_save(image, mask, name="crop_random", transform=crop_random, directory=directory, filename=filename)
                 transform_and_save(image, mask, name="rotate_random", transform=rotate_random, directory=directory, filename=filename)
             except ValueError as verr:
+                print("")
                 print("Fault message: ", verr.args)
                 print('Image ', filename, " could not be transformed")
             except TypeError as tperr:
+                print("")
                 print("Fault message: ", tperr.args)
                 print('Image ', filename, " could not be transformed")
+    print("")
     print("Finished dataset")
 
 if __name__ == '__main__':

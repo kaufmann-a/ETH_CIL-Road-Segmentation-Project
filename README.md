@@ -84,5 +84,5 @@ Software Versions used for this Project (Proposal by Andreas):
 ### Transformations
 
 1. cd to location of augmentations script `cd /cluster/home/{username}/cil-road-segmentation/preprocessing`
-2. run augmentation.py, add location of data as arguemnt: `python augmentations.py "/cluster/scratch/{username}/data"`
-- To transform the original images, run the script `augmentations.py`
+2. Load environment
+3. run augmentation.py, add location of data as arguemnt: `python augmentations.py "/cluster/scratch/{username}/data"`
