@@ -15,13 +15,14 @@ from source.models.basemodel import BaseModel
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels, config):
         super(DoubleConv, self).__init__()
+        padding = (config.filtersize-1)*config.dilation-1
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=config.filtersize,
-                      stride=config.stride, padding=config.filtersize-2, dilation=config.dilation, bias=False),
+                      stride=config.stride, padding=padding, dilation=config.dilation, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=config.filtersize,
-                      stride=config.stride, padding=config.filtersize-2, dilation=config.dilation,  bias=False),
+                      stride=config.stride, padding=padding, dilation=config.dilation,  bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
