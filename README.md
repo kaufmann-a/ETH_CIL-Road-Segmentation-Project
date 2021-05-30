@@ -64,9 +64,7 @@ Software Versions used for this Project (Proposal by Andreas):
 
 ## Preprocessing
 
-### Transformations
 
-- To transform the original images, run the script `augmentations.py`
  
 ### Prepare additional Training data on cluster scratch
 
@@ -83,3 +81,8 @@ Software Versions used for this Project (Proposal by Andreas):
 11. Hit enter and wait
 12. Unzip the data `unzip data.zip`  (with -d to add target directory path)
 
+### Transformations
+
+1. cd to location of augmentations script `cd /cluster/home/{username}/cil-road-segmentation/preprocessing`
+2. run augmentation.py, add location of data as arguemnt: `python augmentations.py "/cluster/scratch/{username}/data"`
+- To transform the original images, run the script `augmentations.py`

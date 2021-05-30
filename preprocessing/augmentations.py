@@ -78,29 +78,37 @@ def apply_all_transformations(directory):
     for file in os.listdir(image_dir):
         filename = os.fsdecode(file)
         if filename.endswith(".png") or filename.endswith(".jpg"):
-            image = cv2.imread(os.path.join(image_dir, filename))
-            mask = cv2.imread(os.path.join(mask_dir, filename))
-            print(f"{filename}")
 
-            # apply the transformations
-            # rotations
-            transform_and_save(image, mask, name="rotate_90", transform=rotate_90, directory=directory, filename=filename)
-            transform_and_save(image, mask, name="rotate_180", transform=rotate_180, directory=directory, filename=filename)
-            transform_and_save(image, mask, name="rotate_270", transform=rotate_270, directory=directory, filename=filename)
+            try:
+                image = cv2.imread(os.path.join(image_dir, filename))
+                mask = cv2.imread(os.path.join(mask_dir, filename))
+                print(f"{filename}")
 
-            # flipped image plus rotations
-            transform_and_save(image, mask, name="flip_hor", transform=flip_hor, directory=directory, filename=filename)
-            transform_and_save(image, mask, name="flip_hor_90", transform=flip_hor_90, directory=directory, filename=filename)
-            transform_and_save(image, mask, name="flip_ver", transform=flip_ver, directory=directory, filename=filename)  # flipped + 180
-            transform_and_save(image, mask, name="flip_ver_90", transform=flip_ver_90, directory=directory, filename=filename)  # flipped + 270
+                # apply the transformations
+                # rotations
+                transform_and_save(image, mask, name="rotate_90", transform=rotate_90, directory=directory, filename=filename)
+                transform_and_save(image, mask, name="rotate_180", transform=rotate_180, directory=directory, filename=filename)
+                transform_and_save(image, mask, name="rotate_270", transform=rotate_270, directory=directory, filename=filename)
 
-            # fix random seed
-            random.seed(17)
+                # flipped image plus rotations
+                transform_and_save(image, mask, name="flip_hor", transform=flip_hor, directory=directory, filename=filename)
+                transform_and_save(image, mask, name="flip_hor_90", transform=flip_hor_90, directory=directory, filename=filename)
+                transform_and_save(image, mask, name="flip_ver", transform=flip_ver, directory=directory, filename=filename)  # flipped + 180
+                transform_and_save(image, mask, name="flip_ver_90", transform=flip_ver_90, directory=directory, filename=filename)  # flipped + 270
 
-            # random
-            transform_and_save(image, mask, name="crop_random", transform=crop_random, directory=directory, filename=filename)
-            transform_and_save(image, mask, name="rotate_random", transform=rotate_random, directory=directory, filename=filename)
+                # fix random seed
+                random.seed(17)
 
+                # random
+                transform_and_save(image, mask, name="crop_random", transform=crop_random, directory=directory, filename=filename)
+                transform_and_save(image, mask, name="rotate_random", transform=rotate_random, directory=directory, filename=filename)
+            except ValueError as verr:
+                print("Fault message: ", verr.args)
+                print('Image ', filename, " could not be transformed")
+            except TypeError as tperr:
+                print("Fault message: ", tperr.args)
+                print('Image ', filename, " could not be transformed")
+    print("Finished dataset")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -108,7 +116,7 @@ if __name__ == '__main__':
     else:
         DIR = "../data/training"
 
-    datasets_dir = ["eth_dataset", "jkfrie", "matejsladek", "ottawa", "alessiapacca"]  # "osm_raodtracer",
+    datasets_dir = ["eth_dataset", "jkfrie", "matejsladek", "ottawa", "alessiapacca", "osm_roadtracer"]
 
     for dataset in datasets_dir:
         print("===============")
