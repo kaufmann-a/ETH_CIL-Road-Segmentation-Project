@@ -1,5 +1,6 @@
 """
- Original source: https://github.com/rishikksh20/ResUnet
+ Based on: https://github.com/rishikksh20/ResUnet,
+  https://github.com/DebeshJha/ResUNetPlusPlus/
 """
 
 import torch
@@ -28,7 +29,8 @@ class ResUnetPlusPlus(BaseModel):
             nn.Conv2d(filters[0], filters[0], kernel_size=3, padding=1),
         )
         self.input_skip = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=3, padding=1)
+            nn.Conv2d(channel, filters[0], kernel_size=1, padding=0),
+            nn.BatchNorm2d(filters[0])
         )
 
         self.squeeze_excite1 = Squeeze_Excite_Block(filters[0])

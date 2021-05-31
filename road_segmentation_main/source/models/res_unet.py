@@ -1,5 +1,7 @@
 """
- Original source: https://github.com/rishikksh20/ResUnet
+ Based on: https://github.com/rishikksh20/ResUnet,
+   https://github.com/nikhilroxtomar/Deep-Residual-Unet/blob/master/Deep%20Residual%20UNet.ipynb,
+   https://github.com/Kaido0/Brain-Tissue-Segment-Keras/blob/4ce27857b0bec8109c03db8263a9b2f41e3a6a55/net/res_unet.py
 """
 
 import torch
@@ -28,7 +30,8 @@ class ResUnet(BaseModel):
             nn.Conv2d(filters[0], filters[0], kernel_size=3, stride=1, padding=1),
         )
         self.input_skip = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=3, stride=1, padding=1)
+            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0),
+            nn.BatchNorm2d(filters[0])
         )
 
         # Level 2
