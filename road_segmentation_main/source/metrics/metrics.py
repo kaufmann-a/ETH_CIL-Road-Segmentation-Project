@@ -34,11 +34,12 @@ class PatchAccuracy(Metric):
 
 
 class PostProcessingPatchAccuracy(Metric):
-    def __init__(self, threshold=0.5, dist_sync_on_step=False):
+    def __init__(self, morphparam, threshold=0.5, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
         self.threshold = threshold
+        self.morphparam = morphparam
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         # create patches
@@ -52,7 +53,7 @@ class PostProcessingPatchAccuracy(Metric):
         # call post processing code
         toimg = patched_preds.cpu().numpy()
         toimg = toimg.astype('uint8')
-        tmp = postprocess(toimg, postprocess)
+        tmp = postprocess(toimg, self.morphparam)
         postprocessed_patched_preds = torch.tensor(tmp)
 
         # update metric states
@@ -65,11 +66,12 @@ class PostProcessingPatchAccuracy(Metric):
 
 
 class PostProcessingPixelAccuracy(Metric):
-    def __init__(self, threshold=0.5, dist_sync_on_step=False):
+    def __init__(self, morphparam, threshold=0.5, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
         self.threshold = threshold
+        self.morphparam = morphparam
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
 
@@ -80,16 +82,17 @@ class PostProcessingPixelAccuracy(Metric):
         # call post processing code
         toimg = preds.cpu().numpy()
         toimg = toimg.astype('uint8')
-        tmp = postprocess(toimg, postprocess)
-        postprocessed_patched_preds = torch.tensor(tmp)
+        tmp = postprocess(toimg, self.morphparam)
+        postprocessed_preds = torch.tensor(tmp)
 
         # update metric states
-        self.correct += torch.sum(postprocessed_patched_preds == target)
+        self.correct += torch.sum(postprocessed_preds == target)
         self.total += target.numel()
 
     def compute(self):
         # compute final result
         return self.correct.float() / self.total
+
 
 class GeneralAccuracyMetric(Metric):
 
