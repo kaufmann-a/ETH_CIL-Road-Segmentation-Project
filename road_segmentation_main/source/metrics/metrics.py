@@ -64,6 +64,33 @@ class PostProcessingPatchAccuracy(Metric):
         return self.correct.float() / self.total
 
 
+class PostProcessingPixelAccuracy(Metric):
+    def __init__(self, threshold=0.5, dist_sync_on_step=False):
+        super().__init__(dist_sync_on_step=dist_sync_on_step)
+        self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.threshold = threshold
+
+    def update(self, preds: torch.Tensor, target: torch.Tensor):
+
+        # convert to integers according to threshold
+        preds = (preds > self.threshold).int()
+        target = (target > self.threshold).int()
+
+        # call post processing code
+        toimg = preds.cpu().numpy()
+        toimg = toimg.astype('uint8')
+        tmp = postprocess(toimg, postprocess)
+        postprocessed_patched_preds = torch.tensor(tmp)
+
+        # update metric states
+        self.correct += torch.sum(postprocessed_patched_preds == target)
+        self.total += target.numel()
+
+    def compute(self):
+        # compute final result
+        return self.correct.float() / self.total
+
 class GeneralAccuracyMetric(Metric):
 
     def __init__(self, device, dist_sync_on_step=False):
