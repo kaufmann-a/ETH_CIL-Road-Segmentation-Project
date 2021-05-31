@@ -55,8 +55,9 @@ class PostProcessingPatchAccuracy(Metric):
         postprocessed_patched_preds = []
         for img in toimgs:
             tmp = postprocess(img, self.morphparam)
-            postprocessed_patched_preds.append(torch.tensor(tmp))
+            postprocessed_patched_preds.append(tmp)
 
+        postprocessed_patched_preds = torch.tensor(postprocessed_patched_preds)
         # update metric states
         self.correct += torch.sum(postprocessed_patched_preds == patched_target)
         self.total += patched_target.numel()
@@ -81,11 +82,14 @@ class PostProcessingPixelAccuracy(Metric):
         target = (target > self.threshold).int()
 
         # call post processing code
-        toimg = preds.cpu().numpy()
-        toimg = toimg.astype('uint8')
-        tmp = postprocess(toimg, self.morphparam)
-        postprocessed_preds = torch.tensor(tmp)
+        toimgs = preds.cpu().numpy()
+        toimgs = toimgs.astype('uint8')
+        postprocessed_preds = []
+        for img in toimgs:
+            tmp = postprocess(toimgs, self.morphparam)
+            postprocessed_preds.append(tmp)
 
+        postprocessed_preds=torch.tensor(postprocessed_preds)
         # update metric states
         self.correct += torch.sum(postprocessed_preds == target)
         self.total += target.numel()
