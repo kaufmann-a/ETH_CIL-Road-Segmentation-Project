@@ -7,8 +7,8 @@
     "data_collection" : {
         "folder" : "../data/training",
 		"collection_names" : ["eth_dataset"],
-        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
-                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+        "transform_folders" : ["rotate_90", //"rotate_180", "rotate_270",
+                               //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
         "validation_ratio" : 0.2,
@@ -18,7 +18,7 @@
     "training": {
         "general" : {
             "batch_size": 2,
-            "num_epochs" : 5,
+            "num_epochs" : 1,
             "checkpoint_save_interval" : 5,
             "num_workers" : 2,
             "shuffle_data" : true,
