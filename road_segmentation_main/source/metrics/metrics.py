@@ -86,7 +86,7 @@ class PostProcessingPixelAccuracy(Metric):
         toimgs = toimgs.astype('uint8')
         postprocessed_preds = []
         for img in toimgs:
-            tmp = postprocess(toimgs, self.morphparam)
+            tmp = postprocess(img, self.morphparam)
             postprocessed_preds.append(tmp)
 
         postprocessed_preds=torch.tensor(postprocessed_preds)
