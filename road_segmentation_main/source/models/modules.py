@@ -14,15 +14,13 @@ class ResidualConv(nn.Module):
         self.conv_block = nn.Sequential(
             nn.BatchNorm2d(input_dim),
             nn.ReLU(),
-            nn.Conv2d(
-                input_dim, output_dim, kernel_size=3, stride=stride, padding=padding
-            ),
+            nn.Conv2d(input_dim, output_dim, kernel_size=3, stride=stride, padding=padding, bias=False),
             nn.BatchNorm2d(output_dim),
             nn.ReLU(),
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=1),
         )
         self.conv_skip = nn.Sequential(
-            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0),
+            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0, bias=False),
             nn.BatchNorm2d(output_dim),
         )
 
