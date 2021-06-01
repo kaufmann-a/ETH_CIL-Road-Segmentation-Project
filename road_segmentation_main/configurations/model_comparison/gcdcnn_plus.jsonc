@@ -23,7 +23,7 @@
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
-            "cropped_image_size" : [400, 400],
+            "cropped_image_size" : [256, 256],
             "submission_loss" : false,
             "use_submission_masks" : false,
             "stochastic_weight_averaging" : {
