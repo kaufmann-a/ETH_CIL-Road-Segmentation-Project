@@ -35,7 +35,7 @@ class GlobalContextDilatedCNNPlus(BaseModel):
         # level numbers according to paper
         # level 1
         self.input_layer = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(channel, filters[0], kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(filters[0]),
             nn.ReLU(),
             nn.Conv2d(filters[0], filters[0], kernel_size=3, stride=1, padding=1),
@@ -56,7 +56,7 @@ class GlobalContextDilatedCNNPlus(BaseModel):
 
         # Bridge
         # Level 5
-        self.bridge = ASPP_new(filters[3], filters[3])
+        self.bridge = ASPP_new(filters[3], filters[3], use_global_avg_pooling=False)
 
         # Decoder
         # Accordint to paper:
@@ -90,7 +90,7 @@ class GlobalContextDilatedCNNPlus(BaseModel):
         # Level 8
         self.attn3 = AttentionBlock(filters[0], filters[1], filters[1])
         if CONV_TRANSPOSE:
-            self.upsample_3 = nn.ConvTranspose2d(filters[0], filters[0], kernel_size=2, stride=2)
+            self.upsample_3 = nn.ConvTranspose2d(filters[1], filters[1], kernel_size=2, stride=2)
         else:
             self.upsample_3 = Upsample_(2)
 
