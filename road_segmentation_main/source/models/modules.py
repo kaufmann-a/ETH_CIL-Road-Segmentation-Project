@@ -146,8 +146,9 @@ class PPM(nn.Module):
     Based on: https://github.com/hszhao/semseg/blob/master/model/pspnet.py
     """
 
-    def __init__(self, in_dim, reduction_dim, bins):
+    def __init__(self, in_dim, reduction_dim, bins, concat_input=True):
         super(PPM, self).__init__()
+        self.concat_input = concat_input
         self.features = []
         for bin in bins:
             self.features.append(nn.Sequential(
@@ -160,7 +161,10 @@ class PPM(nn.Module):
 
     def forward(self, x):
         x_size = x.size()
-        out = [x]
+        if self.concat_input:
+            out = [x]
+        else:
+            out = []
         for f in self.features:
             out.append(F.interpolate(f(x), x_size[2:], mode='bilinear', align_corners=True))
         return torch.cat(out, 1)
