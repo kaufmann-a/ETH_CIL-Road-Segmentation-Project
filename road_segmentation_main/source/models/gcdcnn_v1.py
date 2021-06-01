@@ -17,7 +17,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import torch
 import torch.nn as nn
 
-from source.models.GC_DCNN import ResidualDilatedBlock
+from source.models.gcdcnn import ResidualDilatedBlock
 from source.models.basemodel import BaseModel
 from source.models.modules import PPM
 
