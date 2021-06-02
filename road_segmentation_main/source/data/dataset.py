@@ -3,6 +3,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
@@ -17,17 +18,26 @@ from source.logcreator.logcreator import Logcreator
 class RoadSegmentationDataset(Dataset):
     def __init__(self, image_list, mask_list, threshold, transform=None,
                  crop_size=(400, 400),
-                 use_submission_masks=False):
+                 use_submission_masks=False,
+                 min_road_percentage=0.0001,
+                 debug=False):
         # self.device = device # unsure whether we need this, if yes: add parameter device to init
         self.transform = transform
         self.images = image_list
         self.masks = mask_list
         self.foreground_threshold = threshold
         self.use_submission_masks = use_submission_masks
+        self.min_road_percentage = min_road_percentage if 1 >= min_road_percentage >= 0 else 0
         self.image_cropper = ImageCropper(out_image_size=crop_size)
         # preload images into memory to not read from drive everytime
         self.images_preloaded = list()
         self.masks_preloaded = list()
+
+        Logcreator.info("Removing images that contain less than,",
+                        crop_size[0] * crop_size[1] * self.min_road_percentage,
+                        f"road pixels (less than {self.min_road_percentage}% of the image is road)")
+
+        count_removed_images = 0
 
         loop = tqdm(zip(self.images, self.masks), total=len(self.images), file=sys.stdout, desc="Preload images")
         for image_path, mask_path in loop:
@@ -41,19 +51,36 @@ class RoadSegmentationDataset(Dataset):
             images = [np.array(_img) for _img in images_cropped]
             masks = [np.array(_mask) for _mask in masks_cropped]
 
+            if self.min_road_percentage > 0:
+                # remove images with less percentage of road the given threshold
+                keep_idx = [(np.sum(_mask > 0) / np.size(_mask) >= self.min_road_percentage) for _mask in masks]
+                count_removed_images += np.sum(np.asarray(keep_idx) == False)
+
+                if debug:
+                    for _img, _mask, keep in zip(images, masks, keep_idx):
+                        if keep == False:
+                            plt.imshow(_img)
+                            plt.show()
+                            plt.imshow(_mask)
+                            plt.show()
+
+                images = [_img for _img, keep in zip(images, keep_idx) if keep]
+                masks = [_mask for _mask, keep in zip(masks, keep_idx) if keep]
+
             # concatenate lists
             self.images_preloaded += images
             self.masks_preloaded += masks
 
-
             # set to one since we preload all sub-patches
             self.nr_segments_per_image = 1
-        Logcreator.info("Nr. of cropped image in total" + str(len(self.images_preloaded)))
+
+        Logcreator.info("Nr. of cropped image in total", str(len(self.images_preloaded)))
+        Logcreator.info("Nr. of removed images", str(count_removed_images),
+                        "contain less then {road_threshold} no road labeling")
 
     def __len__(self):
 
         return len(self.images_preloaded)
-
 
     def __getitem__(self, index):
         image = self.images_preloaded[index]
