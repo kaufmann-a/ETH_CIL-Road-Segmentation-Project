@@ -1,11 +1,11 @@
 {
     "environment": {
         "name" : "Name of the run - this is just a default config file",
-        "output_path": "trainings",
+        "output_path": "getenv('OUTPUT_DIR')",
         "log_file" : "logs.txt"
     },
     "data_collection" : {
-        "folder" : "../data/training",
+        "folder" : "getenv('DATA_COLLECTION_DIR')",
 		"collection_names" : ["eth_dataset", "jkfrie"],
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
