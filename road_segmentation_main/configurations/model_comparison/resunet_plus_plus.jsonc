@@ -6,7 +6,7 @@
     },
     "data_collection" : {
         "folder" : "../data/training",
-		"collection_names" : ["eth_dataset"],
+		"collection_names" : ["eth_dataset", "jkfrie"],
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ], // "crop_random", "rotate_random"],
@@ -63,6 +63,15 @@
                 "milestones" : [10,20],
                 "gamma" : 0.1,
             }
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":1,
+                "kernelsz":4,
+                "mediansz":3,
+                }
         },
     },
     "inference" : {
