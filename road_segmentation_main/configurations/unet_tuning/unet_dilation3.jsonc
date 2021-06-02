@@ -39,12 +39,12 @@
             "name": "unet",
             "in_channels" : 3,
             "out_channels" : 1,
-            "features" : [512, 512, 512, 512],
+            "features" : [64, 128, 256, 512],
             "filtersize": 3,
             "pool_kernelsize" : 2,
             "pool_stride" : 2,
             "stride" : 1,
-            "dilation" : 1,
+            "dilation" : 4,
             "pool_padding": 0,
         },
         "loss_function": "dice_loss",
@@ -61,6 +61,15 @@
             "multiStepLR": {
                 "milestones" : [10,40],
                 "gamma" : 0.1,
+            }
+        },
+        "postprocessing":{
+            "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":1,
+                "kernelsz":4,
+                "mediansz":3,
             }
         },
     },
