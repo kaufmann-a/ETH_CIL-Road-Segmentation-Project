@@ -83,9 +83,8 @@ class ResidualDilatedBlock(nn.Module):
         # TODO not clear how they implemented the identity mapping
         # identity connection
         self.conv_skip = nn.Sequential(
-            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0,
-                      bias=bias_out_layer),
-            # nn.BatchNorm2d(output_dim) # TODO add BN?
+            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0, bias=False),
+            nn.BatchNorm2d(output_dim)  # adding BN here helped against NaN values
         )
 
     def forward(self, x):
@@ -119,8 +118,8 @@ class GlobalContextDilatedCNN(BaseModel):
             nn.Conv2d(filters[0], filters[0], kernel_size=3, stride=1, padding=1),
         )
         self.input_skip = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0)
-            # nn.BatchNorm2d(filters[0]) # TODO add BN?
+            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0, bias=False),
+            nn.BatchNorm2d(filters[0])
         )
 
         # Level 2 - RDB 1

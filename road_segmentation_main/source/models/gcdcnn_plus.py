@@ -41,8 +41,8 @@ class GlobalContextDilatedCNNPlus(BaseModel):
             nn.Conv2d(filters[0], filters[0], kernel_size=3, stride=1, padding=1),
         )
         self.input_skip = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0)
-            # nn.BatchNorm2d(filters[0]) # TODO add BN?
+            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0, bias=False),
+            nn.BatchNorm2d(filters[0])  # adding BN here helped against NaN values
         )
 
         # Level 2 - RDB 1
