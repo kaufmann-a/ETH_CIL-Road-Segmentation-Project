@@ -295,8 +295,10 @@ class Engine:
         accuracy = torchmetrics.Accuracy(threshold=foreground_threshold).to(DEVICE)
         morphparam = Configuration.get('training.postprocessing.morphology')
         patch_accuracy = PatchAccuracy(threshold=foreground_threshold).to(DEVICE)
-        postprocessingpatch_accuracy = PostProcessingPatchAccuracy(morphparam, threshold=foreground_threshold).to(DEVICE)
-        postprocessingpixel_accuracy = PostProcessingPixelAccuracy(morphparam, threshold=foreground_threshold).to(DEVICE)
+        postprocessingpatch_accuracy = PostProcessingPatchAccuracy(morphparam, device=DEVICE,
+                                                                   threshold=foreground_threshold).to(DEVICE)
+        postprocessingpixel_accuracy = PostProcessingPixelAccuracy(morphparam, device=DEVICE,
+                                                                   threshold=foreground_threshold).to(DEVICE)
         iou = IoU(num_classes=2, threshold=foreground_threshold).to(DEVICE)
         return accuracy, iou, multi_accuracy_metric, patch_accuracy, postprocessingpatch_accuracy, postprocessingpixel_accuracy
 

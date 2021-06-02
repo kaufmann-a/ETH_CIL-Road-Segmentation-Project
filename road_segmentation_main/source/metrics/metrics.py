@@ -34,12 +34,13 @@ class PatchAccuracy(Metric):
 
 
 class PostProcessingPatchAccuracy(Metric):
-    def __init__(self, morphparam, threshold=0.5, dist_sync_on_step=False):
+    def __init__(self, morphparam, device, threshold=0.5, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
         self.threshold = threshold
         self.morphparam = morphparam
+        self.device = device
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
         # create patches
@@ -56,8 +57,8 @@ class PostProcessingPatchAccuracy(Metric):
         for img in toimgs:
             tmp = postprocess(img, self.morphparam)
             postprocessed_patched_preds.append(tmp)
-
-        postprocessed_patched_preds = torch.tensor(postprocessed_patched_preds)
+        # TODO do we need really need to change the device to cpu and then again to gpu
+        postprocessed_patched_preds = torch.tensor(postprocessed_patched_preds).to(self.device)
         # update metric states
         self.correct += torch.sum(postprocessed_patched_preds == patched_target)
         self.total += patched_target.numel()
@@ -68,12 +69,13 @@ class PostProcessingPatchAccuracy(Metric):
 
 
 class PostProcessingPixelAccuracy(Metric):
-    def __init__(self, morphparam, threshold=0.5, dist_sync_on_step=False):
+    def __init__(self, morphparam, device, threshold=0.5, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
         self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
         self.threshold = threshold
         self.morphparam = morphparam
+        self.device = device
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
 
@@ -88,8 +90,8 @@ class PostProcessingPixelAccuracy(Metric):
         for img in toimgs:
             tmp = postprocess(img, self.morphparam)
             postprocessed_preds.append(tmp)
-
-        postprocessed_preds=torch.tensor(postprocessed_preds)
+        # TODO do we need really need to change the device to cpu and then again to gpu
+        postprocessed_preds = torch.tensor(postprocessed_preds).to(self.device)
         # update metric states
         self.correct += torch.sum(postprocessed_preds == target)
         self.total += target.numel()
