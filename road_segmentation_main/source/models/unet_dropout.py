@@ -25,13 +25,14 @@ class DoubleConv(nn.Module):
                       stride=config.stride, padding=padding, dilation=config.dilation,  bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
+            nn.Dropout(p=config.dropout)
         )
 
     def forward(self, x):
         return self.conv(x)
 
 class UNET(BaseModel):
-    name = 'unet'
+    name = 'unet_dropout'
 
 
     def __init__(self, config):
