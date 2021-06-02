@@ -35,8 +35,17 @@
                 "tags" : []
             }
         },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":1,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        },
         "model": {
-            "name": "unet",
+            "name": "unet_",
             "in_channels" : 3,
             "out_channels" : 1,
             "features" : [64, 128, 256, 512]
