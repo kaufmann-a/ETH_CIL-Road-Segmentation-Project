@@ -74,9 +74,8 @@ class RoadSegmentationDataset(Dataset):
             # set to one since we preload all sub-patches
             self.nr_segments_per_image = 1
 
-        Logcreator.info("Nr. of cropped image in total", str(len(self.images_preloaded)))
-        Logcreator.info("Nr. of removed images", str(count_removed_images),
-                        "contain less then {road_threshold} no road labeling")
+        Logcreator.info("Nr. of cropped image in total:", str(len(self.images_preloaded)))
+        Logcreator.info("Nr. of removed images:", str(count_removed_images))
 
     def __len__(self):
 
