@@ -9,6 +9,7 @@
         "collection_names" : ["osm_roadtracer"],
         "transform_folders" : [],
         "test_images_folder" : "../data/test_images",
+        "min_road_percentage" : 0.0,
         "validation_ratio" : 0.2,
         "include_val_transforms" : false,
         "save_imgs" : false,

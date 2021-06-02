@@ -11,6 +11,7 @@
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
+        "min_road_percentage" : 0.0,
         "validation_ratio" : 0.2,
         "include_val_transforms" : false,
         "save_imgs" : true,
