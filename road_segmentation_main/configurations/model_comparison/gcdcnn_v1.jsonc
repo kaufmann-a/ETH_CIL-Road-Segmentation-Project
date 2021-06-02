@@ -1,25 +1,25 @@
 {
     "environment": {
-        "name" : "Unet, 300",
+        "name" : "Name of the run - this is just a default config file",
         "output_path": "trainings",
         "log_file" : "logs.txt"
     },
     "data_collection" : {
         "folder" : "../data/training",
-		"collection_names" : ["eth_dataset", "alessiapacca"],
+		"collection_names" : ["eth_dataset"],
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
-                                ],
+                               ], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
-        "validation_ratio" : 0.3,
-        "include_val_transforms" : true,
+        "validation_ratio" : 0.2,
+        "include_val_transforms" : false,
         "save_imgs" : true,
     },
     "training": {
         "general" : {
             "batch_size": 8,
-            "num_epochs" : 12,
-            "checkpoint_save_interval" : 12,
+            "num_epochs" : 50,
+            "checkpoint_save_interval" : 25,
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
@@ -31,38 +31,23 @@
                 "start_epoch" : 40
             },
             "comet" : {
-                "log_to_comet" : false,
-                "tags" : []
+                "log_to_comet" : true,
+                "tags" : ["model_comparison"]
             }
         },
-        "postprocessing":{
-                "morphology":{
-                "numdilate":2,
-                "numerode":2,
-                "nummedian":1,
-                "kernelsz":4,
-                "mediansz":3,
-                }
-        },
         "model": {
-            "name": "unet",
+            "name": "gcdcnn_v1",
             "in_channels" : 3,
             "out_channels" : 1,
-            "features" : [64, 128, 256, 512],
-            "filtersize": 3,
-            "pool_kernelsize" : 2,
-            "pool_stride" : 2,
-            "stride" : 1,
-            "dilation" : 1,
-            "pool_padding": 0,
+            "features" : [64, 128, 256, 512]
         },
         "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
-            "lr": 0.001
+            "lr": 0.0001
         },
         "lr_scheduler": {
-            "name": "stepLR",
+            "name": "multiStepLR",
             "stepLR": {
                 "step_size" : 10,
                 "gamma" : 0.1,
@@ -77,7 +62,7 @@
         "general" : {
             "foreground_threshold" : 0.25,
             "use_original_image_size" : false,
-            "enable_postprocessing" : false,
+            "enable_postprocessing" : true,
         },
         "postprocessing":{
                 "morphology":{

@@ -2,6 +2,7 @@ import torch
 import torchmetrics
 from torch.utils.tensorboard import SummaryWriter
 from torchmetrics import Metric
+from source.postprocessing.postprocessing import postprocess
 
 
 class PatchAccuracy(Metric):
@@ -26,6 +27,72 @@ class PatchAccuracy(Metric):
         # update metric states
         self.correct += torch.sum(patched_preds == patched_target)
         self.total += patched_target.numel()
+
+    def compute(self):
+        # compute final result
+        return self.correct.float() / self.total
+
+
+class PostProcessingPatchAccuracy(Metric):
+    def __init__(self, morphparam, threshold=0.5, dist_sync_on_step=False):
+        super().__init__(dist_sync_on_step=dist_sync_on_step)
+        self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.threshold = threshold
+        self.morphparam = morphparam
+
+    def update(self, preds: torch.Tensor, target: torch.Tensor):
+        # create patches
+        avgPool = torch.nn.AvgPool2d(16, stride=16)
+        patched_preds = avgPool(preds)
+        patched_target = avgPool(target)
+        # convert to integers according to threshold
+        patched_preds = (patched_preds > self.threshold).int()
+        patched_target = (patched_target > self.threshold).int()
+
+        toimgs = patched_preds.cpu().numpy()
+        toimgs = toimgs.astype('uint8')
+        postprocessed_patched_preds = []
+        for img in toimgs:
+            tmp = postprocess(img, self.morphparam)
+            postprocessed_patched_preds.append(tmp)
+
+        postprocessed_patched_preds = torch.tensor(postprocessed_patched_preds)
+        # update metric states
+        self.correct += torch.sum(postprocessed_patched_preds == patched_target)
+        self.total += patched_target.numel()
+
+    def compute(self):
+        # compute final result
+        return self.correct.float() / self.total
+
+
+class PostProcessingPixelAccuracy(Metric):
+    def __init__(self, morphparam, threshold=0.5, dist_sync_on_step=False):
+        super().__init__(dist_sync_on_step=dist_sync_on_step)
+        self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.threshold = threshold
+        self.morphparam = morphparam
+
+    def update(self, preds: torch.Tensor, target: torch.Tensor):
+
+        # convert to integers according to threshold
+        preds = (preds > self.threshold).int()
+        target = (target > self.threshold).int()
+
+        # call post processing code
+        toimgs = preds.cpu().numpy()
+        toimgs = toimgs.astype('uint8')
+        postprocessed_preds = []
+        for img in toimgs:
+            tmp = postprocess(img, self.morphparam)
+            postprocessed_preds.append(tmp)
+
+        postprocessed_preds=torch.tensor(postprocessed_preds)
+        # update metric states
+        self.correct += torch.sum(postprocessed_preds == target)
+        self.total += target.numel()
 
     def compute(self):
         # compute final result

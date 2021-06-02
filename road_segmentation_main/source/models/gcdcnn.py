@@ -219,7 +219,13 @@ if __name__ == '__main__':
     """
     Test if the dimensions work out and print model
     """
-    model = GlobalContextDilatedCNN(options=[])
+
+
+    class Config:
+        use_submission_masks = False
+
+
+    model = GlobalContextDilatedCNN(config=Config())
     model.to(DEVICE)
     summary(model, input_size=(3, 256, 256), device=DEVICE)
 
