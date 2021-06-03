@@ -83,9 +83,8 @@ class ResidualDilatedBlock(nn.Module):
         # TODO not clear how they implemented the identity mapping
         # identity connection
         self.conv_skip = nn.Sequential(
-            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0,
-                      bias=bias_out_layer),
-            # nn.BatchNorm2d(output_dim) # TODO add BN?
+            nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0, bias=False),
+            nn.BatchNorm2d(output_dim)  # adding BN here helped against NaN values
         )
 
     def forward(self, x):
@@ -104,7 +103,7 @@ class GlobalContextDilatedCNN(BaseModel):
     """
     Global context dilated convolutional neural network
     """
-    name = 'gcdcnn'
+    name = 'gcdcnn_bn'
 
     def __init__(self, config, channel=3, filters=[64, 128, 256, 512]):
         super(GlobalContextDilatedCNN, self).__init__()
@@ -119,8 +118,8 @@ class GlobalContextDilatedCNN(BaseModel):
             nn.Conv2d(filters[0], filters[0], kernel_size=3, stride=1, padding=1),
         )
         self.input_skip = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0)
-            # nn.BatchNorm2d(filters[0]) # TODO add BN?
+            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0, bias=False),
+            nn.BatchNorm2d(filters[0])
         )
 
         # Level 2 - RDB 1
@@ -213,52 +212,3 @@ class GlobalContextDilatedCNN(BaseModel):
         output = self.output_layer(x14)
 
         return output
-
-
-if __name__ == '__main__':
-    """
-    Test if the dimensions work out and print model
-    """
-
-
-    class Config:
-        use_submission_masks = False
-
-
-    model = GlobalContextDilatedCNN(config=Config())
-    model.to(DEVICE)
-    summary(model, input_size=(3, 256, 256), device=DEVICE)
-
-    # experimental visualization
-    VISUALIZE = False
-    if VISUALIZE:
-        import hiddenlayer as hl  # need to install IPython
-
-        # Changes so it runs:
-        # Line 71 in pytorch_builder.py of the hiddenlayer library to:
-        # torch_graph = torch.onnx._optimize_trace(trace, torch.onnx.OperatorExportTypes.ONNX_FALLTHROUGH)
-        #
-        # Upgrade changes so we see the stride and dilation for Conv3x3:
-        # Changed line 43/44 in transform.py to:
-        # name = self.name or " &gt; ".join([l.title + ("" if not "Conv3x3" == l.title else 's:' + str(l.params['strides']) + 'd:' + str(l.params['dilations'])) for l in matches])
-        #                 combo = Node(uid=graph.sequence_id(matches),
-        #                              name=name, ...
-        x = torch.zeros((2, 3, 256, 256), dtype=torch.float, requires_grad=True).to(DEVICE)
-
-        transforms = [
-            hl.transforms.Fold("BatchNorm > Relu > Conv", "BnReluConv"),
-            hl.transforms.Fold("Conv > BatchNorm > Relu > Conv", "ConvBnReluConv"),
-            hl.transforms.Fold("BnReluConv > BnReluConv > BnReluConv", "RDB"),
-
-            hl.transforms.FoldDuplicates(),
-        ]
-
-        graph = hl.build_graph(model, x, transforms=transforms)
-        out = graph.build_dot()
-        out.render(filename='gc_dcnn', view=True)
-
-        # from torchviz import make_dot
-        #
-        # x = torch.zeros((2, 3, 256, 256), dtype=torch.float, requires_grad=False)
-        # out = model(x)
-        # make_dot(out).render("gc_dcnn")
