@@ -20,6 +20,7 @@ class RoadSegmentationDataset(Dataset):
                  crop_size=(400, 400),
                  use_submission_masks=False,
                  min_road_percentage=0.0001,
+                 include_overlapping_patches=True,
                  debug=False):
         # self.device = device # unsure whether we need this, if yes: add parameter device to init
         self.transform = transform
@@ -28,7 +29,8 @@ class RoadSegmentationDataset(Dataset):
         self.foreground_threshold = threshold
         self.use_submission_masks = use_submission_masks
         self.min_road_percentage = min_road_percentage if 1 >= min_road_percentage >= 0 else 0
-        self.image_cropper = ImageCropper(out_image_size=crop_size)
+        self.image_cropper = ImageCropper(out_image_size=crop_size,
+                                          include_overlapping_patches=include_overlapping_patches)
         # preload images into memory to not read from drive everytime
         self.images_preloaded = list()
         self.masks_preloaded = list()

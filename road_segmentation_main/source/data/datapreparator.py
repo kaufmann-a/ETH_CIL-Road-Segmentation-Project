@@ -98,11 +98,14 @@ class DataPreparator(object):
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
         use_submission_masks = Configuration.get("training.general.use_submission_masks")
         min_road_percentage = Configuration.get("data_collection.min_road_percentage", optional=True, default=0)
+        include_overlapping_patches = Configuration.get("data_collection.include_overlapping_patches",
+                                                        optional=True, default=True)
 
         train_ds = RoadSegmentationDataset(train_set_images, train_set_masks, foreground_threshold, transform_train,
                                            crop_size=cropped_image_size,
                                            use_submission_masks=use_submission_masks,
-                                           min_road_percentage=min_road_percentage)
+                                           min_road_percentage=min_road_percentage,
+                                           include_overlapping_patches=include_overlapping_patches)
 
         mean_after, std_after = transformation.get_mean_std(train_ds)
         Logcreator.info(f"Mean and std after transformations: mean {mean_after}, std {std_after}")
@@ -110,7 +113,9 @@ class DataPreparator(object):
         val_ds = RoadSegmentationDataset(val_set_images, val_set_masks, foreground_threshold, transform_val,
                                          crop_size=cropped_image_size,
                                          use_submission_masks=use_submission_masks,
-                                         min_road_percentage=min_road_percentage)  # TODO should we also remove images in the validation set that do not contain road?
+                                         min_road_percentage=min_road_percentage,
+                                         # TODO should we also remove images in the validation set that do not contain road?
+                                         include_overlapping_patches=include_overlapping_patches)
 
         return train_ds, val_ds
 
