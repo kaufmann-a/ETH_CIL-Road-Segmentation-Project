@@ -1,4 +1,4 @@
-
+import glob
 import os
 from comet_ml import Experiment
 from torch.utils.tensorboard import SummaryWriter
@@ -41,6 +41,12 @@ def init_comet():
         experiment.log_parameter("Optimizer-LR", parameters.optimizer.lr)
         experiment.log_parameter("lr-sched.", parameters.lr_scheduler.name)
         experiment.log_parameter("Whole configfile", parameters)
+
+        try:
+            cfg_file = glob.glob(os.path.join(Configuration.output_directory, '*.jsonc'))[0]
+            experiment.log_code(cfg_file)
+        except:
+            Logcreator.error("Upload of config file failed")
 
         return experiment
     except ValueError:
