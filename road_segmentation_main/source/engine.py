@@ -83,8 +83,16 @@ class Engine:
         # Load training parameters from config file
         train_parms = Configuration.get('training.general')
 
+        # drop the last batch if it only has size one, because otherwise an error is thrown
+        size_of_last_batch = len(training_data) % train_parms.batch_size
+        drop_last_incomplete_batch_train = size_of_last_batch == 1
+        if drop_last_incomplete_batch_train:
+            Logcreator.info("Training - Last batch dropped of size", size_of_last_batch)
         train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
-                                  pin_memory=True, shuffle=train_parms.shuffle_data)
+                                  pin_memory=True,
+                                  shuffle=train_parms.shuffle_data,
+                                  drop_last=drop_last_incomplete_batch_train)
+
         val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
                                 pin_memory=True,
                                 shuffle=False)
