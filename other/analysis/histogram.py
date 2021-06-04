@@ -12,6 +12,31 @@ SAVE_FOLDER = "histograms"
 DEBUG = False
 
 
+def get_histograms_single_image(img):
+    img_hist_color_channels = list()
+    img_hist_cdf_channels = list()
+    for c, c_color in enumerate(('red', 'green', 'blue')):
+        img_hist, bins = exposure.histogram(img[..., c], source_range='dtype', nbins=256)
+        assert (np.all(np.arange(256) == bins))
+        img_hist_color_channels.append(img_hist)
+
+        # img_cdf, bins = exposure.cumulative_distribution(img[..., c], nbins=256)
+        # try:
+        #     assert (np.all(np.arange(256) == bins))
+        # except:
+        #     print(f"image nr {i}")
+
+        img_cdf = img_hist.cumsum()
+        img_cdf = img_cdf / float(img_cdf[-1])
+
+        img_hist_cdf_channels.append(img_cdf)
+
+    img_hist_per_c = np.vstack(img_hist_color_channels)
+    img_cdf_per_c = np.vstack(img_hist_cdf_channels)
+
+    return img_hist_per_c, img_cdf_per_c
+
+
 def get_histograms(image_list, name="train", save_images=False, debug=False):
     img_hist_list = list()
     img_cdf_list = list()
@@ -19,28 +44,7 @@ def get_histograms(image_list, name="train", save_images=False, debug=False):
     loop = tqdm(image_list, file=sys.stdout, postfix="get_histogram")
 
     for i, img in enumerate(loop):
-
-        img_hist_color_channels = list()
-        img_hist_cdf_channels = list()
-
-        for c, c_color in enumerate(('red', 'green', 'blue')):
-            img_hist, bins = exposure.histogram(img[..., c], source_range='dtype', nbins=256)
-            assert (np.all(np.arange(256) == bins))
-            img_hist_color_channels.append(img_hist)
-
-            # img_cdf, bins = exposure.cumulative_distribution(img[..., c], nbins=256)
-            # try:
-            #     assert (np.all(np.arange(256) == bins))
-            # except:
-            #     print(f"image nr {i}")
-
-            img_cdf = img_hist.cumsum()
-            img_cdf = img_cdf / float(img_cdf[-1])
-
-            img_hist_cdf_channels.append(img_cdf)
-
-        img_hist_per_c = np.vstack(img_hist_color_channels)
-        img_cdf_per_c = np.vstack(img_hist_cdf_channels)
+        img_hist_per_c, img_cdf_per_c = get_histograms_single_image(img)
 
         img_hist_list.append(img_hist_per_c)
         img_cdf_list.append(img_cdf_per_c)
@@ -112,7 +116,7 @@ if __name__ == '__main__':
     # training data
     DIR = "../../data/training/"
 
-    datasets_dir = ["eth_dataset", "jkfrie", "osm_roadtracer"]  # , "matejsladek", "ottawa", "alessiapacca"]
+    datasets_dir = ["eth_dataset", "jkfrie", "matejsladek", "alessiapacca", "osm_roadtracer", "ottawa"]
 
     for dataset in datasets_dir:
         print(dataset)
