@@ -1,8 +1,11 @@
 import os
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+from skimage import io
+from tqdm import tqdm
 
 
 def display_images(img_list, mask_list, top=10):
@@ -33,17 +36,29 @@ def display_images(img_list, mask_list, top=10):
             break
 
 
-def read_images(dirImages, dirGroundtruth=None):
+def read_image(file_path, as_array=False):
+    if as_array:
+        img = io.imread(file_path)
+    else:
+        img = Image.open(file_path)
+    return img
+
+
+def read_images(dirImages, dirGroundtruth=None, as_array=False):
     img_list = list()
     mask_list = list()
-    for file in os.listdir(dirImages)[0:20]:
+
+    loop = tqdm(os.listdir(dirImages), file=sys.stdout, postfix="read")
+    for file in loop:
         filename = os.fsdecode(file)
-        if filename.endswith(".png"):
-            img = Image.open(os.path.join(dirImages, filename))
+        if filename.endswith(".png") or filename.endswith(".jpg"):
+            file_path = os.path.join(dirImages, filename)
+            img = read_image(file_path, as_array=as_array)
             img_list.append(img)
 
             if dirGroundtruth is not None:
-                mask = Image.open(os.path.join(dirGroundtruth, filename))
+                file_path = os.path.join(dirGroundtruth, filename)
+                mask = read_image(file_path, as_array=as_array)
                 mask_list.append(mask)
 
     if dirGroundtruth is None:

@@ -6,8 +6,8 @@ import numpy as np
 import os
 
 if __name__ == '__main__':
-    dirImages = "../../data/training/original/images"
-    dirGroundtruth = "../../data/training/original/masks"
+    dirImages = "../../data/training/eth_dataset/original/images/"
+    dirGroundtruth = "../../data/training/eth_dataset/original/masks"
 
     for file in os.listdir(dirImages)[0:5]:
         filename = os.fsdecode(file)
