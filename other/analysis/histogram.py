@@ -1,15 +1,26 @@
 import os
 import sys
 
+import albumentations as A
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage import exposure
+from skimage import io
+from skimage.exposure import match_histograms
 from tqdm import tqdm
 
 from other.analysis.analysis import read_images
 
 SAVE_FOLDER = "histograms"
 DEBUG = False
+
+
+def plot_single_histogram(img, name):
+    img_hist_per_c, img_cdf_per_c = get_histograms_single_image(img)
+    plot_histogram_cdf(img_hist_per_c, img_cdf_per_c,
+                       title=name,
+                       fname=None,
+                       dir=SAVE_FOLDER)
 
 
 def get_histograms_single_image(img):
@@ -108,7 +119,34 @@ def process_on_dataset(dir, name, nr_images_to_process=None):
     return get_mean_hist(img_list, name=name)
 
 
+def test_histogram_matching():
+    # test matching
+    img_train = io.imread("../../data/training/eth_dataset/original/images/satImage_001.png")
+    img_test = io.imread("../../data/test_images/test_7.png")
+    plot_single_histogram(img_train, "img_train")
+    plot_single_histogram(img_test, "img_test")
+
+    matched = match_histograms(img_train, reference=img_test, multichannel=True)
+    plot_single_histogram(matched, "matched")
+    plt.imshow(matched)
+    plt.show()
+
+    # equalize iamges
+    t = A.Equalize(always_apply=True, by_channels=True)
+    img = t(image=img_train)["image"]
+    plot_single_histogram(img, "img train equalized")
+    plt.imshow(img)
+    plt.show()
+    img = t(image=img_test)["image"]
+    plot_single_histogram(img, "img test equalized")
+    plt.imshow(img)
+    plt.show()
+
+
 if __name__ == '__main__':
+    test_histogram_matching()
+    # exit()
+
     # test data
     dirEthTestImages = "../../data/test_images/"
     process_on_dataset(dirEthTestImages, "eth_data_test")
