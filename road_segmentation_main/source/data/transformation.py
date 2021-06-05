@@ -102,6 +102,16 @@ def get_transformations(mean=None, std=None, use_train_statistics=False, is_trai
 
             transform_list.append(aug_instance)
 
+    if hasattr(cfg, "use_histogram_matching") and cfg.use_histogram_matching:
+        test_img_dir = os.path.join(os.getenv("DATA_COLLECTION_DIR"), "../test_images")
+        test_imgs = [os.path.join(test_img_dir, f) for f in os.listdir(test_img_dir)]
+        transform_list += [
+            A.HistogramMatching(
+                blend_ratio=(0.8, 1.0),
+                reference_images=test_imgs,
+                always_apply=True)
+        ]
+
     transform_list += [
         # A.Resize(height=400, width=400), # commented because we generally do not want to resize
         A.Normalize(
@@ -112,9 +122,14 @@ def get_transformations(mean=None, std=None, use_train_statistics=False, is_trai
         ToTensorV2()
     ]
 
-    transforms = A.Compose(transforms=transform_list)
+    # build string for logging
+    transformations_str = "\n"
+    for t in transform_list:
+        transformations_str += str(t) + "\n"
 
-    Logcreator.info(f"Applied transformations (is_train={is_train}):", transforms)
+    Logcreator.info(f"Applied transformations (is_train={is_train}):", transformations_str)
+
+    transforms = A.Compose(transforms=transform_list)
 
     return transforms
 
@@ -136,6 +151,12 @@ if __name__ == '__main__':
         transform = get_transformations(is_train=True)
     else:
         transform_list = []
+        transform_list += [
+            A.HistogramMatching(
+                reference_images=["../../../data/test_images/test_7.png"],
+                always_apply=True)
+        ]
+
         transform_list += [
             # A.CLAHE(p=1.0),
             # A.HueSaturationValue(p=1.0),
