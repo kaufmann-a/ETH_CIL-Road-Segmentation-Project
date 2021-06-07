@@ -7,8 +7,7 @@
     "data_collection" : {
         "folder" : "getenv('DATA_COLLECTION_DIR')",
 		"collection_names" : ["eth_dataset", "jkfrie"],
-        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
-                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+        "transform_folders" : ["rotate_90",
                                 ],
         "test_images_folder" : "../data/test_images",
         "validation_ratio" : 0.2,
