@@ -71,16 +71,13 @@ class ResidualDilatedBlock(nn.Module):
 
             nn.BatchNorm2d(output_dim),
             nn.ReLU(),
-            # TODO is padding = dilation ok?
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=False),
 
             nn.BatchNorm2d(output_dim),
             nn.ReLU(),
-            # TODO is padding = dilation ok?
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=bias_out_layer)
         )
 
-        # TODO not clear how they implemented the identity mapping
         # identity connection
         self.conv_skip = nn.Sequential(
             nn.Conv2d(input_dim, output_dim, kernel_size=1, stride=stride, padding=0, bias=False),
@@ -105,67 +102,51 @@ class GlobalContextDilatedCNN(BaseModel):
     """
     name = 'gcdcnn_bn'
 
-    def __init__(self, config, channel=3, filters=[64, 128, 256, 512]):
+    def __init__(self, config):
         super(GlobalContextDilatedCNN, self).__init__()
 
+        in_channel = 3
+        filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
+
         # Encoder
-        # level numbers according to paper
         # level 1
         self.input_layer = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channel, filters[0], kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(filters[0]),
             nn.ReLU(),
             nn.Conv2d(filters[0], filters[0], kernel_size=3, stride=1, padding=1),
         )
         self.input_skip = nn.Sequential(
-            nn.Conv2d(channel, filters[0], kernel_size=1, stride=1, padding=0, bias=False),
+            nn.Conv2d(in_channel, filters[0], kernel_size=1, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(filters[0])
         )
 
-        # Level 2 - RDB 1
-        self.residual_dilated_block_1 = ResidualDilatedBlock(filters[0], filters[1], stride=2, dilation=2, padding=1)
-        # Level 3 - RDB 2
-        self.residual_dilated_block_2 = ResidualDilatedBlock(filters[1], filters[2], stride=2, dilation=2, padding=1)
-        # Level 4 - RDB 3
-        self.residual_dilated_block_3 = ResidualDilatedBlock(filters[2], filters[3], stride=2, dilation=2, padding=1)
-
-        # TODO not clear where they use BN: during "upsampling" and in ppm
-        BATCH_NORM_INFRONT_PPM = False
+        # RDB blocks
+        self.downs = nn.ModuleList()
+        for idx in range(0, len(filters) - 1):
+            self.downs.append(ResidualDilatedBlock(filters[idx], filters[idx + 1], stride=2, dilation=2, padding=1))
 
         # Bridge
-        # Level 5
+        BATCH_NORM_INFRONT_PPM = False
         bins = (1, 2, 3, 6)
-        ppm = PPM(filters[3], int(filters[3] / len(bins)), bins)
+        ppm = PPM(filters[-1], int(filters[-1] / len(bins)), bins)
         self.bridge = nn.Sequential(
-            nn.BatchNorm2d(filters[3]),
+            nn.BatchNorm2d(filters[-1]),
             ppm,
         ) if BATCH_NORM_INFRONT_PPM else ppm
 
         # Decoder
-        # Accordint to paper:
-        #  "Upsampling is done with the transposed convolution of pytorch using kernel size 2 and stride 2"
-
-        # Level 6
-        self.upsample_1 = nn.ConvTranspose2d(filters[3] * 2, filters[2], kernel_size=2, stride=2)
-
-        # the bias of the up residual out layer is set to true if not followed by a BN layer
-        self.up_residual_block1 = ResidualDilatedBlock(filters[2] * 2, filters[2],
-                                                       stride=1, dilation=1, padding=1,
-                                                       bias_out_layer=True)
-
-        # Level 7
-        self.upsample_2 = nn.ConvTranspose2d(filters[2], filters[1], kernel_size=2, stride=2)
-
-        self.up_residual_block2 = ResidualDilatedBlock(filters[1] * 2, filters[1],
-                                                       stride=1, dilation=1, padding=1,
-                                                       bias_out_layer=True)
-
-        # Level 8
-        self.upsample_3 = nn.ConvTranspose2d(filters[1], filters[0], kernel_size=2, stride=2)
-
-        self.up_residual_block3 = ResidualDilatedBlock(filters[0] * 2, filters[0],
-                                                       stride=1, dilation=1, padding=1,
-                                                       bias_out_layer=True)
+        self.ups_upsample = nn.ModuleList()
+        self.ups_rdb = nn.ModuleList()
+        filters[-1] = filters[-1] * 2  # ppm concatenates input with pyramid pooled layers -> doubles channels
+        for idx in reversed(range(1, len(filters))):
+            self.ups_upsample.append(
+                nn.ConvTranspose2d(filters[idx], filters[idx - 1], kernel_size=(2, 2), stride=(2, 2))
+            )
+            self.ups_rdb.append(
+                ResidualDilatedBlock(filters[idx - 1] * 2, filters[idx - 1], stride=1, dilation=1, padding=1,
+                                     bias_out_layer=True)
+            )
 
         # Choose output kernel size
         if not config.use_submission_masks:
@@ -182,33 +163,45 @@ class GlobalContextDilatedCNN(BaseModel):
         )
 
     def forward(self, x):
+        out_down = []
+
         # Encoder
-        # level numbers according to paper
-        lv1 = self.input_layer(x) + self.input_skip(x)
-        lv2 = self.residual_dilated_block_1(lv1)
-        lv3 = self.residual_dilated_block_2(lv2)
-        lv4 = self.residual_dilated_block_3(lv3)
+        x = self.input_layer(x) + self.input_skip(x)
+        out_down.append(x)
+        for down in self.downs:
+            x = down(x)
+            out_down.append(x)
 
         # Bridge
-        lv5 = self.bridge(lv4)  # bridge already concatenates level 4 with pyramid pooled output!
+        x = self.bridge(out_down[-1])  # bridge already concatenates last layer with pyramid pooled output!
+        out_down[-1] = None
 
         # Decoder
-        # Level 6
-        x6 = self.upsample_1(lv5)
-        x7 = torch.cat([x6, lv3], dim=1)
-        x8 = self.up_residual_block1(x7)
+        for idx in range(0, len(self.ups_upsample)):
+            down_idx = len(self.downs) - 1 - idx
 
-        # Level 7
-        x9 = self.upsample_2(x8)
-        x10 = torch.cat([x9, lv2], dim=1)
-        x11 = self.up_residual_block2(x10)
-
-        # Level 8
-        x12 = self.upsample_3(x11)
-        x13 = torch.cat([x12, lv1], dim=1)
-        x14 = self.up_residual_block3(x13)
+            x = self.ups_upsample[idx](x)
+            x = torch.cat([x, out_down[down_idx]], dim=1)
+            out_down[down_idx] = None
+            x = self.ups_rdb[idx](x)
 
         # Output
-        output = self.output_layer(x14)
+        output = self.output_layer(x)
 
         return output
+
+
+if __name__ == '__main__':
+    """
+    Test if the dimensions work out and print model
+    """
+
+
+    class Config:
+        use_submission_masks = False
+        features = [64, 128, 256, 512]  # [8, 16, 32, 64, 128]
+
+
+    model = GlobalContextDilatedCNN(config=Config())
+    model.to(DEVICE)
+    summary(model, input_size=(3, 608, 608), device=DEVICE)
