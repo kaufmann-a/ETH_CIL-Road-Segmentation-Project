@@ -140,6 +140,56 @@ class AttentionBlock(nn.Module):
         return out * x2
 
 
+class AttentionGate(nn.Module):
+    """
+    Attention Gate (AG) block from the paper: Attention U-Net:Learning Where to Look for the Pancreas
+    Based on: https://arxiv.org/pdf/1804.03999.pdf
+    """
+
+    def __init__(self, F_g, F_l, F_int):
+        """
+
+        @param F_g: encoder dimension
+        @param F_l: decoder dimension
+        @param F_int: internal dimension
+        """
+        super().__init__()
+
+        # encoder input
+        self.W_g = nn.Sequential(
+            nn.Conv2d(F_g, F_int, kernel_size=(1, 1), stride=(2, 2), padding=(0, 0), bias=False),
+            nn.BatchNorm2d(F_int)
+        )
+
+        # decoder input
+        self.W_x = nn.Sequential(
+            nn.Conv2d(F_l, F_int, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.attention = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.Conv2d(F_int, 1, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False),
+            nn.BatchNorm2d(1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, g, x):
+        """
+
+        @param g: encoder input
+        @param x: decoder input
+        @return:
+        """
+        add = self.W_g(g) + self.W_x(x)
+        attention = self.attention(add)
+
+        # upsample is only needed in case the output dimension is different from the internal dimension
+        # F.upsample(attention, size=x.size()[2:], mode="bilinear")
+
+        return attention * x
+
+
 class PPM(nn.Module):
     """
     Pyramid Pooling Module - PPM
