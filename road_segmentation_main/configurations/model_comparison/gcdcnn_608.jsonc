@@ -45,7 +45,7 @@
         },
         "model": {
             "name": "gcdcnn_bn",
-            "features" : [8, 16, 32, 64, 128],
+            "features" : [64, 128, 256, 512],
         },
         "loss_function": "dice_loss",
         "optimizer": {
