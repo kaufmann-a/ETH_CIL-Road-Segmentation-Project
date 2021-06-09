@@ -15,6 +15,7 @@ import os
 import numpy as np
 import random
 import torch
+import inspect
 
 from torch.optim.swa_utils import AveragedModel
 import torchmetrics
@@ -67,12 +68,15 @@ class Engine:
         # self.swa_scheduler = torch.optim.swa_utils.SWALR(optimizer, \
         #          anneal_strategy="linear", anneal_epochs=5, swa_lr=0.05)
 
-        # Init comet and tensorboard
-        self.comet = metricslogging.init_comet()
-        self.tensorboard = metricslogging.init_tensorboard()
-
         # Print model summary
         self.print_modelsummary()
+
+        if inspect.getouterframes(inspect.currentframe(), 2)[1].filename.__contains__('train.py'):
+            # Init comet and tensorboard
+            self.comet = metricslogging.init_comet()
+            self.tensorboard = metricslogging.init_tensorboard()
+
+
 
     def get_lr(self):
         return self.optimizer.param_groups[0]['lr']
