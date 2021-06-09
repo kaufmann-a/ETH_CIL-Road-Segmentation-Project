@@ -20,7 +20,7 @@ import torch.nn.functional as F
 from torchsummary import summary
 
 from source.models.basemodel import BaseModel
-from source.models.modules import PPM
+from source.models.modules import PPM, AttentionGate
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -105,6 +105,9 @@ class GlobalContextDilatedCNN(BaseModel):
     def __init__(self, config):
         super(GlobalContextDilatedCNN, self).__init__()
 
+        self.use_attention = False
+        upsample_bilinear = False
+
         in_channel = 3
         filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
 
@@ -136,13 +139,27 @@ class GlobalContextDilatedCNN(BaseModel):
         ) if BATCH_NORM_INFRONT_PPM else ppm
 
         # Decoder
+        self.up_attention = nn.ModuleList()
         self.ups_upsample = nn.ModuleList()
         self.ups_rdb = nn.ModuleList()
         filters[-1] = filters[-1] * 2  # ppm concatenates input with pyramid pooled layers -> doubles channels
         for idx in reversed(range(1, len(filters))):
-            self.ups_upsample.append(
-                nn.ConvTranspose2d(filters[idx], filters[idx - 1], kernel_size=(2, 2), stride=(2, 2))
-            )
+            if self.use_attention:
+                self.up_attention.append(
+                    AttentionGate(filters[idx - 1], filters[idx], filters[idx]),
+                )
+
+            if upsample_bilinear:
+                self.ups_upsample.append(
+                    nn.Sequential(
+                        nn.Upsample(mode="bilinear", scale_factor=2),
+                        nn.Conv2d(filters[idx], filters[idx - 1], kernel_size=(1, 1), stride=(1, 1))
+                    )
+                )
+            else:
+                self.ups_upsample.append(
+                    nn.ConvTranspose2d(filters[idx], filters[idx - 1], kernel_size=(2, 2), stride=(2, 2))
+                )
             self.ups_rdb.append(
                 ResidualDilatedBlock(filters[idx - 1] * 2, filters[idx - 1], stride=1, dilation=1, padding=1,
                                      bias_out_layer=True)
@@ -174,15 +191,16 @@ class GlobalContextDilatedCNN(BaseModel):
 
         # Bridge
         x = self.bridge(out_down[-1])  # bridge already concatenates last layer with pyramid pooled output!
-        out_down[-1] = None
 
         # Decoder
         for idx in range(0, len(self.ups_upsample)):
             down_idx = len(self.downs) - 1 - idx
 
+            if self.use_attention:
+                x = self.up_attention[idx](out_down[down_idx], x)
+
             x = self.ups_upsample[idx](x)
             x = torch.cat([x, out_down[down_idx]], dim=1)
-            out_down[down_idx] = None
             x = self.ups_rdb[idx](x)
 
         # Output
