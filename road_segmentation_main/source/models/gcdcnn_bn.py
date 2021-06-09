@@ -107,8 +107,10 @@ class GlobalContextDilatedCNN(BaseModel):
 
         self.use_attention = config.use_attention if hasattr(config, "use_attention") else False
         upsample_bilinear = config.upsample_bilinear if hasattr(config, "upsample_bilinear") else False
+        ppm_bins = config.ppm_bins if hasattr(config, "ppm_bins") else [1, 2, 3, 6]
 
         in_channel = 3
+        out_channels = 1
         filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
 
         # Encoder
@@ -131,18 +133,25 @@ class GlobalContextDilatedCNN(BaseModel):
 
         # Bridge
         BATCH_NORM_INFRONT_PPM = False
-        bins = (1, 2, 3, 6)
-        ppm = PPM(filters[-1], int(filters[-1] / len(bins)), bins)
+
+        num_in_channels = filters[-1]
+        reduction_dim = num_in_channels // len(ppm_bins)
+        out_dim_ppm = reduction_dim * len(ppm_bins) + num_in_channels
+
+        ppm = PPM(in_dim=num_in_channels, reduction_dim=reduction_dim, bins=ppm_bins)
+
         self.bridge = nn.Sequential(
             nn.BatchNorm2d(filters[-1]),
             ppm,
         ) if BATCH_NORM_INFRONT_PPM else ppm
 
+        # set last filter to ppm output dimension
+        filters[-1] = out_dim_ppm
+
         # Decoder
         self.up_attention = nn.ModuleList()
         self.ups_upsample = nn.ModuleList()
         self.ups_rdb = nn.ModuleList()
-        filters[-1] = filters[-1] * 2  # ppm concatenates input with pyramid pooled layers -> doubles channels
         for idx in reversed(range(1, len(filters))):
             if self.use_attention:
                 self.up_attention.append(
@@ -175,7 +184,7 @@ class GlobalContextDilatedCNN(BaseModel):
 
         # Output
         self.output_layer = nn.Sequential(
-            nn.Conv2d(filters[0], out_channels=1, kernel_size=out_kernel_size, stride=out_stride),
+            nn.Conv2d(filters[0], out_channels=out_channels, kernel_size=out_kernel_size, stride=out_stride),
             # nn.Sigmoid() # we use sigmoid later in the loss function
         )
 
@@ -216,8 +225,11 @@ if __name__ == '__main__':
 
 
     class Config:
-        use_submission_masks = False
         features = [64, 128, 256, 512]  # [8, 16, 32, 64, 128]
+        use_submission_masks = False
+        use_attention = False
+        upsample_bilinear = False
+        ppm_bins = [1, 2, 3, 6]
 
 
     model = GlobalContextDilatedCNN(config=Config())
