@@ -20,7 +20,7 @@ import torch.nn.functional as F
 from torchsummary import summary
 
 from source.models.basemodel import BaseModel
-from source.models.modules import PPM, AttentionGate
+from source.models.modules import PPM, AttentionGate, ASPP_new
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -105,16 +105,18 @@ class GlobalContextDilatedCNN(BaseModel):
     def __init__(self, config):
         super(GlobalContextDilatedCNN, self).__init__()
 
-        self.use_attention = config.use_attention if hasattr(config, "use_attention") else False
-        upsample_bilinear = config.upsample_bilinear if hasattr(config, "upsample_bilinear") else False
-        ppm_bins = config.ppm_bins if hasattr(config, "ppm_bins") else [1, 2, 3, 6]
-
         in_channel = 3
         out_channels = 1
         filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
 
+        use_aspp = config.ppm_bins if hasattr(config, "use_aspp") else False
+        ppm_bins = config.ppm_bins if hasattr(config, "ppm_bins") else [1, 2, 3, 6]
+
+        self.use_attention = config.use_attention if hasattr(config, "use_attention") else False
+        upsample_bilinear = config.upsample_bilinear if hasattr(config, "upsample_bilinear") else False
+
         # Encoder
-        # level 1
+        # input
         self.input_layer = nn.Sequential(
             nn.Conv2d(in_channel, filters[0], kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(filters[0]),
@@ -132,21 +134,24 @@ class GlobalContextDilatedCNN(BaseModel):
             self.downs.append(ResidualDilatedBlock(filters[idx], filters[idx + 1], stride=2, dilation=2, padding=1))
 
         # Bridge
-        BATCH_NORM_INFRONT_PPM = False
+        if use_aspp:
+            self.bridge = ASPP_new(filters[-1], filters[-1], use_global_avg_pooling=False)
+        else:
+            BATCH_NORM_INFRONT_PPM = False
 
-        num_in_channels = filters[-1]
-        reduction_dim = num_in_channels // len(ppm_bins)
-        out_dim_ppm = reduction_dim * len(ppm_bins) + num_in_channels
+            num_in_channels = filters[-1]
+            reduction_dim = num_in_channels // len(ppm_bins)
+            out_dim_ppm = reduction_dim * len(ppm_bins) + num_in_channels
 
-        ppm = PPM(in_dim=num_in_channels, reduction_dim=reduction_dim, bins=ppm_bins)
+            ppm = PPM(in_dim=num_in_channels, reduction_dim=reduction_dim, bins=ppm_bins)
 
-        self.bridge = nn.Sequential(
-            nn.BatchNorm2d(filters[-1]),
-            ppm,
-        ) if BATCH_NORM_INFRONT_PPM else ppm
+            # set last filter to ppm output dimension
+            filters[-1] = out_dim_ppm
 
-        # set last filter to ppm output dimension
-        filters[-1] = out_dim_ppm
+            self.bridge = nn.Sequential(
+                nn.BatchNorm2d(filters[-1]),
+                ppm,
+            ) if BATCH_NORM_INFRONT_PPM else ppm
 
         # Decoder
         self.up_attention = nn.ModuleList()
@@ -230,6 +235,7 @@ if __name__ == '__main__':
         use_attention = False
         upsample_bilinear = False
         ppm_bins = [1, 2, 3, 6]
+        use_aspp = False
 
 
     model = GlobalContextDilatedCNN(config=Config())
