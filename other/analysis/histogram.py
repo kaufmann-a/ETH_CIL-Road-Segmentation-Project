@@ -119,28 +119,45 @@ def process_on_dataset(dir, name, nr_images_to_process=None):
     return get_mean_hist(img_list, name=name)
 
 
+def apply_augmentation(transform, image, text):
+    image_trans = transform(image=image)["image"]
+    plot_single_histogram(image_trans, text)
+    plt.imshow(image_trans)
+    plt.title(text)
+    plt.show()
+
+
 def test_histogram_matching():
-    # test matching
     img_train = io.imread("../../data/training/eth_dataset/original/images/satImage_001.png")
     img_test = io.imread("../../data/test_images/test_7.png")
-    plot_single_histogram(img_train, "img_train")
-    plot_single_histogram(img_test, "img_test")
+
+    plt.imshow(img_train)
+    plt.title("train image")
+    plt.show()
+
+    plt.imshow(img_test)
+    plt.title("test image")
+    plt.show()
+
+    # test matching
+    plot_single_histogram(img_train, "train image")
+    plot_single_histogram(img_test, "test image")
 
     matched = match_histograms(img_train, reference=img_test, multichannel=True)
-    plot_single_histogram(matched, "matched")
+    plot_single_histogram(matched, "matched image")
     plt.imshow(matched)
     plt.show()
 
-    # equalize iamges
+    # apply gaussian noise to images
+    t = A.GaussNoise(always_apply=True)
+    apply_augmentation(t, img_train, text="train image GaussNoise")
+    apply_augmentation(t, img_test, text="test image GaussNoise")
+
+    # equalize images
     t = A.Equalize(always_apply=True, by_channels=True)
-    img = t(image=img_train)["image"]
-    plot_single_histogram(img, "img train equalized")
-    plt.imshow(img)
-    plt.show()
-    img = t(image=img_test)["image"]
-    plot_single_histogram(img, "img test equalized")
-    plt.imshow(img)
-    plt.show()
+    apply_augmentation(t, img_train, text="train image equalized")
+    apply_augmentation(t, matched, text="matched image equalized")
+    apply_augmentation(t, img_test, text="test image equalized")
 
 
 if __name__ == '__main__':
