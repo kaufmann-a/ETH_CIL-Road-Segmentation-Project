@@ -1,0 +1,95 @@
+{
+    "environment": {
+        "name" : "Name of the run - this is just a default config file",
+        "output_path": "getenv('OUTPUT_DIR')",
+        "log_file" : "logs.txt"
+    },
+    "data_collection" : {
+        "folder" : "getenv('DATA_COLLECTION_DIR')",
+		"collection_names" : ["eth_dataset"],
+        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
+                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+                               ], // "crop_random", "rotate_random"],
+        "test_images_folder" : "../data/test_images",
+        "min_road_percentage" : 0.0001,
+        "validation_ratio" : 0.3,
+        "include_val_transforms" : false,
+        "save_imgs" : true,
+        "augmentations": {
+            "list": [
+                {"name": "ShiftScaleRotate", "params": {"p": 0.4}},
+                {"name": "RandomContrast", "params": {"p": 0.4}},
+                {"name": "GaussNoise", "params": {"p": 0.4}}
+            ],
+        }
+    },
+    "training": {
+        "general" : {
+            "batch_size": 8,
+            "num_epochs" : 30,
+            "checkpoint_save_interval" : 15,
+            "num_workers" : 2,
+            "shuffle_data" : true,
+            "foreground_threshold" : 0.25,
+            "cropped_image_size" : [400, 400],
+            "submission_loss" : false,
+            "use_submission_masks" : false,
+            "stochastic_weight_averaging" : {
+                "on" : false,
+                "start_epoch" : 40
+            },
+            "comet" : {
+                "log_to_comet" : true,
+                "tags" : ["model_comparison"]
+            }
+        },
+        "model": {
+            "name": "gcdcnn_bn",
+            "features" : [64, 128, 256, 512],
+            "ppm_bins" : [1, 2, 3, 6],
+            "use_attention" : false,
+            "upsample_bilinear" : true,
+        },
+        "loss_function": "dice_loss",
+        "optimizer": {
+            "name": "adam",
+            "lr": 0.0001
+        },
+        "lr_scheduler": {
+            "name": "multiStepLR",
+            "stepLR": {
+                "step_size" : 10,
+                "gamma" : 0.1,
+            },
+            "multiStepLR": {
+                "milestones" : [10,20],
+                "gamma" : 0.1,
+            }
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":1,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        },
+    },
+    "inference" : {
+        "general" : {
+            "foreground_threshold" : 0.25,
+            "use_original_image_size" : false,
+            "enable_postprocessing" : true,
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":2,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        }
+    }
+}

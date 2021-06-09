@@ -6,13 +6,13 @@
     },
     "data_collection" : {
         "folder" : "getenv('DATA_COLLECTION_DIR')",
-		"collection_names" : ["eth_dataset", "jkfrie"],
+		"collection_names" : ["eth_dataset"],
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
         "min_road_percentage" : 0.0001,
-        "validation_ratio" : 0.2,
+        "validation_ratio" : 0.3,
         "include_val_transforms" : false,
         "save_imgs" : true,
         "augmentations": {
@@ -31,7 +31,7 @@
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
-            "cropped_image_size" : [256, 256],
+            "cropped_image_size" : [400, 400],
             "submission_loss" : false,
             "use_submission_masks" : false,
             "stochastic_weight_averaging" : {
@@ -44,10 +44,11 @@
             }
         },
         "model": {
-            "name": "gcdcnn_plus",
-            "in_channels" : 3,
-            "out_channels" : 1,
-            "features" : [64, 128, 256, 512]
+            "name": "gcdcnn_bn",
+            "features" : [64, 128, 256, 512],
+            "use_attention" : false,
+            "upsample_bilinear" : false,
+            "ppm_bins" : [1, 2, 3, 6],
         },
         "loss_function": "dice_loss",
         "optimizer": {
