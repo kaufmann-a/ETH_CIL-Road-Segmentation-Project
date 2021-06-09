@@ -105,8 +105,8 @@ class GlobalContextDilatedCNN(BaseModel):
     def __init__(self, config):
         super(GlobalContextDilatedCNN, self).__init__()
 
-        self.use_attention = False
-        upsample_bilinear = False
+        self.use_attention = config.use_attention if hasattr(config, "use_attention") else False
+        upsample_bilinear = config.upsample_bilinear if hasattr(config, "upsample_bilinear") else False
 
         in_channel = 3
         filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
@@ -222,4 +222,4 @@ if __name__ == '__main__':
 
     model = GlobalContextDilatedCNN(config=Config())
     model.to(DEVICE)
-    summary(model, input_size=(3, 608, 608), device=DEVICE)
+    summary(model, input_size=(3, 400, 400), device=DEVICE)
