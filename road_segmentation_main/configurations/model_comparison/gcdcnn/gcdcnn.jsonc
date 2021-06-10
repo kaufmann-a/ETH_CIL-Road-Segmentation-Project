@@ -47,6 +47,7 @@
             "name": "gcdcnn_bn",
             "features" : [64, 128, 256, 512],
             "use_attention" : false,
+            "use_aspp" : false,
             "upsample_bilinear" : false,
             "ppm_bins" : [1, 2, 3, 6],
         },
