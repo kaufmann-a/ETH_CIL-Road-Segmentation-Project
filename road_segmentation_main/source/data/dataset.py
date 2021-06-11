@@ -87,7 +87,8 @@ class RoadSegmentationDataset(Dataset):
     def __getitem__(self, index):
         image = self.images_preloaded[index]
         mask = self.masks_preloaded[index]
-
+        if self.loss_function == "dice_loss":
+            mask = np.divide(mask, 255.0)
         threshold = 255.0 * self.foreground_threshold
         if not self.loss_function == "dice_loss":
             mask = (mask >= threshold).astype(int)
