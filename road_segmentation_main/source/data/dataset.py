@@ -16,7 +16,7 @@ from source.logcreator.logcreator import Logcreator
 
 
 class RoadSegmentationDataset(Dataset):
-    def __init__(self, image_list, mask_list, threshold, transform=None,
+    def __init__(self, image_list, mask_list, threshold, loss_fun, transform=None,
                  crop_size=(400, 400),
                  use_submission_masks=False,
                  min_road_percentage=0.0001,
@@ -34,6 +34,7 @@ class RoadSegmentationDataset(Dataset):
         # preload images into memory to not read from drive everytime
         self.images_preloaded = list()
         self.masks_preloaded = list()
+        self.loss_function = loss_fun
 
         Logcreator.info("Removing images that contain less than,",
                         crop_size[0] * crop_size[1] * self.min_road_percentage,
@@ -88,7 +89,8 @@ class RoadSegmentationDataset(Dataset):
         mask = self.masks_preloaded[index]
 
         threshold = 255.0 * self.foreground_threshold
-        mask = (mask >= threshold).astype(int)
+        if not self.loss_function == "dice_loss":
+            mask = (mask >= threshold).astype(int)
 
         if self.transform is not None:
             augmentations = self.transform(image=image, mask=mask)

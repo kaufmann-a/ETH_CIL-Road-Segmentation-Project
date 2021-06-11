@@ -101,7 +101,8 @@ class DataPreparator(object):
         include_overlapping_patches = Configuration.get("data_collection.include_overlapping_patches",
                                                         optional=True, default=True)
 
-        train_ds = RoadSegmentationDataset(train_set_images, train_set_masks, foreground_threshold, transform_train,
+        loss_fun = Configuration.get('training.loss_function')
+        train_ds = RoadSegmentationDataset(train_set_images, train_set_masks, foreground_threshold, loss_fun, transform_train,
                                            crop_size=cropped_image_size,
                                            use_submission_masks=use_submission_masks,
                                            min_road_percentage=min_road_percentage,
@@ -110,7 +111,7 @@ class DataPreparator(object):
         mean_after, std_after = transformation.get_mean_std(train_ds)
         Logcreator.info(f"Mean and std after transformations: mean {mean_after}, std {std_after}")
 
-        val_ds = RoadSegmentationDataset(val_set_images, val_set_masks, foreground_threshold, transform_val,
+        val_ds = RoadSegmentationDataset(val_set_images, val_set_masks, foreground_threshold, loss_fun, transform_val,
                                          crop_size=cropped_image_size,
                                          use_submission_masks=use_submission_masks,
                                          min_road_percentage=min_road_percentage,
