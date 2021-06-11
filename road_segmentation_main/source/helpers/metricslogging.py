@@ -32,8 +32,6 @@ def init_comet():
 
         experiment.log_parameter("Model", parameters.model.name)
         experiment.log_parameter("Training Collections", data_collection_params.collection_names)
-        if data_collection_params.transform_folders is not None:
-            experiment.log_parameter("Transformations", data_collection_params.transform_folders)
         experiment.log_parameter("Img size", parameters.general.cropped_image_size)
         experiment.log_parameter("Foreground Threshold", parameters.general.foreground_threshold)
         experiment.log_parameter("Augmentations", data_collection_params.transform_folders)
@@ -42,7 +40,10 @@ def init_comet():
         experiment.log_parameter("Optimizer-LR", parameters.optimizer.lr)
         experiment.log_parameter("lr-sched.", parameters.lr_scheduler.name)
         experiment.log_parameter("Whole configfile", parameters)
-
+        try:
+            experiment.log_parameter("Transformations", data_collection_params.transform_folders)
+        except:
+            Logcreator.info("Transformations can't be logged, because parameter not available")
         try:
             cfg_file = glob.glob(os.path.join(Configuration.output_directory, '*.jsonc'))[0]
             experiment.log_code(cfg_file)
