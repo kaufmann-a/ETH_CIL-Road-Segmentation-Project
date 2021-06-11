@@ -29,6 +29,12 @@ class DataPreparator(object):
             path = Configuration.get_path('data_collection.folder', False)
 
         collection_folders = Configuration.get('data_collection.collection_names')
+
+
+        if "experiments_dataset" in collection_folders:
+            train_ds, val_ds =  DataPreparator.experiment_run_datasets(path, collection_folders)
+            return train_ds, val_ds
+
         transform_folders = Configuration.get('data_collection.transform_folders')
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
 
@@ -82,41 +88,40 @@ class DataPreparator(object):
                     val_set_images.append(image_path)
                     val_set_masks.append(train_set_masks_trans[idx])
 
+        train_ds, val_ds = DataPreparator.get_datasets(train_set_images, train_set_masks, val_set_images, val_set_masks)
+
+        return train_ds, val_ds
+
+    @staticmethod
+    def get_datasets(train_set_images, train_set_masks, val_set_images, val_set_masks):
         Logcreator.info("Trainingset contains " + str(len(train_set_images)) + " images")
         Logcreator.info("Validationset constains " + str(len(val_set_images)) + " iamges")
-
         if len(train_set_images) == 0:
             Logcreator.warn("No training files assigned.")
         if len(val_set_images) == 0:
             Logcreator.warn("No validation files assigned.")
-
         # Create datasets
         transform_train = DataPreparator.compute_transformations(train_set_images, is_train=True)
         transform_val = DataPreparator.compute_transformations(train_set_images, is_train=False)
-
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
         use_submission_masks = Configuration.get("training.general.use_submission_masks")
         min_road_percentage = Configuration.get("data_collection.min_road_percentage", optional=True, default=0)
         include_overlapping_patches = Configuration.get("data_collection.include_overlapping_patches",
                                                         optional=True, default=True)
-
         train_ds = RoadSegmentationDataset(train_set_images, train_set_masks, foreground_threshold, transform_train,
                                            crop_size=cropped_image_size,
                                            use_submission_masks=use_submission_masks,
                                            min_road_percentage=min_road_percentage,
                                            include_overlapping_patches=include_overlapping_patches)
-
         mean_after, std_after = transformation.get_mean_std(train_ds)
         Logcreator.info(f"Mean and std after transformations: mean {mean_after}, std {std_after}")
-
         val_ds = RoadSegmentationDataset(val_set_images, val_set_masks, foreground_threshold, transform_val,
                                          crop_size=cropped_image_size,
                                          use_submission_masks=use_submission_masks,
                                          min_road_percentage=min_road_percentage,
                                          # TODO should we also remove images in the validation set that do not contain road?
                                          include_overlapping_patches=include_overlapping_patches)
-
         return train_ds, val_ds
 
     @staticmethod
@@ -147,6 +152,44 @@ class DataPreparator(object):
             imgs += imgs_cur_imgs_folder
             masks += found_masks_cur_folder
         return imgs, masks
+
+    @staticmethod
+    def experiment_run_datasets(path, collection_folders):
+        collection_folder = os.path.join(path, collection_folders[0])
+        train_set_img_folders = [os.path.join(collection_folder, "train", cur_dataset, "images") for cur_dataset in
+                                 os.listdir(os.path.join(collection_folder, "train"))]
+        train_set_mask_folders = [os.path.join(collection_folder, "train", cur_dataset, "masks") for cur_dataset in
+                                  os.listdir(os.path.join(collection_folder, "train"))]
+        val_set_img_folders = [os.path.join(collection_folder, "valid", cur_dataset, "images") for cur_dataset in
+                                 os.listdir(os.path.join(collection_folder, "valid"))]
+        val_set_mask_folders = [os.path.join(collection_folder, "valid", cur_dataset, "masks") for cur_dataset in
+                                  os.listdir(os.path.join(collection_folder, "valid"))]
+
+        train_set_imgs, train_set_masks = DataPreparator.generate_exp_set(train_set_img_folders, train_set_mask_folders)
+        val_set_imgs, val_set_masks = DataPreparator.generate_exp_set(val_set_img_folders, val_set_mask_folders)
+
+        train_ds, val_ds = DataPreparator.get_datasets(train_set_imgs, train_set_masks, val_set_imgs, val_set_masks)
+        return train_ds, val_ds
+
+    @staticmethod
+    def generate_exp_set(set_img_folders, set_mask_folders):
+        set_imgs = []
+        set_masks = []
+        for idx, folder in enumerate(set_img_folders):
+            cur_img_paths = []
+            cur_mask_paths = []
+            image_names_cur_folder = os.listdir(folder)
+            available_masks_cur_folder = os.listdir(set_mask_folders[idx])
+            for img in image_names_cur_folder:
+                if img in available_masks_cur_folder:
+                    cur_img_paths.append(os.path.join(folder, img))
+                    cur_mask_paths.append(os.path.join(set_mask_folders[idx], img))
+                else:
+                    Logcreator.warn("Attention, image ", img,
+                                    " was found in images but not in masks, it is removed from trainingset")
+            set_imgs += cur_img_paths
+            set_masks += cur_mask_paths
+        return set_imgs, set_masks
 
     @staticmethod
     def compute_transformations(image_paths_train, set_train_norm_statistics=False, is_train=True):

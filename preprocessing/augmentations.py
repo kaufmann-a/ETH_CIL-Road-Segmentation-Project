@@ -120,9 +120,9 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         DIR = sys.argv[1]
     else:
-        DIR = "../data/training"
+        DIR = "D:\OneDrive\GMapsImages"
     print("Now crawling thorugh: ", DIR)
-    datasets_dir = ["eth_dataset", "jkfrie", "matejsladek", "ottawa", "alessiapacca", "osm_roadtracer"]
+    datasets_dir = ["eth_dataset"]
 
     for dataset in datasets_dir:
         print("===============")
