@@ -1,0 +1,131 @@
+{
+    "environment": {
+        "name": "augmentation test",
+        "output_path": "getenv('OUTPUT_DIR')",
+        "log_file": "logs.txt"
+    },
+    "data_collection": {
+        "folder": "getenv('DATA_COLLECTION_DIR')",
+        "collection_names": [
+            "experiments_dataset"
+        ],
+        "include_overlapping_patches" : false,
+        "test_images_folder": "../data/test_images",
+        "include_val_transforms": false,
+        "min_road_percentage" : 0.0001, //Removes images with 16px road
+        "save_imgs": true,
+        "augmentations": {
+            "list": [
+                {
+                    "name": "CLAHE",
+                    "params": {
+                        "tile_grid_size": [
+                            8,
+                            8
+                        ],
+                        "p": 0.4
+                    }
+                },
+                {
+                    "name": "ColorJitter",
+                    "params": {
+                        "p": 0.4
+                    }
+                },
+                {
+                    "name": "ChannelShuffle",
+                    "params": {
+                        "p": 0.4
+                    }
+                }
+            ],
+            "use_train_statistics": false
+        }
+
+    },
+    "training": {
+        "general": {
+            "batch_size": 8,
+            "num_epochs": 200,
+            "checkpoint_save_interval": 10,
+            "num_workers": 8,
+            "shuffle_data": true,
+            "foreground_threshold": 0.5,
+            "cropped_image_size": [
+                400,
+                400
+            ],
+            "submission_loss": false,
+            "use_submission_masks": false,
+            "stochastic_weight_averaging": {
+                "on": false,
+                "start_epoch": 40
+            },
+            "comet": {
+                "log_to_comet": true,
+                "tags": [
+                    "official-exp-unet",
+                    "other",
+                    "augmentation"
+                ]
+            }
+        },
+        "model": {
+            "name": "unet",
+            "in_channels" : 3,
+            "out_channels" : 1,
+            "features" : [
+                64,
+                128,
+                256,
+                512
+            ],
+            "filtersize": 3,
+            "pool_kernelsize" : 2,
+            "pool_stride" : 2,
+            "stride" : 1,
+            "dilation" : 1,
+            "pool_padding": 0,
+        },
+        "loss_function": "dice_loss",
+        "optimizer": {
+            "name": "adam",
+            "lr": 0.001
+        },
+        "lr_scheduler": {
+            "name": "multiStepLR",
+            "multiStepLR": {
+                "milestones": [
+                    10,
+                    20
+                ],
+                "gamma": 0.1
+            }
+        },
+        "postprocessing": {
+            "morphology": {
+                "numdilate": 2,
+                "numerode": 2,
+                "nummedian": 1,
+                "kernelsz": 4,
+                "mediansz": 3
+            }
+        }
+    },
+    "inference": {
+        "general": {
+            "foreground_threshold": 0.25,
+            "use_original_image_size": true,
+            "enable_postprocessing": true
+        },
+        "postprocessing": {
+            "morphology": {
+                "numdilate": 2,
+                "numerode": 2,
+                "nummedian": 1,
+                "kernelsz": 4,
+                "mediansz": 3
+            }
+        }
+    }
+}
