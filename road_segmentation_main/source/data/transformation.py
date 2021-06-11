@@ -143,8 +143,10 @@ if __name__ == '__main__':
     from PIL import Image
     import numpy
     import matplotlib.pyplot as plt
+    import cv2
 
     image = Image.open("../../../data/training/eth_dataset/original/images/satImage_001.png").convert("RGB")
+    mask = Image.open("../../../data/training/eth_dataset/original/masks/satImage_001.png").convert("RGB")
 
     LOAD_FROM_CONFIG = False
     if LOAD_FROM_CONFIG:
@@ -163,12 +165,16 @@ if __name__ == '__main__':
             # A.ColorJitter(p=1.0),
             # A.ChannelShuffle(p=1.0),
             # A.ChannelDropout(p=1.0),
-            # A.ShiftScaleRotate(p=1.0),
+            A.ShiftScaleRotate(p=1.0,
+                               shift_limit=0.1,
+                               scale_limit=0.625,
+                               rotate_limit=45,
+                               interpolation=cv2.INTER_LINEAR),  # cv2.INTER_CUBIC
             # A.GaussianBlur(p=1.0),
             # A.RandomFog(fog_coef_upper=0.5, p=1.0),
             # A.RandomContrast(p=1.0),
-            A.MedianBlur(),
-            A.GaussNoise(p=1),
+            # A.MedianBlur(),
+            # A.GaussNoise(p=1),
             A.Normalize(
                 mean=[0.0, 0.0, 0.0],
                 std=[1.0, 1.0, 1.0],
@@ -180,8 +186,13 @@ if __name__ == '__main__':
         transform = A.Compose(transforms=transform_list)
 
     for i in range(0, 10):
-        augmentations = transform(image=numpy.array(image))
+        augmentations = transform(image=numpy.array(image), mask=numpy.array(mask))
         aug_image = augmentations["image"]
+        aug_mask = augmentations["mask"]
 
-        plt.imshow(aug_image.permute(1, 2, 0))
+        fig, ax = plt.subplots(nrows=1, ncols=2)
+
+        ax[0].imshow(aug_image.permute(1, 2, 0))
+        ax[1].imshow(aug_mask)
+
         plt.show()
