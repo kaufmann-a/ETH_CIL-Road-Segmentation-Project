@@ -17,12 +17,9 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchsummary import summary
 
 from source.models.basemodel import BaseModel
 from source.models.modules import PPM, AttentionGate, ASPP_new
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class ResidualDilatedBlock(nn.Module):
@@ -109,7 +106,7 @@ class GlobalContextDilatedCNN(BaseModel):
         out_channels = 1
         filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
 
-        use_aspp = config.ppm_bins if hasattr(config, "use_aspp") else False
+        use_aspp = config.use_aspp if hasattr(config, "use_aspp") else False
         ppm_bins = config.ppm_bins if hasattr(config, "ppm_bins") else [1, 2, 3, 6]
 
         self.use_attention = config.use_attention if hasattr(config, "use_attention") else False
@@ -227,6 +224,9 @@ if __name__ == '__main__':
     """
     Test if the dimensions work out and print model
     """
+    from torchsummary import summary
+
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
     class Config:
@@ -240,4 +240,4 @@ if __name__ == '__main__':
 
     model = GlobalContextDilatedCNN(config=Config())
     model.to(DEVICE)
-    summary(model, input_size=(3, 400, 400), device=DEVICE)
+    summary(model, input_size=(3, 400, 400), device=DEVICE, batch_size=8)
