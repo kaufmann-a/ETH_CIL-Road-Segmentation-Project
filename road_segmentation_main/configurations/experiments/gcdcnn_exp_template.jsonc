@@ -53,12 +53,12 @@
             }
         },
         "model": {
-            "name": "gcdcnn-bn",
+            "name": "gcdcnn_bn",
             "features" : [64, 128, 256, 512],
-            "use-attention" : false,
-            "use-aspp" : false,
-            "upsample-bilinear" : false,
-            "ppm-bins" : [1, 2, 3, 6],
+            "use_attention" : false,
+            "use_aspp" : false,
+            "upsample_bilinear" : false,
+            "ppm_bins" : [1, 2, 3, 6],
         },
         "loss_function": "dice_loss",
         "optimizer": {
