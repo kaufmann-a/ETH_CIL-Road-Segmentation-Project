@@ -32,7 +32,8 @@ def init_comet():
 
         experiment.log_parameter("Model", parameters.model.name)
         experiment.log_parameter("Training Collections", data_collection_params.collection_names)
-        experiment.log_parameter("Transformations", data_collection_params.transform_folders)
+        if data_collection_params.transform_folders is not None:
+            experiment.log_parameter("Transformations", data_collection_params.transform_folders)
         experiment.log_parameter("Img size", parameters.general.cropped_image_size)
         experiment.log_parameter("Foreground Threshold", parameters.general.foreground_threshold)
         experiment.log_parameter("Augmentations", data_collection_params.transform_folders)
