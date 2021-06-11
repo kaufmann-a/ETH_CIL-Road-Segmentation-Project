@@ -34,7 +34,6 @@ def init_comet():
         experiment.log_parameter("Training Collections", data_collection_params.collection_names)
         experiment.log_parameter("Img size", parameters.general.cropped_image_size)
         experiment.log_parameter("Foreground Threshold", parameters.general.foreground_threshold)
-        experiment.log_parameter("Augmentations", data_collection_params.transform_folders)
         experiment.log_parameter("Loss-Function", parameters.loss_function)
         experiment.log_parameter("Optimizer", parameters.optimizer.name)
         experiment.log_parameter("Optimizer-LR", parameters.optimizer.lr)
