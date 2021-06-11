@@ -30,7 +30,8 @@ def save_predictions_to_comet(engine, loader, epoch, pixel_threshold, device, is
                                                    f"{pred_img_idx}_1_input.png", image_format="png")
                             engine.comet.log_image(torchvision.transforms.ToPILImage()(y[i]),
                                                    f"{pred_img_idx}_2_true.png", image_format="png")
-                        engine.comet.log_image(torchvision.transforms.ToPILImage()(preds[i]), f"{pred_img_idx}_3_pred_epoch_{epoch}.png", image_format="png")
+                        engine.comet.log_image(torchvision.transforms.ToPILImage()(preds[i]),
+                                               f"{pred_img_idx}_3_pred_epoch_{epoch:03d}.png", image_format="png")
                 pred_img_idx += 1
 
     engine.model.train()
