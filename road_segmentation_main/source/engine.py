@@ -106,6 +106,7 @@ class Engine:
             epoch = epoch_nr + 1  # plus one to continue with the next epoch
 
         nr_saves = 0
+        best_val_accuracy = 0.0
         while epoch < train_parms.num_epochs:
             Logcreator.info(f"Epoch {epoch}, lr: {self.get_lr():.3e}, lr-step: {self.lr_scheduler.last_epoch}")
 
@@ -123,12 +124,23 @@ class Engine:
                 swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch,
                                                 log_model_name="SWA-", log_postfix_path='val_swa')
 
+            best_model = False
+            if val_metrics['val_acc'] > best_val_accuracy:
+                best_val_accuracy = val_metrics['val_acc']
+                Logcreator.info("New best model with validation acc", best_val_accuracy)
+                best_model = True
+
             # save model
-            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) or (
-                    epoch + 1 == train_parms.num_epochs and DEVICE == "cuda"):
+            if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) \
+                    or (epoch + 1 == train_parms.num_epochs and DEVICE == "cuda") \
+                    or (best_model and epoch > 9):
+
                 # self.save_model(epoch)
-                self.save_checkpoint(epoch, train_metrics['train_loss'], train_metrics['train_acc'],
-                                     val_metrics['val_loss'], val_metrics['val_acc'])
+                self.save_checkpoint(epoch,
+                                     train_metrics['train_loss'], train_metrics['train_acc'],
+                                     val_metrics['val_loss'], val_metrics['val_acc'],
+                                     file_name="best.pth" if best_model else "checkpoint.pth")
+
                 if self.comet is not None:
                     imagesavehelper.save_predictions_to_comet(self,
                                                               val_loader,
