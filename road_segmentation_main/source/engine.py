@@ -76,7 +76,9 @@ class Engine:
             self.comet = metricslogging.init_comet()
             self.tensorboard = metricslogging.init_tensorboard()
 
-
+        # fix random seeds again after initialisation, such that changing the model
+        # does not influence the seeds of the data loading, training, ...
+        self.fix_random_seeds(seed=35416879)
 
     def get_lr(self):
         return self.optimizer.param_groups[0]['lr']
@@ -94,10 +96,12 @@ class Engine:
             Logcreator.info("Training - Last batch dropped of size", size_of_last_batch)
         train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
                                   pin_memory=True,
+                                  worker_init_fn=seed_worker,
                                   shuffle=train_parms.shuffle_data,
                                   drop_last=drop_last_incomplete_batch_train)
 
         val_loader = DataLoader(validation_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
+                                worker_init_fn=seed_worker,
                                 pin_memory=True,
                                 shuffle=False)
 
@@ -430,3 +434,11 @@ class Engine:
         Logcreator.debug("Model '%s' initialized with %d parameters." %
                          (Configuration.get('training.model.name'),
                           sum(p.numel() for p in self.model.parameters() if p.requires_grad)))
+
+
+def seed_worker(worker_id):
+    # https://pytorch.org/docs/stable/notes/randomness.html#dataloader
+    worker_seed = torch.initial_seed() % 2 ** 32
+    # print("worker-id:", worker_id, ", seed:", worker_seed)
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
