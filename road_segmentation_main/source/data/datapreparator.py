@@ -156,14 +156,20 @@ class DataPreparator(object):
     @staticmethod
     def experiment_run_datasets(path, collection_folders):
         collection_folder = os.path.join(path, collection_folders[0])
+
+        train_folders = os.listdir(os.path.join(collection_folder, "train"))
+
         train_set_img_folders = [os.path.join(collection_folder, "train", cur_dataset, "images") for cur_dataset in
-                                 os.listdir(os.path.join(collection_folder, "train"))]
+                                 train_folders]
         train_set_mask_folders = [os.path.join(collection_folder, "train", cur_dataset, "masks") for cur_dataset in
-                                  os.listdir(os.path.join(collection_folder, "train"))]
+                                  train_folders]
+
+        validation_folders = os.listdir(os.path.join(collection_folder, "valid"))
+
         val_set_img_folders = [os.path.join(collection_folder, "valid", cur_dataset, "images") for cur_dataset in
-                                 os.listdir(os.path.join(collection_folder, "valid"))]
+                               validation_folders]
         val_set_mask_folders = [os.path.join(collection_folder, "valid", cur_dataset, "masks") for cur_dataset in
-                                  os.listdir(os.path.join(collection_folder, "valid"))]
+                                validation_folders]
 
         train_set_imgs, train_set_masks = DataPreparator.generate_exp_set(train_set_img_folders, train_set_mask_folders)
         val_set_imgs, val_set_masks = DataPreparator.generate_exp_set(val_set_img_folders, val_set_mask_folders)
