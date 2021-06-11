@@ -149,7 +149,7 @@ class Engine:
                                                                   "inference.general.foreground_threshold"),
                                                               DEVICE, False,
                                                               nr_saves)
-                nr_saves += 1
+                    nr_saves += 1
 
             # Flush tensorboard
             self.tensorboard.flush()
