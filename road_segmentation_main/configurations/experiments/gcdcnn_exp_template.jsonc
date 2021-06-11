@@ -48,9 +48,7 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "augmentation",
-                    "low_lr",
-                    "jkfrie"
+                    "official-exp-gcdcnn"
                 ]
             }
         },
