@@ -138,22 +138,20 @@ class Engine:
             if (epoch % train_parms.checkpoint_save_interval == train_parms.checkpoint_save_interval - 1) \
                     or (epoch + 1 == train_parms.num_epochs and DEVICE == "cuda") \
                     or (best_model and epoch > 9):
-
                 # self.save_model(epoch)
                 self.save_checkpoint(epoch,
                                      train_metrics['train_loss'], train_metrics['train_acc'],
                                      val_metrics['val_loss'], val_metrics['val_acc'],
                                      file_name="best.pth" if best_model else "checkpoint.pth")
 
-                if self.comet is not None:
-                    imagesavehelper.save_predictions_to_comet(self,
-                                                              val_loader,
-                                                              epoch,
-                                                              Configuration.get(
-                                                                  "inference.general.foreground_threshold"),
-                                                              DEVICE, False,
-                                                              nr_saves)
-                    nr_saves += 1
+            if self.comet is not None:
+                imagesavehelper.save_predictions_to_comet(self,
+                                                          val_loader,
+                                                          epoch,
+                                                          Configuration.get("inference.general.foreground_threshold"),
+                                                          DEVICE, False,
+                                                          nr_saves)
+                nr_saves += 1
 
             # Flush tensorboard
             self.tensorboard.flush()
