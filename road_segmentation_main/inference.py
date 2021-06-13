@@ -38,10 +38,14 @@ def process_args(args):
 
         #Get weights
         try:
-            args.weights = filehelper.get_latest(os.path.join(args.workingdir, 'weights_checkpoint'), '*.pth')
+            args.weights = filehelper.get_latest(os.path.join(args.workingdir, 'weights_checkpoint'), '*best.pth')
         except ValueError:
-            print("No weights found, make sure you use a training with stored weights")
-            sys.exit()
+            print("No 'best' weights-checkpoint fond falling back to normal checkpoint")
+            try:
+                args.weights = filehelper.get_latest(os.path.join(args.workingdir, 'weights_checkpoint'), '*.pth')
+            except ValueError:
+                print("No weights found, make sure you use a training with stored weights")
+                sys.exit()
 
         #Init config and logger
         Configuration.initialize(args.configuration, args.workingdir, create_output_train=False, create_output_inf=True)
