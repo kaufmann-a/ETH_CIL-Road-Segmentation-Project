@@ -235,18 +235,22 @@ class Engine:
         self.tensorboard.add_scalar("Accuracy/train", train_acc, epoch)
         self.tensorboard.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
         self.tensorboard.add_scalar("IoU/train", train_iou_score, epoch)
+
         # Comet
         if self.comet is not None:
             self.comet.log_metric('train_loss', train_loss, epoch=epoch)
             self.comet.log_metric('train_acc', train_acc, epoch=epoch)
+            self.comet.log_metric('train_postprocessingpixel_acc', train_postprocessingpixel_acc, epoch=epoch)
             self.comet.log_metric('train_patch_acc', train_patch_acc, epoch=epoch)
+            self.comet.log_metric('train_postprocessingpatch_acc', train_postprocessingpatch_acc, epoch=epoch)
             self.comet.log_metric('train_iou_score', train_iou_score, epoch=epoch)
+
         # Logfile
         Logcreator.info(f"Training:   loss: {train_loss:.5f}",
                         f", accuracy: {train_acc:.5f}",
+                        f", postprocessingpixel-acc: {train_postprocessingpixel_acc:.5f}",
                         f", patch-acc: {train_patch_acc:.5f}",
                         f", postprocessingpatch-acc: {train_postprocessingpatch_acc:.5f}",
-                        f", postprocessingpixel-acc: {train_postprocessingpixel_acc:.5f}",
                         f", IoU: {train_iou_score:.5f}")
 
         return {'train_loss': total_loss, 'train_acc': accuracy.compute(),
@@ -300,22 +304,32 @@ class Engine:
         # Tensorboard
         self.tensorboard.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
         self.tensorboard.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
+        self.tensorboard.add_scalar("Postprocessing/pixel", val_postprocessingpixel_acc, epoch)
         self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
+        self.tensorboard.add_scalar("Postprocessing/patch", val_postprocessingpatch_acc, epoch)
         self.tensorboard.add_scalar("IoU/val", val_iou_score, epoch)
         # Comet
         if self.comet is not None:
             self.comet.log_metric(log_postfix_path + '_loss', val_loss, epoch=epoch)
             self.comet.log_metric(log_postfix_path + '_acc', val_acc, epoch=epoch)
+            self.comet.log_metric('postprocessing_pixel', val_postprocessingpixel_acc, epoch=epoch)
             self.comet.log_metric(log_postfix_path + '_patch_acc', val_patch_acc, epoch=epoch)
+            self.comet.log_metric('postprocessing_patch', val_postprocessingpatch_acc, epoch=epoch)
             self.comet.log_metric('val_iou_score', val_iou_score, epoch=epoch)
+
         # Logfile
         Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
                         f", accuracy: {val_acc:.5f}",
+                        f" postprocessingpixel_acc: {val_postprocessingpixel_acc:.5f}",
                         f", patch-acc: {val_patch_acc:.5f}",
-                        f", IoU: {val_iou_score:.5f}")
+                        f", postprocessingpatch_acc: {val_postprocessingpatch_acc:.5f}",
+                        f", IoU: {val_iou_score:.5f}",
+                        )
 
-        return {'val_loss': total_loss, 'val_acc': val_acc, 'val_patch_acc': val_patch_acc,
-                'val_iou_score': val_iou_score}
+        return {'val_loss': total_loss,
+                'val_acc': val_acc, 'val_postprocessingpixel_acc': val_postprocessingpixel_acc,
+                'val_patch_acc': val_patch_acc,'val_postprocessingpatch_acc': val_postprocessingpatch_acc,
+                'val_iou_score': val_iou_score }
 
     def get_metrics(self):
         multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
