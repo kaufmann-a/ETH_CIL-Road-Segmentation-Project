@@ -16,11 +16,20 @@ def patch_to_label(foreground_threshold, patch):
 
 def mask_to_submission_strings(image, image_nr, patch_size=16, foreground_threshold=0.25):
     # iterate over prediction, just use every 16th pixel
-    for j in range(0, image.shape[1], patch_size):
-        for i in range(0, image.shape[0], patch_size):
-            patch = image[i:i + patch_size, j:j + patch_size]
-            label = patch_to_label(foreground_threshold, patch)
-            yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
+    submission_mask = True
+    if submission_mask:
+        for j in range(0, image.shape[1]):
+            for i in range(0, image.shape[0]):
+                patch = image[i, j]
+                label = (patch > foreground_threshold).int()
+                yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
+
+    else:
+        for j in range(0, image.shape[1], patch_size):
+            for i in range(0, image.shape[0], patch_size):
+                patch = image[i:i + patch_size, j:j + patch_size]
+                label = patch_to_label(foreground_threshold, patch)
+                yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
 
 def images_to_submission_file(out_image_list, image_number_list, patch_size, foreground_threshold, folder, file_prefix):
