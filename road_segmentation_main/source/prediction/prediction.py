@@ -221,7 +221,8 @@ class Prediction(object):
                                                    patch_size=PATCH_SIZE,
                                                    foreground_threshold=self.foreground_threshold,
                                                    folder=Configuration.output_directory,
-                                                   file_prefix=path_prefix)
+                                                   file_prefix=path_prefix,
+                                                   use_submission_mask=self.use_submission_mask)
 
         mask_binary_list = imagesavehelper.save_masks_as_images(mask_probabilistic_list, image_number_list,
                                                                 folder=Configuration.output_directory,
