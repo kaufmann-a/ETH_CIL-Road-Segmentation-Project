@@ -22,7 +22,9 @@ def mask_to_submission_strings(image, image_nr, patch_size=16, foreground_thresh
             for i in range(0, image.shape[0]):
                 patch = image[i, j]
                 label = (patch > foreground_threshold).int()
-                yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
+                x = i * patch_size
+                y = j * patch_size
+                yield ("{:03d}_{}_{},{}".format(image_nr, y, x, label))
 
     else:
         for j in range(0, image.shape[1], patch_size):
