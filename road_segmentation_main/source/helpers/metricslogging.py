@@ -22,6 +22,7 @@ def init_comet():
             api_key=api_key,
             project_name=project_name,
             workspace=workspace,
+            log_code=False
         )
         experiment.set_name(os.path.basename(os.path.normpath(Configuration.output_directory)))
         experiment.add_tag(Configuration.get('training.model.name'))
