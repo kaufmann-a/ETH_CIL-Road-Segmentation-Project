@@ -453,6 +453,8 @@ class Engine:
                             deterministic)
             torch.backends.cudnn.benchmark = benchmark
             torch.backends.cudnn.deterministic = deterministic  # if True: CUDA convolution deterministic
+            if deterministic: # set workspace config, to maybe give same results on 1080Ti and 2080Ti
+                os.environ["CUBLAS_WORKSPACE_CONFIG"]=":4096:2"
             # torch.use_deterministic_algorithms(True) # last resort if other things do not work
 
     def print_modelsummary(self):
