@@ -95,9 +95,15 @@ class Engine:
         drop_last_incomplete_batch_train = size_of_last_batch == 1
         if drop_last_incomplete_batch_train:
             Logcreator.info("Training - Last batch dropped of size", size_of_last_batch)
+
+        # set random number generator for the train dataloader explicitly
+        g = torch.Generator()
+        g.manual_seed(16871643)
+
         train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
                                   pin_memory=True,
                                   worker_init_fn=seed_worker,
+                                  generator=g,
                                   shuffle=train_parms.shuffle_data,
                                   drop_last=drop_last_incomplete_batch_train)
 
