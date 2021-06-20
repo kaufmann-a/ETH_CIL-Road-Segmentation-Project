@@ -4,10 +4,10 @@ import sys
 
 if __name__ == '__main__':
 
-    directory = "configurations/randomness/"
+    directory = "configurations/unet-experiments/"
 
-    GPU = None  # None (= more then 10GB GPU memory), 1 (=1080Ti), 2 (=2080Ti)
-    TIME = '02:00'
+    GPU = 1  # None (= more then 10GB GPU memory), 1 (=1080Ti), 2 (=2080Ti)
+    TIME = '24:00'
     DEBUG = False
 
     for file in os.listdir(directory):
