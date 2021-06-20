@@ -4,7 +4,7 @@ import sys
 
 if __name__ == '__main__':
 
-    directory = "configurations/unet-experiments/"
+    directory = "configurations/experiments/unet-experiments/"
 
     GPU = 1  # None (= more then 10GB GPU memory), 1 (=1080Ti), 2 (=2080Ti)
     TIME = '24:00'
