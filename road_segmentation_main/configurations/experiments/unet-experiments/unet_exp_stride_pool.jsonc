@@ -78,8 +78,8 @@
             "name": "multiStepLR",
             "multiStepLR": {
                 "milestones": [
-                    10,
-                    20
+                    198,
+                    199
                 ],
                 "gamma": 0.1
             }
