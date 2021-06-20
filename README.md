@@ -10,7 +10,7 @@ Software Versions used for this Project (Proposal by Andreas):
 ## Setup on leonhard cluster
 1. Clone `git clone git@github.com:FrederikeLuebeck/cil-road-segmentation.git`
 2. Setup environment
-   - Load software modules: `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
+   - Load software modules: `module load gcc/6.3.0 cuda/11.0.3 python_gpu/3.8.5 tmux/2.6 eth_proxy`
    - Create virtual env and install packages:   
         - `cd ./cil-road-segmentation/`
         - `python -m venv my_venv`
@@ -22,7 +22,7 @@ Software Versions used for this Project (Proposal by Andreas):
 
 ## General: loading environment
 1. `cd ./cil-road-segmentation/`
-2. Load software modules: `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
+2. Load software modules: `module load gcc/6.3.0 cuda/11.0.3 python_gpu/3.8.5 tmux/2.6 eth_proxy`
 3. Load python env: `source ./my_venv/bin/activate`
 4. If you want to work with tmux, start tmux with `tmux` (see tmux guide below)
 
