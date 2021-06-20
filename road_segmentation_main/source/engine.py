@@ -453,7 +453,7 @@ class Engine:
         if torch.cuda.is_available():
             # TODO set default value such that it is reproducible
             benchmark = Configuration.get("training.cudnn.benchmark", optional=True, default=False)
-            deterministic = Configuration.get("training.cudnn.deterministic", optional=True, default=False)
+            deterministic = Configuration.get("training.cudnn.deterministic", optional=True, default=True)
             Logcreator.info("cudnn.benchmark default:", torch.backends.cudnn.benchmark, ", set-value:", benchmark)
             Logcreator.info("cudnn.deterministic default:", torch.backends.cudnn.deterministic, ", set-value:",
                             deterministic)
