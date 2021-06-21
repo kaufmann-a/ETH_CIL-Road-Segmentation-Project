@@ -237,8 +237,11 @@ if __name__ == '__main__':
         use_submission_masks = False
         use_attention = False
         upsample_bilinear = False
-        ppm_bins = [1, 2, 3, 6]
-        use_aspp = False
+
+        class bridge:
+            ppm_bins = [1, 2, 3, 6]
+            use_aspp = False
+            aspp_avg_pooling = False
 
 
     model = GlobalContextDilatedCNN(config=Config())
