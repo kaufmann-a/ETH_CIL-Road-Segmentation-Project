@@ -256,7 +256,7 @@ class ASPPModule(nn.Module):
         self.output_block = nn.Sequential(
             nn.Conv2d(nr_blocks * out_dims, out_dims, kernel_size=(1, 1), bias=False),
             nn.BatchNorm2d(out_dims),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Dropout(0.5)
         )
 
@@ -272,7 +272,7 @@ class ASPPModule(nn.Module):
                       dilation=(dilation, dilation),
                       bias=False),
             nn.BatchNorm2d(out_dims),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
