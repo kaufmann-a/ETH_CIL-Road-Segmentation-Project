@@ -47,16 +47,12 @@ class ResidualDilatedBlock(nn.Module):
     """
 
     def __init__(self, input_dim, output_dim, stride, padding, dilation=2, bias_out_layer=False,
-                 fixed_skip_kernel=False):
+                 init_identity_with_ones=False):
         """
         @param bias_out_layer: True = bias for the last Conv2d layer is set to True
-        @param fixed_skip_kernel: True = Uses a 1x1 kernel Conv2d layer with fixed weights equal to ones
-                                  False = Uses a 1x1 kernel Conv2d layer where the weights are learned
-                                  # TODO fixed_skip_kernel does not work! The loss does not change during training!
+        @param init_identity_with_ones: True = Initializes the 1x1 kernel of the identity Conv2d layer with ones
         """
         super(ResidualDilatedBlock, self).__init__()
-        self.fixed_skip_kernel = fixed_skip_kernel
-        self.stride = stride
 
         # dilated convolution
         self.conv_block = nn.Sequential(
@@ -81,12 +77,11 @@ class ResidualDilatedBlock(nn.Module):
             nn.BatchNorm2d(output_dim)  # adding BN here helped against NaN values
         )
 
+        if init_identity_with_ones:
+            torch.nn.init.constant_(self.conv_skip[0].weight, 1)
+
     def forward(self, x):
-        if self.fixed_skip_kernel:
-            identity_kernel = torch.ones(self.conv_skip[0].weight.shape).to(DEVICE)
-            identity = F.conv2d(input=x, weight=identity_kernel, stride=self.stride, padding=0, bias=None)
-        else:
-            identity = self.conv_skip(x)
+        identity = self.conv_skip(x)
 
         out = self.conv_block(x) + identity
 
