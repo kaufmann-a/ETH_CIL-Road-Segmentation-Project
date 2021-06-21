@@ -134,7 +134,7 @@ class GlobalContextDilatedCNN(BaseModel):
         if use_aspp:
             self.bridge = ASPP_new(filters[-1], filters[-1], use_global_avg_pooling=False)
         else:
-            BATCH_NORM_INFRONT_PPM = False
+            BN_RELU_INFRONT_PPM = True  # True to avoid diverging
 
             num_in_channels = filters[-1]
             reduction_dim = num_in_channels // len(ppm_bins)
@@ -144,8 +144,9 @@ class GlobalContextDilatedCNN(BaseModel):
 
             self.bridge = nn.Sequential(
                 nn.BatchNorm2d(filters[-1]),
+                nn.ReLU(inplace=True),
                 ppm,
-            ) if BATCH_NORM_INFRONT_PPM else ppm
+            ) if BN_RELU_INFRONT_PPM else ppm
 
             # set last filter to ppm output dimension
             filters[-1] = out_dim_ppm
