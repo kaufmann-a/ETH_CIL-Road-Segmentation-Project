@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 
 from source.models.basemodel import BaseModel
-from source.models.modules import PPM, AttentionGate, ASPP_new
+from source.models.modules import PPM, AttentionGate, ASPPModule
 
 
 class ResidualDilatedBlock(nn.Module):
@@ -127,7 +127,7 @@ class GlobalContextDilatedCNN(BaseModel):
 
         # Bridge
         if use_aspp:
-            self.bridge = ASPP_new(filters[-1], filters[-1], use_global_avg_pooling=False)
+            self.bridge = ASPPModule(filters[-1], filters[-1], use_global_avg_pooling=False)
         else:
             BN_RELU_INFRONT_PPM = True  # True to avoid diverging
 
