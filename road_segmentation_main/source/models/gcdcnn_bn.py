@@ -61,17 +61,17 @@ class ResidualDilatedBlock(nn.Module):
         # dilated convolution
         self.conv_block = nn.Sequential(
             nn.BatchNorm2d(input_dim),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(
                 input_dim, output_dim, kernel_size=3, stride=stride, padding=padding, dilation=1, bias=False
             ),
 
             nn.BatchNorm2d(output_dim),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=False),
 
             nn.BatchNorm2d(output_dim),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=bias_out_layer)
         )
 
