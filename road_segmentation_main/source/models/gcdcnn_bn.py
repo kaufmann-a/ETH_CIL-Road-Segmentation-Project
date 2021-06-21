@@ -101,8 +101,15 @@ class GlobalContextDilatedCNN(BaseModel):
         out_channels = 1
         filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
 
-        use_aspp = config.use_aspp if hasattr(config, "use_aspp") else False
-        ppm_bins = config.ppm_bins if hasattr(config, "ppm_bins") else [1, 2, 3, 6]
+        if hasattr(config, "bridge"):
+            use_aspp = config.bridge.use_aspp if hasattr(config.bridge, "use_aspp") else False
+            aspp_global_avg_pooling = config.bridge.aspp_avg_pooling \
+                if hasattr(config.bridge, "aspp_avg_pooling") else False
+            ppm_bins = config.bridge.ppm_bins if hasattr(config.bridge, "ppm_bins") else [1, 2, 3, 6]
+        else:
+            use_aspp = False
+            aspp_global_avg_pooling = False
+            ppm_bins = [1, 2, 3, 6]
 
         self.use_attention = config.use_attention if hasattr(config, "use_attention") else False
         upsample_bilinear = config.upsample_bilinear if hasattr(config, "upsample_bilinear") else False
@@ -130,7 +137,7 @@ class GlobalContextDilatedCNN(BaseModel):
             self.bridge = nn.Sequential(
                 nn.BatchNorm2d(filters[-1]),
                 nn.ReLU(inplace=True),
-                ASPPModule(filters[-1], filters[-1], use_global_avg_pooling=False)
+                ASPPModule(filters[-1], filters[-1], use_global_avg_pooling=aspp_global_avg_pooling)
             )
         else:
             num_in_channels = filters[-1]
