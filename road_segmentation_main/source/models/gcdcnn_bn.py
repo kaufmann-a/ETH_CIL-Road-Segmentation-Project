@@ -16,7 +16,6 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from source.models.basemodel import BaseModel
 from source.models.modules import PPM, AttentionGate, ASPP_new
@@ -37,6 +36,7 @@ class ResidualDilatedBlock(nn.Module):
 
     + skip connection:
      - Conv2d: with 1x1 kernel
+     - BatchNorm2d
 
     Attention: We batch normalize the input but not the output!
 
