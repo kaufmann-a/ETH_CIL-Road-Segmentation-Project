@@ -142,13 +142,13 @@ class GlobalContextDilatedCNN(BaseModel):
 
             ppm = PPM(in_dim=num_in_channels, reduction_dim=reduction_dim, bins=ppm_bins)
 
-            # set last filter to ppm output dimension
-            filters[-1] = out_dim_ppm
-
             self.bridge = nn.Sequential(
                 nn.BatchNorm2d(filters[-1]),
                 ppm,
             ) if BATCH_NORM_INFRONT_PPM else ppm
+
+            # set last filter to ppm output dimension
+            filters[-1] = out_dim_ppm
 
         # Decoder
         self.up_attention = nn.ModuleList()
