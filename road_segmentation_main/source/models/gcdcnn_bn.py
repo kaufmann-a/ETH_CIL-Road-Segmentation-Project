@@ -16,10 +16,9 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from source.models.basemodel import BaseModel
-from source.models.modules import PPM, AttentionGate, ASPP_new
+from source.models.modules import PPM, AttentionGate, ASPPModule
 
 
 class ResidualDilatedBlock(nn.Module):
@@ -37,6 +36,7 @@ class ResidualDilatedBlock(nn.Module):
 
     + skip connection:
      - Conv2d: with 1x1 kernel
+     - BatchNorm2d
 
     Attention: We batch normalize the input but not the output!
 
@@ -47,31 +47,27 @@ class ResidualDilatedBlock(nn.Module):
     """
 
     def __init__(self, input_dim, output_dim, stride, padding, dilation=2, bias_out_layer=False,
-                 fixed_skip_kernel=False):
+                 init_identity_with_ones=False):
         """
         @param bias_out_layer: True = bias for the last Conv2d layer is set to True
-        @param fixed_skip_kernel: True = Uses a 1x1 kernel Conv2d layer with fixed weights equal to ones
-                                  False = Uses a 1x1 kernel Conv2d layer where the weights are learned
-                                  # TODO fixed_skip_kernel does not work! The loss does not change during training!
+        @param init_identity_with_ones: True = Initializes the 1x1 kernel of the identity Conv2d layer with ones
         """
         super(ResidualDilatedBlock, self).__init__()
-        self.fixed_skip_kernel = fixed_skip_kernel
-        self.stride = stride
 
         # dilated convolution
         self.conv_block = nn.Sequential(
             nn.BatchNorm2d(input_dim),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(
                 input_dim, output_dim, kernel_size=3, stride=stride, padding=padding, dilation=1, bias=False
             ),
 
             nn.BatchNorm2d(output_dim),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=False),
 
             nn.BatchNorm2d(output_dim),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=bias_out_layer)
         )
 
@@ -81,12 +77,11 @@ class ResidualDilatedBlock(nn.Module):
             nn.BatchNorm2d(output_dim)  # adding BN here helped against NaN values
         )
 
+        if init_identity_with_ones:
+            torch.nn.init.constant_(self.conv_skip[0].weight, 1)
+
     def forward(self, x):
-        if self.fixed_skip_kernel:
-            identity_kernel = torch.ones(self.conv_skip[0].weight.shape).to(DEVICE)
-            identity = F.conv2d(input=x, weight=identity_kernel, stride=self.stride, padding=0, bias=None)
-        else:
-            identity = self.conv_skip(x)
+        identity = self.conv_skip(x)
 
         out = self.conv_block(x) + identity
 
@@ -106,8 +101,15 @@ class GlobalContextDilatedCNN(BaseModel):
         out_channels = 1
         filters = config.features  # [64, 128, 256, 512], [8, 16, 32, 64, 128]
 
-        use_aspp = config.use_aspp if hasattr(config, "use_aspp") else False
-        ppm_bins = config.ppm_bins if hasattr(config, "ppm_bins") else [1, 2, 3, 6]
+        if hasattr(config, "bridge"):
+            use_aspp = config.bridge.use_aspp if hasattr(config.bridge, "use_aspp") else False
+            aspp_global_avg_pooling = config.bridge.aspp_avg_pooling \
+                if hasattr(config.bridge, "aspp_avg_pooling") else False
+            ppm_bins = config.bridge.ppm_bins if hasattr(config.bridge, "ppm_bins") else [1, 2, 3, 6]
+        else:
+            use_aspp = False
+            aspp_global_avg_pooling = False
+            ppm_bins = [1, 2, 3, 6]
 
         self.use_attention = config.use_attention if hasattr(config, "use_attention") else False
         upsample_bilinear = config.upsample_bilinear if hasattr(config, "upsample_bilinear") else False
@@ -132,23 +134,24 @@ class GlobalContextDilatedCNN(BaseModel):
 
         # Bridge
         if use_aspp:
-            self.bridge = ASPP_new(filters[-1], filters[-1], use_global_avg_pooling=False)
+            self.bridge = nn.Sequential(
+                nn.BatchNorm2d(filters[-1]),
+                nn.ReLU(inplace=True),
+                ASPPModule(filters[-1], filters[-1], use_global_avg_pooling=aspp_global_avg_pooling)
+            )
         else:
-            BATCH_NORM_INFRONT_PPM = False
-
             num_in_channels = filters[-1]
             reduction_dim = num_in_channels // len(ppm_bins)
             out_dim_ppm = reduction_dim * len(ppm_bins) + num_in_channels
 
-            ppm = PPM(in_dim=num_in_channels, reduction_dim=reduction_dim, bins=ppm_bins)
+            self.bridge = nn.Sequential(
+                nn.BatchNorm2d(filters[-1]),  # BN + RELU to avoid diverging
+                nn.ReLU(inplace=True),
+                PPM(in_dim=num_in_channels, reduction_dim=reduction_dim, bins=ppm_bins)
+            )
 
             # set last filter to ppm output dimension
             filters[-1] = out_dim_ppm
-
-            self.bridge = nn.Sequential(
-                nn.BatchNorm2d(filters[-1]),
-                ppm,
-            ) if BATCH_NORM_INFRONT_PPM else ppm
 
         # Decoder
         self.up_attention = nn.ModuleList()
@@ -234,8 +237,11 @@ if __name__ == '__main__':
         use_submission_masks = False
         use_attention = False
         upsample_bilinear = False
-        ppm_bins = [1, 2, 3, 6]
-        use_aspp = False
+
+        class bridge:
+            ppm_bins = [1, 2, 3, 6]
+            use_aspp = False
+            aspp_avg_pooling = False
 
 
     model = GlobalContextDilatedCNN(config=Config())

@@ -47,6 +47,7 @@ class Engine:
         # fix random seeds
         seed = 49626446
         self.fix_random_seeds(seed)
+        self.fix_deterministic_operations()
 
         # initialize model
         self.model = ModelFactory.build().to(DEVICE)
@@ -94,9 +95,15 @@ class Engine:
         drop_last_incomplete_batch_train = size_of_last_batch == 1
         if drop_last_incomplete_batch_train:
             Logcreator.info("Training - Last batch dropped of size", size_of_last_batch)
+
+        # set random number generator for the train dataloader explicitly
+        g = torch.Generator()
+        g.manual_seed(16871643)
+
         train_loader = DataLoader(training_data, batch_size=train_parms.batch_size, num_workers=train_parms.num_workers,
                                   pin_memory=True,
                                   worker_init_fn=seed_worker,
+                                  generator=g,
                                   shuffle=train_parms.shuffle_data,
                                   drop_last=drop_last_incomplete_batch_train)
 
@@ -432,6 +439,29 @@ class Engine:
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
+        # this is probably overkill, since these functions are also called in torch.manual_seed
+        #  (but there is a if condition in there, that then might prevent to call these)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)  # current gpu
+            torch.cuda.manual_seed_all(seed)  # all gpus
+
+    def fix_deterministic_operations(self):
+        """
+        Fixes backend cudnn to produce deterministic results.
+
+        """
+        if torch.cuda.is_available():
+            # TODO set default value such that it is reproducible
+            benchmark = Configuration.get("training.cudnn.benchmark", optional=True, default=False)
+            deterministic = Configuration.get("training.cudnn.deterministic", optional=True, default=True)
+            Logcreator.info("cudnn.benchmark default:", torch.backends.cudnn.benchmark, ", set-value:", benchmark)
+            Logcreator.info("cudnn.deterministic default:", torch.backends.cudnn.deterministic, ", set-value:",
+                            deterministic)
+            torch.backends.cudnn.benchmark = benchmark
+            torch.backends.cudnn.deterministic = deterministic  # if True: CUDA convolution deterministic
+            if deterministic: # set workspace config, to maybe give same results on 1080Ti and 2080Ti
+                os.environ["CUBLAS_WORKSPACE_CONFIG"]=":4096:2"
+            # torch.use_deterministic_algorithms(True) # last resort if other things do not work
 
     def print_modelsummary(self):
         cropped_image_size = Configuration.get("training.general.cropped_image_size")

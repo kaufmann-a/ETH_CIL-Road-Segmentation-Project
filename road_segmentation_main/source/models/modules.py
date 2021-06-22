@@ -220,7 +220,7 @@ class PPM(nn.Module):
         return torch.cat(out, 1)
 
 
-class ASPP_new(nn.Module):
+class ASPPModule(nn.Module):
     """
     Atrous Spatial Pyramid Pooling - APP
 
@@ -228,8 +228,8 @@ class ASPP_new(nn.Module):
              https://github.com/jfzhang95/pytorch-deeplab-xception/blob/master/modeling/aspp.py,
     """
 
-    def __init__(self, in_dims, out_dims, use_bn_relu_out=False, use_global_avg_pooling=True):
-        super(ASPP_new, self).__init__()
+    def __init__(self, in_dims, out_dims, use_global_avg_pooling=True):
+        super(ASPPModule, self).__init__()
 
         self.out_dims = out_dims
         self.use_global_avg_pooling = use_global_avg_pooling
@@ -253,18 +253,12 @@ class ASPP_new(nn.Module):
                                                  nn.ReLU())
             nr_blocks += 1
 
-        if use_bn_relu_out:
-            self.output_block = nn.Sequential(
-                nn.Conv2d(nr_blocks * out_dims, out_dims, kernel_size=(1, 1), bias=False),
-                nn.BatchNorm2d(out_dims),
-                nn.ReLU(),
-                nn.Dropout(0.5)
-            )
-        else:
-            self.output_block = nn.Sequential(
-                nn.Conv2d(nr_blocks * out_dims, out_dims, kernel_size=(1, 1), bias=False),
-                nn.Dropout(0.5)
-            )
+        self.output_block = nn.Sequential(
+            nn.Conv2d(nr_blocks * out_dims, out_dims, kernel_size=(1, 1), bias=False),
+            nn.BatchNorm2d(out_dims),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5)
+        )
 
         self._init_weights()
 
@@ -278,7 +272,7 @@ class ASPP_new(nn.Module):
                       dilation=(dilation, dilation),
                       bias=False),
             nn.BatchNorm2d(out_dims),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):

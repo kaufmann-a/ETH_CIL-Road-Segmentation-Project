@@ -4,9 +4,10 @@ import sys
 
 if __name__ == '__main__':
 
-    directory = "configurations/augmentations"
-    GPU_2080TI = False
-    TIME = '02:00'
+    directory = "configurations/experiments/unet-experiments/"
+
+    GPU = 1  # None (= more then 10GB GPU memory), 1 (=1080Ti), 2 (=2080Ti)
+    TIME = '24:00'
     DEBUG = False
 
     for file in os.listdir(directory):
@@ -23,7 +24,9 @@ if __name__ == '__main__':
             command += ' -W ' + TIME
             # memory per cpu and select one gpu
             command += ' -R "rusage[mem=10240, ngpus_excl_p=1]"'
-            if GPU_2080TI:
+            if GPU == 1:
+                command += ' -R "select[gpu_model0==GeForceGTX1080Ti]"'
+            elif GPU == 2:
                 command += ' -R "select[gpu_model0==GeForceRTX2080Ti]"'
             else:
                 command += ' -R "select[gpu_mtotal0>=10240]"'  # GPU memory more then 10GB

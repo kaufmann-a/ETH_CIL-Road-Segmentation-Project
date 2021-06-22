@@ -21,12 +21,6 @@
                     "params": {
                         "p": 0.5
                     }
-                },
-                {
-                    "name": "GaussianBlur",
-                    "params": {
-                        "p": 0.5
-                    }
                 }
             ],
             "use_train_statistics": false
@@ -54,9 +48,7 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet",
-                    "other",
-                    "augmentation"
+                    "official-exp-unet", "unet-tuning"
                 ]
             }
         },
@@ -86,8 +78,8 @@
             "name": "multiStepLR",
             "multiStepLR": {
                 "milestones": [
-                    50,
-                    100
+                    198,
+                    199
                 ],
                 "gamma": 0.1
             }

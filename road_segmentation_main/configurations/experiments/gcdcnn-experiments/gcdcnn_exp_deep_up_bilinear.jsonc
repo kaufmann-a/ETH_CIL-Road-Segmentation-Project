@@ -21,12 +21,6 @@
                     "params": {
                         "p": 0.5
                     }
-                },
-                {
-                    "name": "GaussianBlur",
-                    "params": {
-                        "p": 0.5
-                    }
                 }
             ],
             "use_train_statistics": false
@@ -54,28 +48,21 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet",
-                    "other",
-                    "augmentation"
+                    "official-exp-gcdcnn",
+                    "gcdcnn-tuning"
                 ]
             }
         },
         "model": {
-            "name": "unet",
-            "in_channels" : 3,
-            "out_channels" : 1,
-            "features" : [
-                64,
-                128,
-                256,
-                512
-            ],
-            "filtersize": 3,
-            "pool_kernelsize" : 2,
-            "pool_stride" : 2,
-            "stride" : 1,
-            "dilation" : 1,
-            "pool_padding": 0,
+            "name": "gcdcnn_bn",
+            "features" : [64, 128, 256, 512],
+            "bridge": {
+                "use_aspp" : false,
+                "aspp_avg_pooling" : false,
+                "ppm_bins" : [1, 2, 3, 6]
+            },
+            "use_attention" : false,
+            "upsample_bilinear" : true,
         },
         "loss_function": "dice_loss",
         "optimizer": {

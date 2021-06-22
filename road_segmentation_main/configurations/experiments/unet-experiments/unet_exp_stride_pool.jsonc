@@ -21,12 +21,6 @@
                     "params": {
                         "p": 0.5
                     }
-                },
-                {
-                    "name": "GaussianBlur",
-                    "params": {
-                        "p": 0.5
-                    }
                 }
             ],
             "use_train_statistics": false
@@ -54,9 +48,7 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet",
-                    "other",
-                    "augmentation"
+                    "official-exp-unet", "unet-tuning"
                 ]
             }
         },
@@ -71,11 +63,11 @@
                 512
             ],
             "filtersize": 3,
-            "pool_kernelsize" : 2,
+            "pool_kernelsize" : 4,
             "pool_stride" : 2,
             "stride" : 1,
             "dilation" : 1,
-            "pool_padding": 0,
+            "pool_padding": 1,
         },
         "loss_function": "dice_loss",
         "optimizer": {
@@ -86,8 +78,8 @@
             "name": "multiStepLR",
             "multiStepLR": {
                 "milestones": [
-                    50,
-                    100
+                    198,
+                    199
                 ],
                 "gamma": 0.1
             }

@@ -21,12 +21,6 @@
                     "params": {
                         "p": 0.5
                     }
-                },
-                {
-                    "name": "GaussianBlur",
-                    "params": {
-                        "p": 0.5
-                    }
                 }
             ],
             "use_train_statistics": false
@@ -54,40 +48,31 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet",
-                    "other",
-                    "augmentation"
+                    "official-exp-gcdcnn",
+                    "randomness-test",
+                    "set-workspace"
                 ]
             }
         },
         "model": {
-            "name": "unet",
-            "in_channels" : 3,
-            "out_channels" : 1,
-            "features" : [
-                64,
-                128,
-                256,
-                512
-            ],
-            "filtersize": 3,
-            "pool_kernelsize" : 2,
-            "pool_stride" : 2,
-            "stride" : 1,
-            "dilation" : 1,
-            "pool_padding": 0,
+            "name": "gcdcnn_bn",
+            "features" : [64, 128, 256, 512],
+            "use_attention" : false,
+            "use_aspp" : false,
+            "upsample_bilinear" : false,
+            "ppm_bins" : [1, 2, 3, 6],
         },
         "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
-            "lr": 0.001
+            "lr": 0.0001
         },
         "lr_scheduler": {
             "name": "multiStepLR",
             "multiStepLR": {
                 "milestones": [
-                    50,
-                    100
+                    15,
+                    30
                 ],
                 "gamma": 0.1
             }
@@ -100,6 +85,10 @@
                 "kernelsz": 4,
                 "mediansz": 3
             }
+        },
+        "cudnn" : {
+            "benchmark" : false,
+            "deterministic" : true,
         }
     },
     "inference": {

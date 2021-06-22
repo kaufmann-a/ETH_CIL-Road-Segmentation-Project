@@ -7,23 +7,19 @@
     "data_collection": {
         "folder": "getenv('DATA_COLLECTION_DIR')",
         "collection_names": [
-            "experiments_dataset"
+            "osm_roadtracer"
         ],
+        "transform_folders" : [],
         "include_overlapping_patches" : false,
         "test_images_folder": "../data/test_images",
         "include_val_transforms": false,
         "min_road_percentage" : 0.0001, //Removes images with 16px road
+        "validation_ratio" : 0.02,
         "save_imgs": true,
         "augmentations": {
             "list": [
                 {
                     "name": "ShiftScaleRotate",
-                    "params": {
-                        "p": 0.5
-                    }
-                },
-                {
-                    "name": "GaussianBlur",
                     "params": {
                         "p": 0.5
                     }
@@ -54,28 +50,19 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet",
-                    "other",
-                    "augmentation"
+                    "official-exp-gcdcnn",
+                    "pretrain",
+                    "osm"
                 ]
             }
         },
         "model": {
-            "name": "unet",
-            "in_channels" : 3,
-            "out_channels" : 1,
-            "features" : [
-                64,
-                128,
-                256,
-                512
-            ],
-            "filtersize": 3,
-            "pool_kernelsize" : 2,
-            "pool_stride" : 2,
-            "stride" : 1,
-            "dilation" : 1,
-            "pool_padding": 0,
+            "name": "gcdcnn_bn",
+            "features" : [64, 128, 256, 512],
+            "use_attention" : false,
+            "use_aspp" : false,
+            "upsample_bilinear" : false,
+            "ppm_bins" : [1, 2, 3, 6],
         },
         "loss_function": "dice_loss",
         "optimizer": {
@@ -86,8 +73,8 @@
             "name": "multiStepLR",
             "multiStepLR": {
                 "milestones": [
-                    50,
-                    100
+                    10,
+                    40
                 ],
                 "gamma": 0.1
             }

@@ -67,14 +67,14 @@
         "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
-            "lr": 0.0001
+            "lr": 0.0005
         },
         "lr_scheduler": {
             "name": "multiStepLR",
             "multiStepLR": {
                 "milestones": [
-                    15,
-                    30
+                    30,
+                    70
                 ],
                 "gamma": 0.1
             }
