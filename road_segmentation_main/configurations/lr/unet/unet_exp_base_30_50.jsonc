@@ -49,7 +49,7 @@
                 "log_to_comet": true,
                 "tags": [
                     "official-exp-unet",
-                    "lr"
+                    "lr", "deterministic"
                 ]
             }
         },
@@ -79,8 +79,8 @@
             "name": "multiStepLR",
             "multiStepLR": {
                 "milestones": [
-                    198,
-                    199
+                    30,
+                    50
                 ],
                 "gamma": 0.1
             }
@@ -93,6 +93,10 @@
                 "kernelsz": 4,
                 "mediansz": 3
             }
+        },
+        "cudnn" : {
+            "benchmark" : true,
+            "deterministic" : true,
         }
     },
     "inference": {
