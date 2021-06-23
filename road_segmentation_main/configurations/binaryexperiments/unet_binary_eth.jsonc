@@ -6,8 +6,9 @@
     },
     "data_collection" : {
         "folder" : "/cluster/scratch/abaranwal/data/binary_experiment/",
-		"collection_names" : ["binary_jkfrie_dataset"],
-        "transform_folders" : ["original",
+		"collection_names" : ["binary_eth_dataset"],
+        "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
+                               "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                 ],
         "test_images_folder" : "../data/test_images",
         "min_road_percentage" : 0.0,
@@ -17,13 +18,13 @@
     },
     "training": {
         "general" : {
-            "batch_size": 4,
+            "batch_size": 8,
             "num_epochs" : 12,
             "checkpoint_save_interval" : 12,
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.50,
-            "cropped_image_size" : [608, 608],
+            "cropped_image_size" : [400, 400],
             "submission_loss" : false,
             "use_submission_masks" : false,
             "stochastic_weight_averaging" : {
@@ -32,7 +33,7 @@
             },
             "comet" : {
                 "log_to_comet" : true,
-                "tags" : ["binary_experiment","retrain_on_binary"]
+                "tags" : ["binary_experiment"]
             }
         },
         "postprocessing":{
@@ -46,7 +47,7 @@
         },
         "model": {
             "name": "unet",
-            "in_channels" : 3,
+            "in_channels" : 1,
             "out_channels" : 1,
             "features" : [64, 128, 256, 512],
             "filtersize": 3,

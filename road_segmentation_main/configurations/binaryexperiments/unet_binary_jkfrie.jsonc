@@ -6,7 +6,7 @@
     },
     "data_collection" : {
         "folder" : "/cluster/scratch/abaranwal/data/binary_experiment/",
-		"collection_names" : ["binary_jkfrie_dataset"],
+		"collection_names" : ["jkfrie"],
         "transform_folders" : ["original",
                                 ],
         "test_images_folder" : "../data/test_images",
@@ -32,7 +32,7 @@
             },
             "comet" : {
                 "log_to_comet" : true,
-                "tags" : ["binary_experiment","retrain_on_binary"]
+                "tags" : ["binary_experiment"]
             }
         },
         "postprocessing":{

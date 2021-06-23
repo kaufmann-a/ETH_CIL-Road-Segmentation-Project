@@ -45,7 +45,7 @@
                 }
         },
         "model": {
-            "name": "unet",
+            "name": "unet_pconv",
             "in_channels" : 3,
             "out_channels" : 1,
             "features" : [64, 128, 256, 512],
@@ -59,7 +59,7 @@
         "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
-            "lr": 0.001
+            "lr": 0.0001
         },
         "lr_scheduler": {
             "name": "stepLR",
