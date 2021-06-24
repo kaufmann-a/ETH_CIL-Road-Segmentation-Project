@@ -9,6 +9,7 @@
         "collection_names": [
             "osm_roadtracer"
         ],
+        "transform_folders" : [],
         "include_overlapping_patches" : false,
         "test_images_folder": "../data/test_images",
         "include_val_transforms": false,
