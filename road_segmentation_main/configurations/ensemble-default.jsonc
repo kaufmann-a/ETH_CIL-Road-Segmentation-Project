@@ -1,0 +1,11 @@
+{
+    "environment": {
+        "name" : "Name of the Run - this is just a default config file",
+        "output_path": "/cluster/scratch/fluebeck/trainings",
+        "log_file" : "logs.txt"
+    },
+    "dirs_prediction" : ["20210619-102350-unet_exp_base_50_100/prediction-20210621-213346",
+                   "20210618-053027-unet_exp_base_100_199/prediction-20210618-163809",
+                   "20210618-084246-unet_exp_base_50_70/prediction-20210618-163045"],
+    "mode" : "binary"
+}
