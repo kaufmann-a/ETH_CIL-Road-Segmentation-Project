@@ -75,20 +75,20 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
                 # save every prediction separately
                 for i in range(0, preds.shape[0]):
                     # save prediction
-                    torchvision.utils.save_image(preds[i], f"{folder}/pred_{pred_img_idx}.png")
+                    torchvision.utils.save_image(preds[i], f"{folder}/pred_{pred_img_idx}.jpg")
                     # save truth
-                    torchvision.utils.save_image(y[i], f"{folder}/true_{pred_img_idx}.png")
+                    torchvision.utils.save_image(y[i], f"{folder}/true_{pred_img_idx}.jpg")
                     # save input
-                    torchvision.utils.save_image(x[i], f"{folder}/input_{pred_img_idx}.png")
+                    torchvision.utils.save_image(x[i], f"{folder}/input_{pred_img_idx}.jpg")
 
                     pred_img_idx += 1
             else:
                 # save entire batch predictions as one grid image
-                torchvision.utils.save_image(preds, f"{folder}/pred_{idx}.png")
+                torchvision.utils.save_image(preds, f"{folder}/pred_{idx}.jpg")
                 # save truth
-                torchvision.utils.save_image(y, f"{folder}/true_{idx}.png")
+                torchvision.utils.save_image(y, f"{folder}/true_{idx}.jpg")
                 # save input
-                torchvision.utils.save_image(x, f"{folder}/input_{idx}.png")
+                torchvision.utils.save_image(x, f"{folder}/input_{idx}.jpg")
 
     model.train()
 
@@ -125,12 +125,12 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
         out_preds = (preds[i] > pixel_threshold).float()
         out_preds_list.append(out_preds)
         # save prediction
-        torchvision.utils.save_image(out_preds, f"{folder_normal_size}/pred_{index[i]}.png")
+        torchvision.utils.save_image(out_preds, f"{folder_normal_size}/pred_{index[i]}.jpg")
 
         if save_submission_img:
             # save submission masks
             patched_preds = mask_to_submission_mask(torch.unsqueeze(preds[i], 0), pixel_threshold).float()
             # save prediction
-            torchvision.utils.save_image(patched_preds, f"{folder_small_size}/pred_{index[i]}.png")
+            torchvision.utils.save_image(patched_preds, f"{folder_small_size}/pred_{index[i]}.jpg")
 
     return out_preds_list

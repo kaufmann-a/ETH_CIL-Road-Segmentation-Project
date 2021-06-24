@@ -1,29 +1,30 @@
 {
     "environment": {
-        "name" : "Unet, 300",
+        "name" : "Name of the run - this is just a default config file",
         "output_path": "trainings",
         "log_file" : "logs.txt"
     },
     "data_collection" : {
-        "folder" : "/cluster/scratch/abaranwal/data/binary_experiment/",
-		"collection_names" : ["binary_jkfrie_dataset"],
-        "transform_folders" : ["original",
-                                ],
+        "folder" : "../data/training",
+		"collection_names" : ["eth_dataset"],
+        "transform_folders" : ["rotate_90", //"rotate_180", "rotate_270",
+                               //"flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
+                               ], // "crop_random", "rotate_random"],
         "test_images_folder" : "../data/test_images",
         "min_road_percentage" : 0.0,
         "validation_ratio" : 0.2,
-        "include_val_transforms" : true,
+        "include_val_transforms" : false,
         "save_imgs" : true,
     },
     "training": {
         "general" : {
             "batch_size": 2,
-            "num_epochs" : 12,
-            "checkpoint_save_interval" : 12,
+            "num_epochs" : 2,
+            "checkpoint_save_interval" : 2,
             "num_workers" : 2,
             "shuffle_data" : true,
-            "foreground_threshold" : 0.50,
-            "cropped_image_size" : [608, 608],
+            "foreground_threshold" : 0.25,
+            "cropped_image_size" : [400, 400],
             "submission_loss" : false,
             "use_submission_masks" : false,
             "stochastic_weight_averaging" : {
@@ -31,35 +32,29 @@
                 "start_epoch" : 40
             },
             "comet" : {
-                "log_to_comet" : true,
-                "tags" : ["binary_experiment","retrain_on_binary"]
+                "log_to_comet" : false,
+                "tags" : []
             }
         },
-        "postprocessing":{
-                "morphology":{
-                "numdilate":2,
-                "numerode":2,
-                "nummedian":1,
-                "kernelsz":4,
-                "mediansz":3,
-                }
+       "postprocessing":{
+            "morphology":{
+            "numdilate":2,
+            "numerode":2,
+            "nummedian":1,
+            "kernelsz":4,
+            "mediansz":3,
+            }
         },
         "model": {
             "name": "unet_pconv",
             "in_channels" : 3,
             "out_channels" : 1,
-            "features" : [64, 128, 256, 512],
-            "filtersize": 3,
-            "pool_kernelsize" : 2,
-            "pool_stride" : 2,
-            "stride" : 1,
-            "dilation" : 1,
-            "pool_padding": 0,
+            "features" : [64, 128, 256, 512]
         },
-        "loss_function": "dice_loss",
+        "loss_function": "bce_with_logits_loss",
         "optimizer": {
             "name": "adam",
-            "lr": 0.0001
+            "lr": 0.001
         },
         "lr_scheduler": {
             "name": "stepLR",
@@ -76,14 +71,14 @@
     "inference" : {
         "general" : {
             "foreground_threshold" : 0.25,
-            "use_original_image_size" : true,
-            "enable_postprocessing" : false,
+            "use_original_image_size" : false,
+            "enable_postprocessing" : true,
         },
         "postprocessing":{
                 "morphology":{
                 "numdilate":2,
                 "numerode":2,
-                "nummedian":2,
+                "nummedian":1,
                 "kernelsz":4,
                 "mediansz":3,
                 }
