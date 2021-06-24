@@ -104,6 +104,7 @@ if __name__ == "__main__":
     # these directories have to be in "dir_trainings"
     dirs_prediction = Configuration.get('dirs_prediction')
     mode = Configuration.get("mode")
+    voting_threshold = Configuration.get("voting_threshold")
 
     ens = Ensemble(prediction_dirs=dirs_prediction)
     ens.ensemble(mode=mode)
