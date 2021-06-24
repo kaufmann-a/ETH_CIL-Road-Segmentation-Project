@@ -131,3 +131,24 @@ class SimpleToTensorDataset(Dataset):
         img = Image.open(self.img_path_list[index]).convert("RGB")
         img = np.array(img)
         return self.transform(img)
+
+class EnsembleDataset(Dataset):
+    def __init__(self, image_lists):
+        self.image_lists = image_lists # list of lists with images
+        self.num_predictions = len(image_lists)
+        self.transform = transforms.Compose([transforms.ToTensor()])
+        self.shape = np.array(image_lists[0][0]).shape
+
+    def __len__(self):
+        return len(self.image_lists[0])
+
+    def __getitem__(self, index):
+        avg_image = np.zeros(self.shape)
+
+        for image_list in self.image_lists:
+            image = np.array(image_list[index]).astype(int)
+            avg_image += image
+        avg_image = avg_image / self.num_predictions
+        avg_image = avg_image / 255 # transform to [0,1]
+
+        return self.transform(avg_image)
