@@ -27,7 +27,7 @@
                     "params": {
                         "p": 0.4
                     }
-                }
+                },
                 {
                     "name": "GaussNoise",
                     "params": {
