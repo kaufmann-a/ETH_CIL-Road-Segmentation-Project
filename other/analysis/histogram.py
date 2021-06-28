@@ -148,8 +148,22 @@ def test_histogram_matching():
     plt.imshow(matched)
     plt.show()
 
+    # apply color jitter
+    t = A.ColorJitter(always_apply=True,
+                      brightness=0.2,
+                      contrast=0.2,
+                      saturation=0.2,
+                      hue=0.2)
+    apply_augmentation(t, img_train, text="train image ColorJitter")
+    apply_augmentation(t, img_test, text="test image ColorJitter")
+
+    # apply random contrast
+    t = A.RandomContrast(always_apply=True, limit=(0.2, 0.5))
+    apply_augmentation(t, img_train, text="train image RandomContrast")
+    apply_augmentation(t, img_test, text="test image RandomContrast")
+
     # apply gaussian noise to images
-    t = A.GaussNoise(always_apply=True)
+    t = A.GaussNoise(always_apply=True, var_limit=(50, 200))
     apply_augmentation(t, img_train, text="train image GaussNoise")
     apply_augmentation(t, img_test, text="test image GaussNoise")
 
