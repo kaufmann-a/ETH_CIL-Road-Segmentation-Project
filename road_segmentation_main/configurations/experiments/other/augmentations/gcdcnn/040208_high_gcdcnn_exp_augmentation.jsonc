@@ -26,7 +26,7 @@
                     "name": "ColorJitter",
                     "params": {
                         "p": 0.6,
-                        "contrast_limit" : [0.2, 0.5],
+                        "contrast_limit" : 0.5,
                     }
                 },
                 {
