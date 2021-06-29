@@ -1,0 +1,122 @@
+[
+  {
+    "lat": 35.7925617,
+    "lng": -78.6418313,
+    "place": "carolina"
+  },
+  {
+    "lat": 35.7829711,
+    "lng": -78.6486063,
+    "place": "carolina"
+  },
+  {
+    "lat": 35.7424778,
+    "lng": -78.7512719,
+    "place": "carolina"
+  },
+  {
+    "lat": 34.6738111,
+    "lng": -77.3383541,
+    "place": "carolina"
+  },
+  {
+    "lat": 33.4775599,
+    "lng": -81.9764858,
+    "place": "carolina"
+  },
+  {
+    "lat": 33.5030249,
+    "lng": -82.1006316,
+    "place": "carolina"
+  },
+  {
+    "lat": 38.8322299,
+    "lng": -104.8256821,
+    "place": "colorado"
+  },
+  {
+    "lat": 38.8777476,
+    "lng": -104.815165,
+    "place": "colorado"
+  },
+  {
+    "lat": 39.6294382,
+    "lng": -106.075914,
+    "place": "colorado"
+  },
+  {
+    "lat": 42.6506635,
+    "lng": -83.0341157,
+    "place": "michigan"
+  },
+  {
+    "lat": 42.5566694,
+    "lng": -83.1710507,
+    "place": "michigan"
+  },
+  {
+    "lat": 42.5667788,
+    "lng": -83.188956,
+    "place": "michigan"
+  },
+  {
+    "lat": 42.5643529,
+    "lng": -83.0880845,
+    "place": "michigan"
+  },
+  {
+    "lat": 42.3458226,
+    "lng": -83.0759347,
+    "place": "michigan"
+  },
+  {
+    "lat": 42.3446796,
+    "lng": -83.1701945,
+    "place": "michigan"
+  },
+  {
+    "lat": 39.8887021,
+    "lng": -86.2487378,
+    "place": "indiana"
+  },
+  {
+    "lat": 39.9108709,
+    "lng": -86.2556025,
+    "place": "indiana"
+  },
+  {
+    "lat": 39.9267769,
+    "lng": -86.1053143,
+    "place": "indiana"
+  },
+  {
+    "lat": 39.9105802,
+    "lng": -86.198642,
+    "place": "indiana"
+  },
+  {
+    "lat": 39.9218891,
+    "lng": -86.2130922,
+    "place": "indiana"
+  },
+  {
+    "lat": 40.1502672,
+    "lng": -89.3656306,
+    "place": "illinois"
+  },
+  {
+    "lat": 41.4036398,
+    "lng": -99.6407215,
+    "place": "nebraska"
+  },
+  {
+    "lat": 33.4596645,
+    "lng": -112.0299613,
+    "place": "arizona"
+  },
+  {
+    "lat": 37.5577448,
+    "lng": -122.0081509,
+    "place": "california"
+  }
+]

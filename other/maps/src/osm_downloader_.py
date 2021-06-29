@@ -122,5 +122,6 @@ def get_osm_roads(x, y, zoom, nr_tiles_width, nr_tiles_height, file):
     # gets rid of the white border
     plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
 
-    plt.savefig(file, pad_inches=0, dpi=DPI, transparent=True)
+    # save fig with black background
+    plt.savefig(file, pad_inches=0, dpi=DPI, facecolor='black')  # , transparent=True
     plt.close(fig)
