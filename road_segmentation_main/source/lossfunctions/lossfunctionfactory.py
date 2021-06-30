@@ -11,7 +11,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import torch.nn as nn
 
 from source.configuration import Configuration
-from source.lossfunctions.lossfunctions import DiceLoss, DiceBCELoss, BinaryFocalLoss, FocalTverskyLoss, LogCoshDiceLoss
+from source.lossfunctions.lossfunctions import DiceLoss, DiceBCELoss, BinaryFocalLoss, FocalTverskyLoss, LogCoshDiceLoss, DicePenaltyLoss
 
 class LossFunctionFactory(object):
     model = False
@@ -51,6 +51,11 @@ class LossFunctionFactory(object):
         return LogCoshDiceLoss()
 
     @staticmethod
+    def dice_penalty_loss():
+        return DicePenaltyLoss()
+
+
+    @staticmethod
     def get_members():
         return {
             'bce_with_logits_loss': LossFunctionFactory.bce_with_logits_loss,
@@ -59,4 +64,5 @@ class LossFunctionFactory(object):
             'binary_focal_loss': LossFunctionFactory.binary_focal_loss,
             'focal_tversky_loss': LossFunctionFactory.focal_tversky_loss,
             'log_cosh_dice_loss': LossFunctionFactory.log_cosh_dice_loss,
+            'dice_penalty_loss': LossFunctionFactory.dice_penalty_loss
         }

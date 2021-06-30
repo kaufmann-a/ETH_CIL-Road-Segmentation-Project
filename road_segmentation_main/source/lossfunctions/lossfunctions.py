@@ -2,6 +2,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.autograd import Function
+from source.configuration import Configuration
+from source.logcreator.logcreator import Logcreator
 
 class DiceBCELoss(nn.Module):
     """
@@ -55,6 +57,32 @@ class DiceLoss(nn.Module):
         dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
 
         return 1 - dice
+
+class DicePenaltyLoss(DiceLoss):
+    def __init__(self):
+        super(DiceLoss).__init__()
+
+    def forward(self, inputs, targets, smooth=1):
+        inputs = torch.sigmoid(inputs)
+
+        add_penalty = Configuration.get("training.general.penalty.add_penalty", optional=True, default=False)
+        kernel_size = Configuration.get("training.general.penalty.kernel_size", optional=True, default=3)
+        lam = Configuration.get("training.general.penalty.lam", optional=True, default=0.5)
+        avgPool = torch.nn.AvgPool2d(kernel_size, stride=1, padding=np.floor(kernel_size/2).astype(int))
+        mean_predictions = avgPool(inputs)
+        mse_loss = torch.nn.MSELoss()
+        penalty = mse_loss(inputs, mean_predictions)
+        Logcreator.info("Penalty:", penalty)
+
+        # flatten label and prediction tensors
+        inputs = inputs.view(-1)
+        targets = targets.view(-1)
+
+        # TODO put dice coefficent into one static function
+        intersection = (inputs * targets).sum()
+        dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
+
+        return 1 - dice + lam * penalty
 
 
 #https://github.com/Hsuxu/Loss_ToolBox-PyTorch/blob/master/FocalLoss/focal_loss.py
