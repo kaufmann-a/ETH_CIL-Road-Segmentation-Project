@@ -19,9 +19,7 @@ import torch
 import inspect
 
 from torch.optim.swa_utils import AveragedModel
-import torchmetrics
 from torch.utils.data import DataLoader
-from torchmetrics import IoU
 
 from torchsummary import summary
 from tqdm import tqdm
@@ -33,8 +31,6 @@ from source.helpers.imagesavehelper import save_predictions_as_imgs
 import source.helpers.metricslogging as metricslogging
 from source.logcreator.logcreator import Logcreator
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
-from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric, PostProcessingPatchAccuracy, \
-    PostProcessingPixelAccuracy
 from source.metrics.metrics_handler import MetricsHandler
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
@@ -153,8 +149,7 @@ class Engine:
                     torch.optim.swa_utils.update_bn(tqdm(train_loader, desc="SWA BN update", file=sys.stdout),
                                                     self.swa_model, device=DEVICE)
                 # evaluate on validation set
-                swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch,
-                                                log_model_name="SWA-", log_postfix_path='val_swa')
+                swa_val_metrics = self.evaluate(self.swa_model, val_loader, epoch, log_dataset_name='val_swa')
 
             best_model = False
             if val_metrics['val_acc'] > best_val_accuracy:
@@ -241,38 +236,24 @@ class Engine:
 
         # compute epoch scores
         train_loss = total_loss / len(data_loader)
-        train_acc, train_iou_score, train_patch_acc, train_postprocessingpatch_acc, train_postprocessingpixel_acc = metrics_handler.compute()
 
         # Tensorboard
         self.tensorboard.add_scalar("Loss/train", train_loss, epoch)
-        self.tensorboard.add_scalar("Accuracy/train", train_acc, epoch)
-        self.tensorboard.add_scalar("PatchAccuracy/train", train_patch_acc, epoch)
-        self.tensorboard.add_scalar("IoU/train", train_iou_score, epoch)
 
         # Comet
         if self.comet is not None:
             self.comet.log_metric('train_loss', train_loss, epoch=epoch)
-            self.comet.log_metric('train_acc', train_acc, epoch=epoch)
-            self.comet.log_metric('train_postprocessingpixel_acc', train_postprocessingpixel_acc, epoch=epoch)
-            self.comet.log_metric('train_patch_acc', train_patch_acc, epoch=epoch)
-            self.comet.log_metric('train_postprocessingpatch_acc', train_postprocessingpatch_acc, epoch=epoch)
-            self.comet.log_metric('train_iou_score', train_iou_score, epoch=epoch)
 
-        # Logfile
-        Logcreator.info(f"Training:   loss: {train_loss:.5f}",
-                        f", accuracy: {train_acc:.5f}",
-                        f", postprocessingpixel-acc: {train_postprocessingpixel_acc:.5f}",
-                        f", patch-acc: {train_patch_acc:.5f}",
-                        f", postprocessingpatch-acc: {train_postprocessingpatch_acc:.5f}",
-                        f", IoU: {train_iou_score:.5f}")
+        score_dict = metrics_handler.compute_and_log(self.tensorboard, self.comet, epoch=epoch, data_set_name="train")
 
-        return {'train_loss': total_loss, 'train_acc': train_acc,
-                'train_patch_acc': train_patch_acc,
-                'train_postprocessing_patch_acc': train_postprocessingpatch_acc,
-                'train_postprocessing_pixel_acc': train_postprocessingpixel_acc,
-                'train_iou_score': train_iou_score}
+        Logcreator.info(f"Training:   loss: {train_loss:.5f}", self.score_dict_to_string(score_dict))
 
-    def evaluate(self, model, data_loader, epoch, log_model_name='', log_postfix_path='val'):
+        # add the loss to the dictionary
+        score_dict["train_loss"] = total_loss
+
+        return score_dict
+
+    def evaluate(self, model, data_loader, epoch, log_dataset_name='val'):
         """
         Evaluate model on validation data.
         """
@@ -302,37 +283,22 @@ class Engine:
         # compute epoch scores
         val_loss = total_loss / len(data_loader)
 
-        val_acc, val_iou_score, val_patch_acc, val_postprocessingpatch_acc, val_postprocessingpixel_acc = metrics_handler.compute()
-
         # Tensorboard
-        self.tensorboard.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
-        self.tensorboard.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
-        self.tensorboard.add_scalar("Postprocessing/pixel", val_postprocessingpixel_acc, epoch)
-        self.tensorboard.add_scalar("PatchAccuracy/" + log_postfix_path, val_patch_acc, epoch)
-        self.tensorboard.add_scalar("Postprocessing/patch", val_postprocessingpatch_acc, epoch)
-        self.tensorboard.add_scalar("IoU/val", val_iou_score, epoch)
+        self.tensorboard.add_scalar("Loss/" + log_dataset_name, val_loss, epoch)
+
         # Comet
         if self.comet is not None:
-            self.comet.log_metric(log_postfix_path + '_loss', val_loss, epoch=epoch)
-            self.comet.log_metric(log_postfix_path + '_acc', val_acc, epoch=epoch)
-            self.comet.log_metric('postprocessing_pixel', val_postprocessingpixel_acc, epoch=epoch)
-            self.comet.log_metric(log_postfix_path + '_patch_acc', val_patch_acc, epoch=epoch)
-            self.comet.log_metric('postprocessing_patch', val_postprocessingpatch_acc, epoch=epoch)
-            self.comet.log_metric('val_iou_score', val_iou_score, epoch=epoch)
+            self.comet.log_metric(log_dataset_name + '_loss', val_loss, epoch=epoch)
 
-        # Logfile
-        Logcreator.info(log_model_name + f"Validation: loss: {val_loss:.5f}",
-                        f", accuracy: {val_acc:.5f}",
-                        f" postprocessingpixel_acc: {val_postprocessingpixel_acc:.5f}",
-                        f", patch-acc: {val_patch_acc:.5f}",
-                        f", postprocessingpatch_acc: {val_postprocessingpatch_acc:.5f}",
-                        f", IoU: {val_iou_score:.5f}",
-                        )
+        score_dict = metrics_handler.compute_and_log(self.tensorboard, self.comet, epoch=epoch,
+                                                     data_set_name=log_dataset_name)
 
-        return {'val_loss': total_loss,
-                'val_acc': val_acc, 'val_postprocessingpixel_acc': val_postprocessingpixel_acc,
-                'val_patch_acc': val_patch_acc, 'val_postprocessingpatch_acc': val_postprocessingpatch_acc,
-                'val_iou_score': val_iou_score}
+        Logcreator.info(f"Validation: loss: {val_loss:.5f}", self.score_dict_to_string(score_dict))
+
+        # add the loss to the dictionary
+        score_dict["train_loss"] = total_loss
+
+        return score_dict
 
     def compute_loss(self, predictions, targets):
         """
@@ -352,6 +318,17 @@ class Engine:
             targets = avgPool(targets)
 
         return self.loss_function(predictions, targets)
+
+    def score_dict_to_string(self, score_dict):
+        """
+        Helper to convert the scores dictionary to a string.
+
+        :param score_dict: a dictionary containing float values
+
+        :return: the string representing the dictionary
+        """
+        return ''.join(f'{name.replace("val_", "").replace("train_", "")}: {score:.5f}, '
+                       for name, score in score_dict.items())
 
     def save_model(self, epoch_nr):
         """
