@@ -53,7 +53,8 @@ class MetricsHandler(Metric):
         :param comet: The comet handle.
         :param epoch: The current epoch number.
         :param data_set_name: The dataset name used for logging.
-        :return: A score dictionary.
+
+        :return: score_dict: The score dictionary.
         """
         result_list = self.compute()
 
@@ -78,7 +79,7 @@ class MetricsHandler(Metric):
         :param device: The used device.
         :return:
             metrics_list: A list containing the torchmetrics. <br>
-            int_targets_list: A boolean list telling for each metric if the targets should be converted to integers.
+            int_targets_list: A boolean list telling for each metric if the targets should be converted to integers. <br>
             names_list: A list metric names.
         """
         metrics_list = []
