@@ -60,7 +60,7 @@ class DiceLoss(nn.Module):
 
 class DicePenaltyLoss(DiceLoss):
     def __init__(self):
-        super(DiceLoss).__init__()
+        super(DiceLoss, self).__init__()
 
     def forward(self, inputs, targets, smooth=1):
         inputs = torch.sigmoid(inputs)
