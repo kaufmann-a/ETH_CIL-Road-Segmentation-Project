@@ -2,13 +2,14 @@
 # coding: utf8
 
 """
-Model of the road segmentatjion neuronal network learning object.
+Engine of the road segmentation neuronal network learning object.
 """
 
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
-from comet_ml import Experiment
+# noinspection PyUnresolvedReferences
+from comet_ml import Experiment  # comet_ml needs to be imported before torch
 
 import sys
 import os
@@ -42,8 +43,16 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class Engine:
+    """
+    Handles the training of the model.
+    """
 
     def __init__(self):
+        """
+        Initializes the model, optimizer, learning rate scheduler and the loss function
+        using the respective Factory classes.
+        """
+
         # fix random seeds
         seed = 49626446
         self.fix_random_seeds(seed)
@@ -54,6 +63,7 @@ class Engine:
         self.optimizer = OptimizerFactory.build(self.model)
         self.lr_scheduler = LRSchedulerFactory.build(self.optimizer)
         self.loss_function = LossFunctionFactory.build(self.model)
+
         self.scaler = torch.cuda.amp.GradScaler()  # I assumed we always use gradscaler, thus no factory for this
         self.submission_loss = Configuration.get("training.general.submission_loss")
         Logcreator.info("Following device will be used for training: " + DEVICE,
@@ -82,9 +92,18 @@ class Engine:
         self.fix_random_seeds(seed=35416879)
 
     def get_lr(self):
+        """
+        :return: the current learning rate
+        """
         return self.optimizer.param_groups[0]['lr']
 
     def train(self, epoch_nr=0):
+        """
+        This is the main training loop function. It trains, validates and saves the best model for the given number of
+        epochs.
+
+        :param epoch_nr: Start training from this epoch. Useful to continue training with a saved model checkpoint.
+        """
         training_data, validation_data = DataPreparator.load()
 
         # Load training parameters from config file
@@ -271,7 +290,7 @@ class Engine:
         model.eval()
 
         # initialize metrics
-        accuracy, iou, multi_accuracy_metric, patch_accuracy, postprocessingpatch_accuracy, postprocessingpixel_accuracy= self.get_metrics()
+        accuracy, iou, multi_accuracy_metric, patch_accuracy, postprocessingpatch_accuracy, postprocessingpixel_accuracy = self.get_metrics()
 
         total_loss = 0.
 
@@ -333,8 +352,27 @@ class Engine:
 
         return {'val_loss': total_loss,
                 'val_acc': val_acc, 'val_postprocessingpixel_acc': val_postprocessingpixel_acc,
-                'val_patch_acc': val_patch_acc,'val_postprocessingpatch_acc': val_postprocessingpatch_acc,
-                'val_iou_score': val_iou_score }
+                'val_patch_acc': val_patch_acc, 'val_postprocessingpatch_acc': val_postprocessingpatch_acc,
+                'val_iou_score': val_iou_score}
+
+    def compute_loss(self, predictions, targets):
+        """
+        Computes the loss using the configured loss function. If submission-loss is configured the prediction and target
+        masks are first converted to the submission mask format. The submission mask format only takes 16x16 patches
+        into account.
+
+        :param predictions: The model predictions.
+        :param targets: The ground truth mask.
+
+        :return: The computed loss.
+        """
+        if self.submission_loss:
+            # use average pooling to convert the predictions and targets to the submission format
+            avgPool = torch.nn.AvgPool2d(16, stride=16)
+            predictions = avgPool(predictions)
+            targets = avgPool(targets)
+
+        return self.loss_function(predictions, targets)
 
     def get_metrics(self):
         multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
@@ -350,7 +388,11 @@ class Engine:
         return accuracy, iou, multi_accuracy_metric, patch_accuracy, postprocessingpatch_accuracy, postprocessingpixel_accuracy
 
     def save_model(self, epoch_nr):
-        """ This function saves entire model incl. modelstructure"""
+        """
+        This function saves the entire model incl. model structure.
+
+        :param epoch_nr: The current epoch number.
+        """
         Configuration.model_save_folder = os.path.join(Configuration.output_directory, "whole_model_backups")
         if not os.path.exists(Configuration.model_save_folder):
             os.makedirs(Configuration.model_save_folder)
@@ -358,6 +400,16 @@ class Engine:
         torch.save(self.model, os.path.join(Configuration.model_save_folder, file_name))
 
     def save_checkpoint(self, epoch, tl, ta, vl, va, file_name="checkpoint.pth"):
+        """
+        Saves a model checkpoint.
+
+        :param epoch: The current epoch number.
+        :param tl: training loss
+        :param ta: training accuracy
+        :param vl: validation loss
+        :param va: validation accuracy
+        :param file_name: The checkpoint file name.
+        """
         Configuration.weights_save_folder = os.path.join(Configuration.output_directory, "weights_checkpoint")
         if not os.path.exists(Configuration.weights_save_folder):
             os.makedirs(Configuration.weights_save_folder)
@@ -380,15 +432,22 @@ class Engine:
         }, os.path.join(Configuration.weights_save_folder, file_name))
 
     def load_model(self, path=None):
+        """
+        Loads a saved model.
+
+        :param path: Path to the saved model structure.
+        """
         self.model = torch.load(path)
 
     def load_checkpoints(self, path=None, reset_lr=False, overwrite_model_with_swa=False):
         """
-        Loads a checkpoint.
+        Loads a model checkpoint.
 
-        :param path: path to checkpoint file.
+        :param path: The path to checkpoint file.
         :param reset_lr: True = resets the learning rate of the optimizer to the configuration values.
-        :return:
+        :param overwrite_model_with_swa: True = Overwrites the model with the saved swa model.
+
+        :return: epoch number, train loss, train accuracy, validation loss, validation accuracy
         """
         Logcreator.info("Loading checkpoint file:", path)
 
@@ -427,15 +486,12 @@ class Engine:
 
         return epoch, train_loss, train_accuracy, val_loss, val_accuracy
 
-    def compute_loss(self, predictions, targets):
-        if self.submission_loss:
-            avgPool = torch.nn.AvgPool2d(16, stride=16)
-            predictions = avgPool(predictions)
-            targets = avgPool(targets)
-
-        return self.loss_function(predictions, targets)
-
     def fix_random_seeds(self, seed):
+        """
+        Fixes the random seeds of torch, numpy, random and cuda.
+
+        :param seed: The seed number.
+        """
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
@@ -451,7 +507,6 @@ class Engine:
 
         """
         if torch.cuda.is_available():
-            # TODO set default value such that it is reproducible
             benchmark = Configuration.get("training.cudnn.benchmark", optional=True, default=False)
             deterministic = Configuration.get("training.cudnn.deterministic", optional=True, default=True)
             Logcreator.info("cudnn.benchmark default:", torch.backends.cudnn.benchmark, ", set-value:", benchmark)
@@ -459,11 +514,15 @@ class Engine:
                             deterministic)
             torch.backends.cudnn.benchmark = benchmark
             torch.backends.cudnn.deterministic = deterministic  # if True: CUDA convolution deterministic
-            if deterministic: # set workspace config, to maybe give same results on 1080Ti and 2080Ti
-                os.environ["CUBLAS_WORKSPACE_CONFIG"]=":4096:2"
+            if deterministic:  # set workspace config, to maybe give same results on 1080Ti and 2080Ti
+                os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:2"
             # torch.use_deterministic_algorithms(True) # last resort if other things do not work
 
     def print_modelsummary(self):
+        """
+        Logs the model summary.
+
+        """
         cropped_image_size = Configuration.get("training.general.cropped_image_size")
         input_size = tuple(np.insert(cropped_image_size, 0, values=3))
         # redirect stdout to our logger
@@ -479,6 +538,11 @@ class Engine:
 
 
 def seed_worker(worker_id):
+    """
+    Fixes seeds for numpy and random.
+
+    :param worker_id: The worker id.
+    """
     # https://pytorch.org/docs/stable/notes/randomness.html#dataloader
     worker_seed = torch.initial_seed() % 2 ** 32
     # print("worker-id:", worker_id, ", seed:", worker_seed)
