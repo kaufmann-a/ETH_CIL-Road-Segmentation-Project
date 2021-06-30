@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from source.configuration import Configuration
 from source.logcreator.logcreator import Logcreator
+import numpy as np
 
 class DiceBCELoss(nn.Module):
     """
