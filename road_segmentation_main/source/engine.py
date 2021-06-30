@@ -441,7 +441,7 @@ class Engine:
             mean_predictions = avgPool(predictions)
             mse_loss = torch.nn.MSELoss()
             penalty = mse_loss(predictions, mean_predictions)
-            print("Penalty:", penalty)
+            Logcreator.info("Penalty:", penalty)
             return self.loss_function(predictions, targets) + lam * penalty
         else:
             return self.loss_function(predictions, targets)
