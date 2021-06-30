@@ -33,7 +33,9 @@ from source.helpers.imagesavehelper import save_predictions_as_imgs
 import source.helpers.metricslogging as metricslogging
 from source.logcreator.logcreator import Logcreator
 from source.lossfunctions.lossfunctionfactory import LossFunctionFactory
-from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric, PostProcessingPatchAccuracy, PostProcessingPixelAccuracy
+from source.metrics.metrics import PatchAccuracy, GeneralAccuracyMetric, PostProcessingPatchAccuracy, \
+    PostProcessingPixelAccuracy
+from source.metrics.metrics_handler import MetricsHandler
 from source.models.modelfactory import ModelFactory
 from source.optimizers.optimizerfactory import OptimizerFactory
 from source.scheduler.lr_schedulerfactory import LRSchedulerFactory
@@ -201,7 +203,7 @@ class Engine:
         self.model.train()
 
         # initialize metrics
-        accuracy, iou, multi_accuracy_metric, patch_accuracy, postprocessingpatch_accuracy, postprocessingpixel_accuracy = self.get_metrics()
+        metrics_handler = MetricsHandler(device=DEVICE)
 
         total_loss = 0.
 
@@ -229,15 +231,8 @@ class Engine:
             total_loss += loss.item()
 
             # update metrics
-            # TODO create one Metrics class that we can feed with (predicted, targets)
-            #  and computes all metrics we want and maybe logs them -> tensorboard?
             prediction_probabilities = torch.sigmoid(predictions)
-            multi_accuracy_metric.update(prediction_probabilities, targets)
-            accuracy.update(prediction_probabilities, targets.int())
-            patch_accuracy.update(prediction_probabilities, targets)
-            postprocessingpatch_accuracy.update(prediction_probabilities, targets)
-            postprocessingpixel_accuracy.update(prediction_probabilities, targets)
-            iou.update(prediction_probabilities, targets.int())
+            metrics_handler.update(prediction_probabilities, targets)
 
             # update tqdm progressbar
             loop.set_postfix(loss=loss.item())
@@ -246,14 +241,8 @@ class Engine:
 
         # compute epoch scores
         train_loss = total_loss / len(data_loader)
-        train_acc = accuracy.compute().item()
-        train_patch_acc = patch_accuracy.compute().item()
-        train_postprocessingpatch_acc = postprocessingpatch_accuracy.compute().item()
-        train_postprocessingpixel_acc = postprocessingpixel_accuracy.compute().item()
-        train_iou_score = iou.compute().item()
+        train_acc, train_iou_score, train_patch_acc, train_postprocessingpatch_acc, train_postprocessingpixel_acc = metrics_handler.compute()
 
-        # log scores
-        multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix='train')
         # Tensorboard
         self.tensorboard.add_scalar("Loss/train", train_loss, epoch)
         self.tensorboard.add_scalar("Accuracy/train", train_acc, epoch)
@@ -277,10 +266,10 @@ class Engine:
                         f", postprocessingpatch-acc: {train_postprocessingpatch_acc:.5f}",
                         f", IoU: {train_iou_score:.5f}")
 
-        return {'train_loss': total_loss, 'train_acc': accuracy.compute(),
-                'train_patch_acc': patch_accuracy.compute(),
-                'train_postprocessing_patch_acc': postprocessingpatch_accuracy.compute(),
-                'train_postprocessing_pixel_acc': postprocessingpixel_accuracy.compute(),
+        return {'train_loss': total_loss, 'train_acc': train_acc,
+                'train_patch_acc': train_patch_acc,
+                'train_postprocessing_patch_acc': train_postprocessingpatch_acc,
+                'train_postprocessing_pixel_acc': train_postprocessingpixel_acc,
                 'train_iou_score': train_iou_score}
 
     def evaluate(self, model, data_loader, epoch, log_model_name='', log_postfix_path='val'):
@@ -290,7 +279,7 @@ class Engine:
         model.eval()
 
         # initialize metrics
-        accuracy, iou, multi_accuracy_metric, patch_accuracy, postprocessingpatch_accuracy, postprocessingpixel_accuracy = self.get_metrics()
+        metrics_handler = MetricsHandler(device=DEVICE)
 
         total_loss = 0.
 
@@ -308,23 +297,13 @@ class Engine:
 
                 # update metrics
                 prediction_probabilities = torch.sigmoid(predictions)
-                multi_accuracy_metric.update(prediction_probabilities, targets)
-                accuracy.update(prediction_probabilities, targets.int())
-                patch_accuracy.update(prediction_probabilities, targets)
-                postprocessingpatch_accuracy.update(prediction_probabilities, targets)
-                postprocessingpixel_accuracy.update(prediction_probabilities, targets)
-                iou.update(prediction_probabilities, targets.int())
+                metrics_handler.update(prediction_probabilities, targets)
 
         # compute epoch scores
         val_loss = total_loss / len(data_loader)
-        val_acc = accuracy.compute().item()
-        val_patch_acc = patch_accuracy.compute().item()
-        val_postprocessingpatch_acc = postprocessingpatch_accuracy.compute().item()
-        val_postprocessingpixel_acc = postprocessingpixel_accuracy.compute().item()
-        val_iou_score = iou.compute().item()
 
-        # log scores
-        multi_accuracy_metric.compute_and_log(self.tensorboard, epoch, path_postfix=log_postfix_path)
+        val_acc, val_iou_score, val_patch_acc, val_postprocessingpatch_acc, val_postprocessingpixel_acc = metrics_handler.compute()
+
         # Tensorboard
         self.tensorboard.add_scalar("Loss/" + log_postfix_path, val_loss, epoch)
         self.tensorboard.add_scalar("Accuracy/" + log_postfix_path, val_acc, epoch)
@@ -373,19 +352,6 @@ class Engine:
             targets = avgPool(targets)
 
         return self.loss_function(predictions, targets)
-
-    def get_metrics(self):
-        multi_accuracy_metric = GeneralAccuracyMetric(device=DEVICE)
-        foreground_threshold = Configuration.get('training.general.foreground_threshold')
-        accuracy = torchmetrics.Accuracy(threshold=foreground_threshold).to(DEVICE)
-        morphparam = Configuration.get('training.postprocessing.morphology')
-        patch_accuracy = PatchAccuracy(threshold=foreground_threshold).to(DEVICE)
-        postprocessingpatch_accuracy = PostProcessingPatchAccuracy(morphparam, device=DEVICE,
-                                                                   threshold=foreground_threshold).to(DEVICE)
-        postprocessingpixel_accuracy = PostProcessingPixelAccuracy(morphparam, device=DEVICE,
-                                                                   threshold=foreground_threshold).to(DEVICE)
-        iou = IoU(num_classes=2, threshold=foreground_threshold).to(DEVICE)
-        return accuracy, iou, multi_accuracy_metric, patch_accuracy, postprocessingpatch_accuracy, postprocessingpixel_accuracy
 
     def save_model(self, epoch_nr):
         """
