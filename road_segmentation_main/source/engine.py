@@ -433,7 +433,17 @@ class Engine:
             predictions = avgPool(predictions)
             targets = avgPool(targets)
 
-        return self.loss_function(predictions, targets)
+        add_penalty = Configuration.get("training.penalty.add_penalty", optional=True, default=False)
+        if add_penalty:
+            kernel_size = Configuration.get("training.penalty.kernel_size", optional=True, default=3)
+            lam = Configuration.get("training.penalty.lambda", optional=True, default=0.5)
+            avgPool = torch.nn.AvgPool2d(kernel_size, stride=1, padding=0.5)
+            mean_predictions = avgPool(predictions)
+            mse_loss = torch.nn.MSELoss()
+            penalty = mse_loss(predictions, mean_predictions)
+            return self.loss_function(predictions, targets) + lam * penalty
+        else:
+            return self.loss_function(predictions, targets)
 
     def fix_random_seeds(self, seed):
         torch.manual_seed(seed)
