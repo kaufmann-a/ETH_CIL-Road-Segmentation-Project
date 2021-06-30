@@ -75,7 +75,7 @@
             "dilation" : 1,
             "pool_padding": 0,
         },
-        "loss_function": "dice_loss",
+        "loss_function": "dice_penalty_loss",
         "optimizer": {
             "name": "adam",
             "lr": 0.001
