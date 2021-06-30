@@ -436,7 +436,7 @@ class Engine:
         add_penalty = Configuration.get("training.penalty.add_penalty", optional=True, default=False)
         if add_penalty:
             kernel_size = Configuration.get("training.penalty.kernel_size", optional=True, default=3)
-            lam = Configuration.get("training.penalty.lambda", optional=True, default=0.5)
+            lam = Configuration.get("training.penalty.lam", optional=True, default=0.5)
             avgPool = torch.nn.AvgPool2d(kernel_size, stride=1, padding=0.5)
             mean_predictions = avgPool(predictions)
             mse_loss = torch.nn.MSELoss()
