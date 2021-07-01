@@ -54,8 +54,8 @@
             },
             "penalty": {
                 "add_penalty": true,
-                "kernel_size": 12,
-                "lam": 2
+                "kernel_size": 13,
+                "lam": 1
             }
         },
         "model": {
