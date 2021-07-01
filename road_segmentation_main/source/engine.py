@@ -249,7 +249,7 @@ class Engine:
         Logcreator.info(f"Training:   loss: {train_loss:.5f}", self.score_dict_to_string(score_dict))
 
         # add the loss to the dictionary
-        score_dict["train_loss"] = total_loss
+        score_dict["train_loss"] = train_loss
 
         return score_dict
 
@@ -296,7 +296,7 @@ class Engine:
         Logcreator.info(f"Validation: loss: {val_loss:.5f}", self.score_dict_to_string(score_dict))
 
         # add the loss to the dictionary
-        score_dict["train_loss"] = total_loss
+        score_dict["val_loss"] = val_loss
 
         return score_dict
 
