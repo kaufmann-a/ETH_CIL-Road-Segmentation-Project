@@ -1,0 +1,92 @@
+{
+    "environment": {
+        "name" : "Unet, 300",
+        "output_path": "trainings",
+        "log_file" : "logs.txt"
+    },
+    "data_collection" : {
+        "folder" : "/cluster/scratch/abaranwal/data/binary_experiment/",
+		"collection_names" : ["binary_jkfrie_dataset"],
+        "transform_folders" : ["original",
+                                ],
+        "test_images_folder" : "../data/test_images",
+        "min_road_percentage" : 0.0,
+        "validation_ratio" : 0.2,
+        "include_val_transforms" : true,
+        "save_imgs" : true,
+    },
+    "training": {
+        "general" : {
+            "batch_size": 2,
+            "num_epochs" : 12,
+            "checkpoint_save_interval" : 12,
+            "num_workers" : 2,
+            "shuffle_data" : true,
+            "foreground_threshold" : 0.50,
+            "cropped_image_size" : [608, 608],
+            "submission_loss" : false,
+            "use_submission_masks" : false,
+            "stochastic_weight_averaging" : {
+                "on" : false,
+                "start_epoch" : 40
+            },
+            "comet" : {
+                "log_to_comet" : true,
+                "tags" : ["binary_experiment","retrain_on_binary"]
+            }
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":1,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        },
+        "model": {
+            "name": "unet_pconv",
+            "in_channels" : 3,
+            "out_channels" : 1,
+            "features" : [64, 128, 256, 512],
+            "filtersize": 3,
+            "pool_kernelsize" : 2,
+            "pool_stride" : 2,
+            "stride" : 1,
+            "dilation" : 1,
+            "pool_padding": 0,
+        },
+        "loss_function": "dice_loss",
+        "optimizer": {
+            "name": "adam",
+            "lr": 0.0001
+        },
+        "lr_scheduler": {
+            "name": "stepLR",
+            "stepLR": {
+                "step_size" : 10,
+                "gamma" : 0.1,
+            },
+            "multiStepLR": {
+                "milestones" : [10,40],
+                "gamma" : 0.1,
+            }
+        },
+    },
+    "inference" : {
+        "general" : {
+            "foreground_threshold" : 0.25,
+            "use_original_image_size" : true,
+            "enable_postprocessing" : false,
+        },
+        "postprocessing":{
+                "morphology":{
+                "numdilate":2,
+                "numerode":2,
+                "nummedian":2,
+                "kernelsz":4,
+                "mediansz":3,
+                }
+        }
+    }
+}

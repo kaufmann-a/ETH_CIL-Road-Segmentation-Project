@@ -160,7 +160,7 @@ class Prediction(object):
 
         for file in os.listdir(imgDir):
             filename = os.fsdecode(file)
-            if filename.endswith(".png"):
+            if filename.endswith(".png") or filename.endswith(".jpg"):
                 # get image number
                 image_number_list.append([int(s) for s in filename[:-4].split("_") if s.isdigit()][0])
                 # get cropped images
