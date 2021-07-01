@@ -5,9 +5,9 @@ import sys
 from PIL import Image
 from tqdm import tqdm
 
-from other.maps.src import gmaps_downloader
-from other.maps.src.osm_downloader_ import get_osm_roads
-from other.maps.src.tile_coordinates_helper import num2deg, deg2num
+from src import gmaps_downloader
+from src.osm_downloader_ import get_osm_roads
+from src.tile_coordinates_helper import num2deg, deg2num
 
 # bad masks from manual inspection
 bad_masks = [
