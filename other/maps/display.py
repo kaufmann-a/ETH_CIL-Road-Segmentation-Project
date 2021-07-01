@@ -25,8 +25,8 @@ if __name__ == '__main__':
 
             DPI = 100.0
             fig = plt.figure(figsize=(img.height / DPI, img.width / DPI))
-
-            plt.imshow(mask, alpha=0.5, zorder=1)
+            plt.title(file)
+            plt.imshow(mask, alpha=0.4, zorder=1)
             plt.imshow(img, zorder=0)
             plt.show()
             plt.close(fig)

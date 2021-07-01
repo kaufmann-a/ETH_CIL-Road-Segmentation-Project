@@ -4,9 +4,9 @@ from matplotlib import pyplot as plt, image as mimage
 
 from .tile_coordinates_helper import num2deg, get_extent
 
-WIDE_ROADS = 22
-MID_ROADS = 16
-SMALL_ROAD = 10
+WIDE_ROADS = 14
+MID_ROADS = 12
+SMALL_ROAD = 8
 # https://wiki.openstreetmap.org/wiki/Key:highway
 road_width_dict = {
     "motorway": WIDE_ROADS,
@@ -74,10 +74,10 @@ def get_osm_roads(x, y, zoom, nr_tiles_width, nr_tiles_height, file):
     lat_, lng_ = num2deg(x + nr_tiles_width + NR_TILES_EXTENDED, y + nr_tiles_height + NR_TILES_EXTENDED, zoom)
 
     G = ox.graph_from_bbox(lat, lat_, lng, lng_,
-                           simplify=False,  # if True masks are smoother
+                           simplify=True,  # if True masks are smoother
                            clean_periphery=False,
                            truncate_by_edge=False,
-                           network_type='all')  # all_private, all, drive_service, drive
+                           network_type='drive_service')  # all_private, all, drive_service, drive
 
     graph_gdfs = ox.graph_to_gdfs(G, nodes=False, node_geometry=True, fill_edge_geometry=True)
 

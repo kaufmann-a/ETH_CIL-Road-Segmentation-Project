@@ -11,11 +11,13 @@ from src.tile_coordinates_helper import num2deg, deg2num
 
 # bad masks from manual inspection
 bad_masks = [
-    'sat_62963_94290.png'
-    'sat_62953_94291.png'
-    'sat_62973_94322.png'
-    'sat_79215_97557.png'
+    'sat_62963_94290.png',
+    'sat_62953_94291.png',
+    'sat_62973_94322.png',
+    'sat_79215_97557.png',
     'sat_79186_97535.png',
+    'sat_58515_97893.png',
+    'sat_73806_103126.png'
 ]
 
 
@@ -72,8 +74,11 @@ if __name__ == '__main__':
             file_mask = os.path.join(data_folder_masks, file_name)
 
             if file_name in bad_masks:
-                os.remove(file_sat)
-                os.remove(file_mask)
+                print("bad mask lat, lng:", str(num2deg(lat, lng, zoom)))
+                if os.path.exists(file_sat):
+                    os.remove(file_sat)
+                if os.path.exists(file_sat):
+                    os.remove(file_mask)
                 continue
 
             if not os.path.exists(file_sat):
@@ -86,6 +91,6 @@ if __name__ == '__main__':
             # TODO fix gmaps_downloader to give exact sized images
             img = Image.open(file_sat)
             if img.height != nr_tiles_width * 256 or img.width != nr_tiles_height * 256:
-                print("Unexpected image width/height:", file_sat)
+                print("Unexpected image width/height:", file_sat, "lat:", lat, "lng:", lng)
                 os.remove(file_sat)
                 os.remove(file_mask)
