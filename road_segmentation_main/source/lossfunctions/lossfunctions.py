@@ -71,8 +71,9 @@ class DicePenaltyLoss(DiceLoss):
         lam = Configuration.get("training.general.penalty.lam", optional=True, default=0.5)
         avgPool = torch.nn.AvgPool2d(kernel_size, stride=1, padding=np.floor(kernel_size/2).astype(int))
         mean_predictions = avgPool(inputs)
-        mse_loss = torch.nn.MSELoss()
-        penalty = mse_loss(inputs, mean_predictions)
+        #mse_loss = torch.nn.MSELoss()
+        #penalty = mse_loss(inputs, mean_predictions)
+        penalty = torch.sum((inputs - mean_predictions)**2)
         Logcreator.info("Penalty:", penalty)
 
         # flatten label and prediction tensors
