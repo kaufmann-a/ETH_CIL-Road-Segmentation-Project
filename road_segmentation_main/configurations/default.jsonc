@@ -18,9 +18,9 @@
     },
     "training": {
         "general" : {
-            "batch_size": 8,
-            "num_epochs" : 50,
-            "checkpoint_save_interval" : 25,
+            "batch_size": 2,
+            "num_epochs" : 2,
+            "checkpoint_save_interval" : 2,
             "num_workers" : 2,
             "shuffle_data" : true,
             "foreground_threshold" : 0.25,
@@ -46,7 +46,7 @@
             }
         },
         "model": {
-            "name": "unet_",
+            "name": "unet_pconv",
             "in_channels" : 3,
             "out_channels" : 1,
             "features" : [64, 128, 256, 512]
