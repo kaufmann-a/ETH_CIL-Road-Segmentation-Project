@@ -17,7 +17,11 @@ bad_masks = [
     'sat_79215_97557.png',
     'sat_79186_97535.png',
     'sat_58515_97893.png',
-    'sat_73806_103126.png'
+    'sat_73806_103126.png',
+    'sat_61603_108213.png',
+    'sat_61606_108213.png',
+    'sat_201619_105705.png',
+    'sat_59869_107951.png'
 ]
 
 
@@ -74,7 +78,7 @@ if __name__ == '__main__':
             file_mask = os.path.join(data_folder_masks, file_name)
 
             if file_name in bad_masks:
-                print("bad mask lat, lng:", str(num2deg(lat, lng, zoom)))
+                print("bad mask lat, lng:", lat, lng)
                 if os.path.exists(file_sat):
                     os.remove(file_sat)
                 if os.path.exists(file_sat):
