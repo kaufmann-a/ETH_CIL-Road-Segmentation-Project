@@ -15,11 +15,9 @@ from skimage.transform import hough_line, hough_line_peaks
 import math
 import cv2
 import os
+from tqdm import tqdm
 
 class HoughTransforms():
-
-    def __init__(self):
-        a = 1
 
     def get_hough_transform(self, image):
         """
@@ -53,13 +51,14 @@ class HoughTransforms():
 
         return out_image
 
-    def create_line_images(self):
-        directory = "../../../../trainings/exp_lr/20210619-102350-unet_exp_base_50_100/prediction-20210621-213346/pred-masks-original"
+    def create_line_images(self, directory):
+        directory = directory
         out_directory = ""
         out_directory = os.path.join(out_directory, "pred_lines")
         if not os.path.exists(out_directory):
             os.makedirs(out_directory)
-        for filename in os.listdir(directory)[0:10]:
+        loop = tqdm(os.listdir(directory))
+        for filename in loop:
             if filename.endswith(".png"):
                 image = cv2.imread(os.path.join(directory, filename), cv2.IMREAD_GRAYSCALE)
                 out_image = self.get_hough_transform(image)
@@ -67,4 +66,4 @@ class HoughTransforms():
 
 if __name__ == '__main__':
     ht = HoughTransforms()
-    ht.create_line_images()
+    ht.create_line_images(directory = "../../../../trainings/exp_lr/20210619-102350-unet_exp_base_50_100/prediction-20210621-213346/pred-masks-original")
