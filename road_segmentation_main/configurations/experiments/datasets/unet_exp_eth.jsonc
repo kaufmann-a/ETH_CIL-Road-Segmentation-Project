@@ -10,7 +10,7 @@
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ],
-        "validation_ratio" : 0.001,
+        "validation_ratio" : 0.01,
         "include_overlapping_patches" : true,
         "test_images_folder": "../data/test_images",
         "include_val_transforms": false,
