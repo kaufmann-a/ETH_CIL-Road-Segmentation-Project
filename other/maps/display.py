@@ -5,6 +5,23 @@ from PIL import Image
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
+
+def make_background_transparent(image):
+    """
+    Converts the black color to transparent.
+
+    """
+    image = image.convert('RGBA')
+    new_image = []
+    for item in image.getdata():
+        if item[:3] == (0, 0, 0):
+            new_image.append((255, 255, 255, 0))
+        else:
+            new_image.append(item)
+
+    return new_image
+
+
 if __name__ == '__main__':
     dirImages = "./images"
     dirMasks = "./masks"
@@ -22,11 +39,12 @@ if __name__ == '__main__':
 
             file_path = os.path.join(dirMasks, filename)
             mask = Image.open(file_path)
+            mask.putdata(make_background_transparent(mask))
 
             DPI = 100.0
             fig = plt.figure(figsize=(img.height / DPI, img.width / DPI))
             plt.title(file)
-            plt.imshow(mask, alpha=0.4, zorder=1)
+            plt.imshow(mask, alpha=0.65, zorder=1)
             plt.imshow(img, zorder=0)
             plt.show()
             plt.close(fig)
