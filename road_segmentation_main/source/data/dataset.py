@@ -26,6 +26,7 @@ class RoadSegmentationDataset(Dataset):
         # self.device = device # unsure whether we need this, if yes: add parameter device to init
         self.transform = transform
         self.images = image_list
+        self.images_filtered = []
         self.masks = mask_list
         self.foreground_threshold = threshold
         self.use_submission_masks = use_submission_masks
@@ -69,8 +70,6 @@ class RoadSegmentationDataset(Dataset):
                     images[img_idx] = np.append(images[img_idx], lines_image_resh, axis=2)
                     images[img_idx] = np.append(images[img_idx], predicted_mask_image_resh, axis=2)
 
-
-
             if self.min_road_percentage > 0:
                 # remove images with less percentage of road the given threshold
                 keep_idx = [(np.sum(_mask > 0) / np.size(_mask) >= self.min_road_percentage) for _mask in masks]
@@ -86,6 +85,10 @@ class RoadSegmentationDataset(Dataset):
 
                 images = [_img for _img, keep in zip(images, keep_idx) if keep]
                 masks = [_mask for _mask, keep in zip(masks, keep_idx) if keep]
+                if any(keep_idx):
+                    self.images_filtered.append(image_path)
+            else:
+                self.images_filtered = self.images
 
             # concatenate lists
             self.images_preloaded += images
