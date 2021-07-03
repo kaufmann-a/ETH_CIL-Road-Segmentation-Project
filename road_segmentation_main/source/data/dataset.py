@@ -1,6 +1,7 @@
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
+import os
 import sys
 
 import matplotlib.pyplot as plt
@@ -16,7 +17,7 @@ from source.logcreator.logcreator import Logcreator
 
 
 class RoadSegmentationDataset(Dataset):
-    def __init__(self, image_list, mask_list, threshold, transform=None,
+    def __init__(self, engine, image_list, mask_list, threshold, transform=None,
                  crop_size=(400, 400),
                  use_submission_masks=False,
                  min_road_percentage=0.0001,
@@ -31,6 +32,9 @@ class RoadSegmentationDataset(Dataset):
         self.min_road_percentage = min_road_percentage if 1 >= min_road_percentage >= 0 else 0
         self.image_cropper = ImageCropper(out_image_size=crop_size,
                                           include_overlapping_patches=include_overlapping_patches)
+
+
+
         # preload images into memory to not read from drive everytime
         self.images_preloaded = list()
         self.masks_preloaded = list()
@@ -52,6 +56,20 @@ class RoadSegmentationDataset(Dataset):
 
             images = [np.array(_img) for _img in images_cropped]
             masks = [np.array(_mask) for _mask in masks_cropped]
+
+            if hasattr(engine, 'lines_layer_path'):
+                lines_layer_cropped = self.image_cropper.get_cropped_images(Image.open(os.path.join(engine.lines_layer_path, os.path.basename(image_path))).convert('L'))
+                predicted_layer_cropped = self.image_cropper.get_cropped_images(Image.open(os.path.join(engine.predicted_masks_path, os.path.basename(image_path))).convert('L'))
+                lines_layer_imgs = [np.array(_img) for _img in lines_layer_cropped]
+                predicted_layer_imgs = [np.array(_img) for _img in predicted_layer_cropped]
+
+                for img_idx, img in enumerate(images):
+                    lines_image_resh = np.reshape(lines_layer_imgs[img_idx], (400, 400, 1))
+                    predicted_mask_image_resh = np.reshape(predicted_layer_imgs[img_idx], (400, 400, 1))
+                    images[img_idx] = np.append(images[img_idx], lines_image_resh, axis=2)
+                    images[img_idx] = np.append(images[img_idx], predicted_mask_image_resh, axis=2)
+
+
 
             if self.min_road_percentage > 0:
                 # remove images with less percentage of road the given threshold

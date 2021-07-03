@@ -45,7 +45,7 @@ class Engine:
     Handles the training of the model.
     """
 
-    def __init__(self):
+    def __init__(self, args):
         """
         Initializes the model, optimizer, learning rate scheduler and the loss function
         using the respective Factory classes.
@@ -55,6 +55,9 @@ class Engine:
         seed = 49626446
         self.fix_random_seeds(seed)
         self.fix_deterministic_operations()
+        if args.lines_layer_path != '':
+            self.lines_layer_path = args.lines_layer_path
+            self.predicted_masks_path = args.predicted_masks_path
 
         # initialize model
         self.model = ModelFactory.build().to(DEVICE)
@@ -102,7 +105,7 @@ class Engine:
 
         :param epoch_nr: Start training from this epoch. Useful to continue training with a saved model checkpoint.
         """
-        training_data, validation_data = DataPreparator.load()
+        training_data, validation_data = DataPreparator.load(self)
 
         # Load training parameters from config file
         train_parms = Configuration.get('training.general')
