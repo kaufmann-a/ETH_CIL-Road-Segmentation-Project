@@ -8,7 +8,7 @@
         "folder": "getenv('DATA_COLLECTION_DIR')",
         "collection_names": ["jkfrie_additional"],
         "transform_folders" : [],
-        "validation_ratio" : 0.001,
+        "validation_ratio" : 0.20,
         "include_overlapping_patches" : true,
         "test_images_folder": "../data/test_images",
         "include_val_transforms": false,
