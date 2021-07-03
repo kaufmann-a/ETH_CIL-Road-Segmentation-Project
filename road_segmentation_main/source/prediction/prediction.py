@@ -270,7 +270,7 @@ class Prediction(object):
             self.run_prediction(self.swa_model, loader, image_number_list, cropped_image_size, nr_crops_per_image,
                                 file_prefix='swa-')
 
-    def predict_train_images(self, create_collection_folder_structure=False):
+    def predict_train_images(self, create_collection_folder_structure=True):
         ds = DataPreparator.load_all(self.engine, is_train=False)
         loader = DataLoader(ds, batch_size=8, num_workers=2, pin_memory=True, shuffle=False)
 
