@@ -45,17 +45,19 @@ class Engine:
     Handles the training of the model.
     """
 
-    def __init__(self, args):
+    def __init__(self, args=None):
         """
         Initializes the model, optimizer, learning rate scheduler and the loss function
         using the respective Factory classes.
+
+        :param args:
         """
 
         # fix random seeds
         seed = 49626446
         self.fix_random_seeds(seed)
         self.fix_deterministic_operations()
-        if args.lines_layer_path != '':
+        if args is not None and args.lines_layer_path != '':
             self.lines_layer_path = args.lines_layer_path
             self.predicted_masks_path = args.predicted_masks_path
 
