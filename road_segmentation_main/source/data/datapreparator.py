@@ -21,6 +21,7 @@ from source.logcreator.logcreator import Logcreator
 from source.data.dataset import RoadSegmentationDataset, SimpleToTensorDataset
 from source.exceptions.configurationerror import DatasetError
 
+
 class DataPreparator(object):
 
     @staticmethod
@@ -30,33 +31,35 @@ class DataPreparator(object):
 
         collection_folders = Configuration.get('data_collection.collection_names')
 
-
         if "experiments_dataset" in collection_folders:
-            train_ds, val_ds =  DataPreparator.experiment_run_datasets(engine, path, collection_folders)
+            train_ds, val_ds = DataPreparator.experiment_run_datasets(engine, path, collection_folders)
             return train_ds, val_ds
 
-        transform_folders = Configuration.get('data_collection.transform_folders')
+        # Get image and respective mask paths
+        images_orig, masks_orig = DataPreparator.get_original_images(collection_folders, path)
+        images_trans, masks_trans = DataPreparator.get_transformed_images(collection_folders, path)
+
+        # Get train / validation split
+        train_set_images, train_set_masks, val_set_images, val_set_masks = \
+            DataPreparator.get_train_validation_split(images_orig, masks_orig, images_trans, masks_trans)
+
+        # Get datasets
+        train_ds, val_ds = DataPreparator.get_datasets(engine, train_set_images, train_set_masks,
+                                                       val_set_images, val_set_masks)
+
+        return train_ds, val_ds
+
+    @staticmethod
+    def get_train_validation_split(images_orig, masks_orig, images_trans, masks_trans):
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
 
-        collections_folders_orig = [os.path.join(path, cur_collection, "original") for cur_collection in collection_folders]
-        transform_folders = [os.path.join(path, cur_collection, cur_transformation)
-                             for cur_transformation in transform_folders
-                             for cur_collection in collection_folders
-                             if os.path.exists(os.path.join(path, cur_collection, cur_transformation))]
-
-        # Read in original imges
-        try:
-            train_set_images_orig, train_set_masks_orig = DataPreparator.assign_masks_to_images(collections_folders_orig)
-        except ValueError:
-            raise DatasetError()
-
-        #Create mask for validation set
+        # Create mask for validation set
         train_set_images = []
         train_set_masks = []
         val_set_images = []
         val_set_masks = []
-        size_val_set = int(len(train_set_images_orig) * val_ratio)
-        mask = np.full(len(train_set_images_orig), False)
+        size_val_set = int(len(images_orig) * val_ratio)
+        mask = np.full(len(images_orig), False)
         mask[:size_val_set] = True
         np.random.seed(0)
         np.random.shuffle(mask)
@@ -64,33 +67,65 @@ class DataPreparator(object):
         # Define validation set
         for idx, add_to_val_set in enumerate(mask):
             if add_to_val_set:
-                val_set_images.append(train_set_images_orig[idx])
-                val_set_masks.append(train_set_masks_orig[idx])
+                val_set_images.append(images_orig[idx])
+                val_set_masks.append(masks_orig[idx])
             else:
-                train_set_images.append(train_set_images_orig[idx])
-                train_set_masks.append(train_set_masks_orig[idx])
-
-
-        # Read all transformation images
-        train_set_images_trans, train_set_masks_trans = DataPreparator.assign_masks_to_images(transform_folders)
+                train_set_images.append(images_orig[idx])
+                train_set_masks.append(masks_orig[idx])
 
         # Add transformations to training set
-        for idx, image_path in enumerate(train_set_images_trans):
+        for idx, image_path in enumerate(images_trans):
             split_path = os.path.normpath(image_path).split(os.sep)
             img_name = split_path[-1]
             collection = split_path[-4]
             red_list = list(filter(lambda j: img_name in j, list(filter(lambda k: collection in k, val_set_images))))
             if len(red_list) == 0:
                 train_set_images.append(image_path)
-                train_set_masks.append(train_set_masks_trans[idx])
+                train_set_masks.append(masks_trans[idx])
             else:
                 if Configuration.get('data_collection.include_val_transforms'):
                     val_set_images.append(image_path)
-                    val_set_masks.append(train_set_masks_trans[idx])
+                    val_set_masks.append(masks_trans[idx])
 
-        train_ds, val_ds = DataPreparator.get_datasets(engine, train_set_images, train_set_masks, val_set_images, val_set_masks)
+        return train_set_images, train_set_masks, val_set_images, val_set_masks
 
-        return train_ds, val_ds
+    @staticmethod
+    def get_transformed_images(collection_folders, path):
+        transform_folders = Configuration.get('data_collection.transform_folders')
+
+        transform_folders = [os.path.join(path, cur_collection, cur_transformation)
+                             for cur_transformation in transform_folders
+                             for cur_collection in collection_folders
+                             if os.path.exists(os.path.join(path, cur_collection, cur_transformation))]
+        # Read all transformation images
+        train_set_images_trans, train_set_masks_trans = DataPreparator.assign_masks_to_images(transform_folders)
+
+        return train_set_images_trans, train_set_masks_trans
+
+    @staticmethod
+    def get_original_images(collection_folders, path):
+        """
+        Gets all original images and masks paths that are in the folder "original" in the respective collection folder.
+        A data collection folder needs to have the structure:
+        +-- data-collection-folder
+            +-- original
+                +-- images
+                +-- masks
+
+        :param collection_folders: Data collection folder list.
+        :param path: Path to the data collection folders.
+
+        :return: image path list, mask path list
+        """
+        collections_folders_orig = [os.path.join(path, cur_collection, "original") for cur_collection in
+                                    collection_folders]
+        # Read in original images
+        try:
+            images_orig, masks_orig = DataPreparator.assign_masks_to_images(collections_folders_orig)
+        except ValueError:
+            raise DatasetError()
+
+        return images_orig, masks_orig
 
     @staticmethod
     def get_datasets(engine, train_set_images, train_set_masks, val_set_images, val_set_masks):
