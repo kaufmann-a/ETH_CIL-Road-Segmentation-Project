@@ -9,7 +9,7 @@
         "collection_names": ["jkfrie"],
         "transform_folders" : [],
         "validation_ratio" : 0.20,
-        "include_overlapping_patches" : true,
+        "include_overlapping_patches" : false,
         "test_images_folder": "../data/test_images",
         "include_val_transforms": false,
         "min_road_percentage" : 0.0001, //Removes images with 16px road
