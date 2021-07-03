@@ -10,12 +10,10 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import os
 
-import random
 import numpy as np
 
 from source.configuration import Configuration
 from source.data import transformation
-from source.data.transformation import get_transformations
 from source.logcreator.logcreator import Logcreator
 
 from source.data.dataset import RoadSegmentationDataset, SimpleToTensorDataset
@@ -32,12 +30,20 @@ class DataPreparator(object):
         collection_folders = Configuration.get('data_collection.collection_names')
 
         # get image and respective mask paths
-        images_orig, masks_orig = DataPreparator.get_original_images(collection_folders, path)
-        images_trans, masks_trans = DataPreparator.get_transformed_images(collection_folders, path)
-        
-        # combine lists
-        images = images_orig + images_trans
-        masks = masks_orig + masks_trans
+        if "experiments_dataset" in collection_folders:
+            train_set_imgs, train_set_masks, val_set_imgs, val_set_masks = \
+                DataPreparator.get_experiment_image_paths(collection_folders, path)
+
+            # combine lists
+            images = train_set_imgs + val_set_imgs
+            masks = train_set_masks + val_set_masks
+        else:
+            images_orig, masks_orig = DataPreparator.get_original_images(collection_folders, path)
+            images_trans, masks_trans = DataPreparator.get_transformed_images(collection_folders, path)
+
+            # combine lists
+            images = images_orig + images_trans
+            masks = masks_orig + masks_trans
 
         # get image transforms
         image_transforms = DataPreparator.compute_transformations(images, is_train=is_train)
@@ -237,27 +243,30 @@ class DataPreparator(object):
 
     @staticmethod
     def experiment_run_datasets(engine, path, collection_folders):
+        train_set_imgs, train_set_masks, val_set_imgs, val_set_masks = \
+            DataPreparator.get_experiment_image_paths(collection_folders, path)
+
+        train_ds, val_ds = DataPreparator.get_datasets(engine, train_set_imgs, train_set_masks,
+                                                       val_set_imgs, val_set_masks)
+        return train_ds, val_ds
+
+    @staticmethod
+    def get_experiment_image_paths(collection_folders, path):
         collection_folder = os.path.join(path, collection_folders[0])
-
         train_folders = os.listdir(os.path.join(collection_folder, "train"))
-
         train_set_img_folders = [os.path.join(collection_folder, "train", cur_dataset, "images") for cur_dataset in
                                  train_folders]
         train_set_mask_folders = [os.path.join(collection_folder, "train", cur_dataset, "masks") for cur_dataset in
                                   train_folders]
-
         validation_folders = os.listdir(os.path.join(collection_folder, "valid"))
-
         val_set_img_folders = [os.path.join(collection_folder, "valid", cur_dataset, "images") for cur_dataset in
                                validation_folders]
         val_set_mask_folders = [os.path.join(collection_folder, "valid", cur_dataset, "masks") for cur_dataset in
                                 validation_folders]
-
         train_set_imgs, train_set_masks = DataPreparator.generate_exp_set(train_set_img_folders, train_set_mask_folders)
         val_set_imgs, val_set_masks = DataPreparator.generate_exp_set(val_set_img_folders, val_set_mask_folders)
 
-        train_ds, val_ds = DataPreparator.get_datasets(engine, train_set_imgs, train_set_masks, val_set_imgs, val_set_masks)
-        return train_ds, val_ds
+        return train_set_imgs, train_set_masks, val_set_imgs, val_set_masks
 
     @staticmethod
     def generate_exp_set(set_img_folders, set_mask_folders):
