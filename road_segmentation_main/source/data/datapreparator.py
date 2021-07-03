@@ -25,6 +25,26 @@ from source.exceptions.configurationerror import DatasetError
 class DataPreparator(object):
 
     @staticmethod
+    def load_all(engine, path='', is_train=False):
+        if not path:
+            path = Configuration.get_path('data_collection.folder', False)
+
+        collection_folders = Configuration.get('data_collection.collection_names')
+
+        # get image and respective mask paths
+        images_orig, masks_orig = DataPreparator.get_original_images(collection_folders, path)
+        images_trans, masks_trans = DataPreparator.get_transformed_images(collection_folders, path)
+        
+        # combine lists
+        images = images_orig + images_trans
+        masks = masks_orig + masks_trans
+
+        # get image transforms
+        image_transforms = DataPreparator.compute_transformations(images, is_train=is_train)
+
+        return DataPreparator.get_dataset(engine, images, masks, image_transforms, name="all")
+
+    @staticmethod
     def load(engine, path=''):
         if not path:
             path = Configuration.get_path('data_collection.folder', False)
@@ -158,6 +178,33 @@ class DataPreparator(object):
                                          # TODO should we also remove images in the validation set that do not contain road?
                                          include_overlapping_patches=include_overlapping_patches)
         return train_ds, val_ds
+
+    @staticmethod
+    def get_dataset(engine, images, masks, image_transforms, name="training", compute_stats=False):
+        Logcreator.info(name, "set contains " + str(len(images)) + " images")
+        if len(images) == 0:
+            Logcreator.warn("No ", name, "files assigned.")
+
+        # Create dataset
+        foreground_threshold = Configuration.get("training.general.foreground_threshold")
+        cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
+        use_submission_masks = Configuration.get("training.general.use_submission_masks")
+        min_road_percentage = Configuration.get("data_collection.min_road_percentage", optional=True, default=0)
+        include_overlapping_patches = Configuration.get("data_collection.include_overlapping_patches",
+                                                        optional=True, default=True)
+
+        ds = RoadSegmentationDataset(engine, images, masks, foreground_threshold,
+                                     image_transforms,
+                                     crop_size=cropped_image_size,
+                                     use_submission_masks=use_submission_masks,
+                                     min_road_percentage=min_road_percentage,
+                                     include_overlapping_patches=include_overlapping_patches)
+
+        if compute_stats:
+            mean_after, std_after = transformation.get_mean_std(ds)
+            Logcreator.info(f"Mean and std after transformations: mean {mean_after}, std {std_after}")
+
+        return ds
 
     @staticmethod
     def assign_masks_to_images(imgs_folders):
