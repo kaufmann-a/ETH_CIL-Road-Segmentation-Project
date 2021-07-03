@@ -62,6 +62,8 @@ if __name__ == "__main__":
     )
     parser.add_argument('--run_folder', default='',
                         type=str, help="Input here the folder path of the training run you want to use for inference")
+    parser.add_argument('--predict_on_train', default=False,
+                        type=bool, help="If true uses the training data collection to predict.")
 
     args = parser.parse_args()
     start = time.time()
@@ -87,4 +89,7 @@ if __name__ == "__main__":
                            use_swa_model=Configuration.get("training.general.stochastic_weight_averaging.on")
                            )
 
-    predictor.predict()
+    if not args.predict_on_train:
+        predictor.predict()
+    else:
+        predictor.predict_train_images()

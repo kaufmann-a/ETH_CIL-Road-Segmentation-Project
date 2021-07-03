@@ -10,6 +10,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 
 import math
 import os
+import sys
 
 import torch
 from PIL import Image, ImageChops
@@ -18,6 +19,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from source.configuration import Configuration
+from source.data.datapreparator import DataPreparator
 from source.data.dataset import RoadSegmentationDatasetInference
 from source.data.transformation import get_transformations
 from source.helpers import predictionhelper, imagesavehelper
@@ -46,6 +48,7 @@ class Prediction(object):
         """
 
         self.device = device
+        self.engine = engine
         self.model = engine.model
         self.swa_model = engine.swa_model
         self.model.to(device)
@@ -266,3 +269,66 @@ class Prediction(object):
             Logcreator.info("Stochastic Weight Averaging prediction run")
             self.run_prediction(self.swa_model, loader, image_number_list, cropped_image_size, nr_crops_per_image,
                                 file_prefix='swa-')
+
+    def predict_train_images(self, create_collection_folder_structure=False):
+        ds = DataPreparator.load_all(self.engine, is_train=False)
+        loader = DataLoader(ds, batch_size=8, num_workers=2, pin_memory=True, shuffle=False)
+
+        preds_masks_list = self.model_prediction_run(loader)
+
+        from pathlib import Path
+        file_paths = [Path(img) for img in ds.images]
+
+        folder_out_path = Path(os.path.join(Configuration.output_directory, "pred-masks-original"))
+        folder_out_path.mkdir(parents=True, exist_ok=True)  # create folders if they do not exist
+
+        import torchvision
+
+        for prediction_mask, file_path in tqdm(zip(preds_masks_list, file_paths),
+                                               total=len(file_paths),
+                                               desc="Saving preds."):
+            # probabilities to binary
+            out_preds = (prediction_mask > self.foreground_threshold).float()
+
+            # create folder structure
+            if create_collection_folder_structure:
+                file_relative_path = file_path.relative_to(file_path.parent.parent.parent.parent)
+                file_out_path = folder_out_path.joinpath(file_relative_path)
+            else:
+                file_out_path = folder_out_path.joinpath(file_path.name)
+
+            file_out_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # save prediction
+            torchvision.utils.save_image(out_preds, file_out_path.absolute())
+
+    def model_prediction_run(self, loader):
+        """
+        Makes prediction for all images in the data loader and returns them.
+
+        :param loader: the data loader
+        :return: predictions
+        """
+        preds_masks_list = []
+
+        self.model.eval()
+
+        loop = tqdm(loader, file=sys.stdout, desc="Prediction run")
+        for idx, data in enumerate(loop):
+            images, masks = data
+            images = images.to(device=self.device)
+
+            with torch.no_grad():
+                preds = self.model(images)
+
+                # get probabilities
+                preds = torch.sigmoid(preds)
+
+                preds_masks_list.append(preds)
+
+            loop.set_postfix(image_nr=len(preds_masks_list))
+
+        # convert list to 4d tensor
+        preds_masks_list = torch.vstack(preds_masks_list)
+
+        return preds_masks_list
