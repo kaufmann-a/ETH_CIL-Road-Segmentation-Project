@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Creates Hough Transforms on Predictions"
     )
-    parser.add_argument('--prediction_folder', default="../../trainings/exp_lr/20210619-102350-unet_exp_base_50_100/prediction-20210621-213346",
+    parser.add_argument('--prediction_folder', default='',
                         type=str, help="Input here the folder path of the predictions you want to create hough transforms of")
 
     args = parser.parse_args()
