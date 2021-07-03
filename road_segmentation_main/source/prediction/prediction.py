@@ -277,7 +277,7 @@ class Prediction(object):
         preds_masks_list = self.model_prediction_run(loader)
 
         from pathlib import Path
-        file_paths = [Path(img) for img in ds.images]
+        file_paths = [Path(img) for img in ds.images_filtered]
 
         folder_out_path = Path(os.path.join(Configuration.output_directory, "pred-masks-original"))
         folder_out_path.mkdir(parents=True, exist_ok=True)  # create folders if they do not exist
@@ -286,6 +286,7 @@ class Prediction(object):
 
         for prediction_mask, file_path in tqdm(zip(preds_masks_list, file_paths),
                                                total=len(file_paths),
+                                               file=sys.stdout,
                                                desc="Saving preds."):
             # probabilities to binary
             out_preds = (prediction_mask > self.foreground_threshold).float()
