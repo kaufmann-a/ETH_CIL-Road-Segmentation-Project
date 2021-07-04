@@ -472,7 +472,7 @@ class Engine:
 
         """
         cropped_image_size = Configuration.get("training.general.cropped_image_size")
-        input_size = tuple(np.insert(cropped_image_size, 0, values=3))
+        input_size = tuple(np.insert(cropped_image_size, 0, values=5))
         # redirect stdout to our logger
         sys.stdout = mystdout = StringIO()
         summary(self.model, input_size=input_size, device=DEVICE)

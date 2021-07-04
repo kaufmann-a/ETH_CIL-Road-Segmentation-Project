@@ -77,11 +77,17 @@ def get_default_config():
     return cfg
 
 
-def get_transformations(mean=None, std=None, use_train_statistics=False, is_train=False):
-    if mean is None:
-        mean = [0.0, 0.0, 0.0]
-    if std is None:
-        std = [1.0, 1.0, 1.0]
+def get_transformations(engine, mean=None, std=None, use_train_statistics=False, is_train=False):
+    if hasattr(engine, 'lines_layer_path'):
+        if mean is None:
+            mean = [0.0, 0.0, 0.0, 0.0, 0.0]
+        if std is None:
+            std = [1.0, 1.0, 1.0, 1.0, 1.0]
+    else:
+        if mean is None:
+            mean = [0.0, 0.0, 0.0]
+        if std is None:
+            std = [1.0, 1.0, 1.0]
 
     cfg = get_default_config()
 
