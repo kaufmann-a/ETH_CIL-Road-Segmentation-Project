@@ -176,8 +176,8 @@ class Prediction(object):
                     pred_filename = "pred_" + str(image_number_list[-1]) + ".png"
                     pred_image = Image.open(os.path.join(preds_dir, pred_filename)).convert('L')
                     lines_image = Image.open(os.path.join(lines_dir, pred_filename)).convert('L')
-                    print(pred_image.shape)
-                    print(lines_image.shape)
+                    print(pred_image.size)
+                    print(lines_image.size)
                     input_image = np.append(input_image, lines_image, axis=2)
                     input_image = np.append(input_image, pred_image, axis=2)
 
