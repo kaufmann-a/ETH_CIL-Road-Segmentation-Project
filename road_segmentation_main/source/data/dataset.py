@@ -34,8 +34,6 @@ class RoadSegmentationDataset(Dataset):
         self.image_cropper = ImageCropper(out_image_size=crop_size,
                                           include_overlapping_patches=include_overlapping_patches)
 
-
-
         # preload images into memory to not read from drive everytime
         self.images_preloaded = list()
         self.masks_preloaded = list()
@@ -126,7 +124,7 @@ class RoadSegmentationDataset(Dataset):
 
 
 class RoadSegmentationDatasetInference(Dataset):
-    def __init__(self, image_list, transform, crop_size=(400, 400), sanity_check=False):
+    def __init__(self, engine, image_list, transform, crop_size=(400, 400), sanity_check=False):
         self.image_paths = image_list
         self.transform = transform
 
@@ -145,6 +143,28 @@ class RoadSegmentationDatasetInference(Dataset):
                 # get cropped images
                 input_image = Image.open(file)
                 cropped_images = image_cropper.get_cropped_images(input_image)
+
+                if hasattr(engine, 'lines_layer_path') and engine.lines_layer_path is not None:
+                    # load prediction + lines, append to image
+                    preds_dir = engine.predicted_masks_path
+                    lines_dir = engine.lines_layer_path
+                    pred_filename = "pred_" + str(self.image_number_list[-1]) + ".png"
+
+                    lines_image = Image.open(os.path.join(lines_dir, pred_filename)).convert('L')
+                    pred_image = Image.open(os.path.join(preds_dir, pred_filename)).convert('L')
+
+                    lines_layer_cropped = image_cropper.get_cropped_images(lines_image)
+                    predicted_layer_cropped = image_cropper.get_cropped_images(pred_image)
+
+                    lines_layer_imgs = [np.array(_img) for _img in lines_layer_cropped]
+                    predicted_layer_imgs = [np.array(_img) for _img in predicted_layer_cropped]
+
+                    for img_idx, img in enumerate(cropped_images):
+                        # explicitly add new dimension (608,608) -> (608,608,1)
+                        lines_image_resh = lines_layer_imgs[img_idx][:, :, np.newaxis]
+                        predicted_mask_image_resh = predicted_layer_imgs[img_idx][:, :, np.newaxis]
+                        cropped_images[img_idx] = np.append(cropped_images[img_idx], lines_image_resh, axis=2)
+                        cropped_images[img_idx] = np.append(cropped_images[img_idx], predicted_mask_image_resh, axis=2)
 
                 # concatenate out-images with new cropped-images
                 self.preloaded_images += cropped_images

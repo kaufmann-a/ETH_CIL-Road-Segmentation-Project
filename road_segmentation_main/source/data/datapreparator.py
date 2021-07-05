@@ -90,7 +90,7 @@ class DataPreparator(object):
 
         transform = transformation.get_transformations(engine=engine, is_train=False)
 
-        return RoadSegmentationDatasetInference(test_images, transform=transform, crop_size=crop_size)
+        return RoadSegmentationDatasetInference(engine, test_images, transform=transform, crop_size=crop_size)
 
     @staticmethod
     def get_train_validation_split(images_orig, masks_orig, images_trans, masks_trans):
