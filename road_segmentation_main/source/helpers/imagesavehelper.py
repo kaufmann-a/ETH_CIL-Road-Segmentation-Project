@@ -125,12 +125,12 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
         out_preds = (preds[i] > pixel_threshold).float()
         out_preds_list.append(out_preds)
         # save prediction
-        torchvision.utils.save_image(out_preds, f"{folder_normal_size}/pred_{index[i]}.jpg")
+        torchvision.utils.save_image(out_preds, f"{folder_normal_size}/pred_{index[i]}.png")
 
         if save_submission_img:
             # save submission masks
             patched_preds = mask_to_submission_mask(torch.unsqueeze(preds[i], 0), pixel_threshold).float()
             # save prediction
-            torchvision.utils.save_image(patched_preds, f"{folder_small_size}/pred_{index[i]}.jpg")
+            torchvision.utils.save_image(patched_preds, f"{folder_small_size}/pred_{index[i]}.png")
 
     return out_preds_list
