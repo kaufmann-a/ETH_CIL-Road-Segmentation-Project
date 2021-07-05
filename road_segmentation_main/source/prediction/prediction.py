@@ -11,6 +11,7 @@ __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@stud
 import math
 import os
 import sys
+import numpy as np
 
 import torch
 from PIL import Image, ImageChops
@@ -145,7 +146,7 @@ class Prediction(object):
             out_array = torch.div(out_array, out_overlap_count)
         return out_array
 
-    def load_test_images(self, imgDir='../data/test_images/', stride=(400, 400), sanity_check=False):
+    def load_test_images(self, imgDir='../../data/test_images/', stride=(400, 400), sanity_check=False):
         """
         Loads images from a directory and creates multiple cropped images (that if patched together
          again equal the original image) according to the stride.
@@ -168,6 +169,16 @@ class Prediction(object):
                 image_number_list.append([int(s) for s in filename[:-4].split("_") if s.isdigit()][0])
                 # get cropped images
                 input_image = Image.open(os.path.join(imgDir, filename))
+                if self.engine.args is not None and self.engine.args.lines_layer_path != '':
+                    # load prediction + lines, append to image
+                    preds_dir = self.engine.predicted_masks_path
+                    lines_dir = self.engine.lines_layer_path
+                    pred_filename = "pred_" + str(image_number_list[-1]) + ".png"
+                    pred_image = Image.open(os.path.join(preds_dir, pred_filename)).convert('L').reshape((608,608,1))
+                    lines_image = Image.open(os.path.join(lines_dir, pred_filename)).convert('L').reshape((608,608,1))
+                    input_image = np.append(input_image, lines_image, axis=2)
+                    input_image = np.append(input_image, pred_image, axis=2)
+
                 cropped_images = image_cropper.get_cropped_images(input_image)
 
                 # concatenate out-images with new cropped-images
