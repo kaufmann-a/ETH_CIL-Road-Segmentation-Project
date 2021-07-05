@@ -169,17 +169,31 @@ class Prediction(object):
                 image_number_list.append([int(s) for s in filename[:-4].split("_") if s.isdigit()][0])
                 # get cropped images
                 input_image = Image.open(os.path.join(imgDir, filename))
+
+                cropped_images = image_cropper.get_cropped_images(input_image)
+
                 if self.engine.lines_layer_path is not None:
                     # load prediction + lines, append to image
                     preds_dir = self.engine.predicted_masks_path
                     lines_dir = self.engine.lines_layer_path
                     pred_filename = "pred_" + str(image_number_list[-1]) + ".png"
-                    pred_image = np.reshape(Image.open(os.path.join(preds_dir, pred_filename)).convert('L'), (608,608,1))
-                    lines_image = np.reshape(Image.open(os.path.join(lines_dir, pred_filename)).convert('L'), (608,608,1))
-                    input_image = np.append(input_image, lines_image, axis=2)
-                    input_image = np.append(input_image, pred_image, axis=2)
 
-                cropped_images = image_cropper.get_cropped_images(Image.fromarray(input_image))
+                    lines_image = Image.open(os.path.join(lines_dir, pred_filename)).convert('L')
+                    pred_image = Image.open(os.path.join(preds_dir, pred_filename)).convert('L')
+
+
+                    lines_layer_cropped = image_cropper.get_cropped_images(lines_image)
+                    predicted_layer_cropped = image_cropper.get_cropped_images(pred_image)
+
+                    lines_layer_imgs = [np.array(_img) for _img in lines_layer_cropped]
+                    predicted_layer_imgs = [np.array(_img) for _img in predicted_layer_cropped]
+
+                    for img_idx, img in enumerate(cropped_images):
+                        # explicitly add new dimension (608,608) -> (608,608,1)
+                        lines_image_resh = lines_layer_imgs[img_idx][:,:,np.newaxis]
+                        predicted_mask_image_resh = predicted_layer_imgs[img_idx][:,:,np.newaxis]
+                        cropped_images[img_idx] = np.append(cropped_images[img_idx], lines_image_resh, axis=2)
+                        cropped_images[img_idx] = np.append(cropped_images[img_idx], predicted_mask_image_resh, axis=2)
 
                 # concatenate out-images with new cropped-images
                 out_image_list += cropped_images
