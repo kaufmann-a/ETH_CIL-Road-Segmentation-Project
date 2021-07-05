@@ -174,8 +174,10 @@ class Prediction(object):
                     preds_dir = self.engine.predicted_masks_path
                     lines_dir = self.engine.lines_layer_path
                     pred_filename = "pred_" + str(image_number_list[-1]) + ".png"
-                    pred_image = np.reshape(Image.open(os.path.join(preds_dir, pred_filename)).convert('L'), (608,608,1))
-                    lines_image = np.reshape(Image.open(os.path.join(lines_dir, pred_filename)).convert('L'), (608,608,1))
+                    pred_image = Image.open(os.path.join(preds_dir, pred_filename)).convert('L')
+                    lines_image = Image.open(os.path.join(lines_dir, pred_filename)).convert('L')
+                    print(pred_image.shape)
+                    print(lines_image.shape)
                     input_image = np.append(input_image, lines_image, axis=2)
                     input_image = np.append(input_image, pred_image, axis=2)
 
