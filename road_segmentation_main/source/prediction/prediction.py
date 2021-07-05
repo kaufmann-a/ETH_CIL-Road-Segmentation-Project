@@ -169,7 +169,7 @@ class Prediction(object):
                 image_number_list.append([int(s) for s in filename[:-4].split("_") if s.isdigit()][0])
                 # get cropped images
                 input_image = Image.open(os.path.join(imgDir, filename))
-                if self.engine.args is not None and self.engine.args.lines_layer_path != '':
+                if self.engine.lines_layer_path is not None:
                     # load prediction + lines, append to image
                     preds_dir = self.engine.predicted_masks_path
                     lines_dir = self.engine.lines_layer_path
