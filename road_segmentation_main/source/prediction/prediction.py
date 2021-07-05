@@ -13,17 +13,14 @@ import os
 import sys
 
 import torch
-from PIL import Image, ImageChops
 from matplotlib import pyplot
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from source.configuration import Configuration
 from source.data.datapreparator import DataPreparator
-from source.data.dataset import RoadSegmentationDatasetInference
-from source.data.transformation import get_transformations
 from source.helpers import predictionhelper, imagesavehelper
-from source.helpers.image_cropping import get_crop_box, ImageCropper
+from source.helpers.image_cropping import get_crop_box
 from source.helpers.predictionhelper import run_post_processing
 from source.logcreator.logcreator import Logcreator
 
@@ -59,23 +56,6 @@ class Prediction(object):
         self.use_original_image_size = use_original_image_size
         self.use_submission_mask = use_submission_masks
         self.use_swa_model = use_swa_model
-
-    def patch_image_together(self, cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
-        width = total_width
-        height = total_height
-
-        new_image = Image.new(mode, (width, height))
-
-        image_idx = 0
-        for i in range(math.ceil(height / stride[0])):
-            for j in range(math.ceil(width / stride[1])):
-                left, upper, right, lower = get_crop_box(i, j, height, width, stride)
-
-                new_image.paste(cropped_images[image_idx], (left, upper))
-                # new_image.show()
-                image_idx += 1
-
-        return new_image
 
     def patch_masks_together(self, cropped_images, out_image_size=(608, 608), stride=(400, 400),
                              mode='avg', debug=False):
@@ -145,41 +125,6 @@ class Prediction(object):
             out_array = torch.div(out_array, out_overlap_count)
         return out_array
 
-    def load_test_images(self, imgDir='../data/test_images/', stride=(400, 400), sanity_check=False):
-        """
-        Loads images from a directory and creates multiple cropped images (that if patched together
-         again equal the original image) according to the stride.
-
-        :param imgDir:
-        :param stride: size of cropped output images (width, height)
-        :param sanity_check: check if cropped images form again the original image
-
-        :return: list of cropped images, image numbers
-        """
-        out_image_list = []
-        image_number_list = []
-
-        image_cropper = ImageCropper(out_image_size=stride)
-
-        for file in os.listdir(imgDir):
-            filename = os.fsdecode(file)
-            if filename.endswith(".png") or filename.endswith(".jpg"):
-                # get image number
-                image_number_list.append([int(s) for s in filename[:-4].split("_") if s.isdigit()][0])
-                # get cropped images
-                input_image = Image.open(os.path.join(imgDir, filename))
-                cropped_images = image_cropper.get_cropped_images(input_image)
-
-                # concatenate out-images with new cropped-images
-                out_image_list += cropped_images
-
-                if sanity_check:
-                    img_patched = self.patch_image_together(cropped_images, mode='RGB', stride=stride)
-                    if ImageChops.difference(input_image, img_patched).getbbox() is not None:
-                        print("Images are not equal!")
-
-        return out_image_list, image_number_list
-
     def patch_predictions_together(self, preds, cropped_image_size, nr_crops_per_image):
         mask_probabilistic_list = []
 
@@ -230,7 +175,7 @@ class Prediction(object):
                                 path_prefix=path_prefix)
 
     def run_prediction(self, model, loader, image_number_list, cropped_image_size, nr_crops_per_image, file_prefix=''):
-        preds = self.model_prediction_run(loader)
+        preds = self.model_prediction_run(model, loader)
         mask_probabilistic_list = self.patch_predictions_together(preds,
                                                                   cropped_image_size=cropped_image_size,
                                                                   nr_crops_per_image=nr_crops_per_image)
@@ -243,24 +188,24 @@ class Prediction(object):
         else:
             cropped_image_size = Configuration.get("training.general.cropped_image_size")
 
-        image_list, image_number_list = self.load_test_images(self.images_folder, stride=cropped_image_size)
-        nr_crops_per_image = int(len(image_list) / len(image_number_list))
+        dataset = DataPreparator.load_test(self.engine, path=self.images_folder, crop_size=cropped_image_size)
 
-        dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations(self.engine))
-        loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
+        loader = DataLoader(dataset, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
 
-        self.run_prediction(self.model, loader, image_number_list, cropped_image_size, nr_crops_per_image)
+        self.run_prediction(self.model, loader, dataset.image_number_list, cropped_image_size,
+                            dataset.nr_crops_per_image)
 
         if self.use_swa_model:
             Logcreator.info("Stochastic Weight Averaging prediction run")
-            self.run_prediction(self.swa_model, loader, image_number_list, cropped_image_size, nr_crops_per_image,
+            self.run_prediction(self.swa_model, loader, dataset.image_number_list, cropped_image_size,
+                                dataset.nr_crops_per_image,
                                 file_prefix='swa-')
 
     def predict_train_images(self, create_collection_folder_structure=True):
         ds = DataPreparator.load_all(self.engine, is_train=False)
-        loader = DataLoader(ds, batch_size=8, num_workers=2, pin_memory=True, shuffle=False)
+        loader = DataLoader(ds, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
 
-        preds_masks_list = self.model_prediction_run(loader)
+        preds_masks_list = self.model_prediction_run(self.model, loader)
 
         from pathlib import Path
         file_paths = [Path(img) for img in ds.images_filtered]
@@ -289,16 +234,17 @@ class Prediction(object):
             # save prediction
             torchvision.utils.save_image(out_preds, file_out_path.absolute())
 
-    def model_prediction_run(self, loader):
+    def model_prediction_run(self, model, loader):
         """
         Makes prediction for all images in the data loader and returns them.
 
         :param loader: the data loader
+        :param model: the model used to predict
         :return: predictions
         """
         preds_masks_list = []
 
-        self.model.eval()
+        model.eval()
 
         loop = tqdm(loader, file=sys.stdout, desc="Prediction run")
         for idx, data in enumerate(loop):
@@ -310,7 +256,7 @@ class Prediction(object):
             images = images.to(device=self.device)
 
             with torch.no_grad():
-                preds = self.model(images)
+                preds = model(images)
 
                 # get probabilities
                 preds = torch.sigmoid(preds)

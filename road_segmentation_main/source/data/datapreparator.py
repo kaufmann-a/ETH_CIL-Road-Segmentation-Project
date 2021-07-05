@@ -17,7 +17,7 @@ from source.data import transformation
 from source.data.datacollection import DataCollection, DataCollectionExperiment
 from source.logcreator.logcreator import Logcreator
 
-from source.data.dataset import RoadSegmentationDataset, SimpleToTensorDataset
+from source.data.dataset import RoadSegmentationDataset, SimpleToTensorDataset, RoadSegmentationDatasetInference
 
 
 class DataPreparator(object):
@@ -80,6 +80,17 @@ class DataPreparator(object):
                                                        val_set_images, val_set_masks)
 
         return train_ds, val_ds
+
+    @staticmethod
+    def load_test(engine, path='', crop_size=(608, 608)):
+        if not path:
+            path = Configuration.get_path('data_collection.folder', False)
+
+        test_images = [os.path.join(path, filename) for filename in os.listdir(path)]
+
+        transform = transformation.get_transformations(engine=engine, is_train=False)
+
+        return RoadSegmentationDatasetInference(test_images, transform=transform, crop_size=crop_size)
 
     @staticmethod
     def get_train_validation_split(images_orig, masks_orig, images_trans, masks_trans):

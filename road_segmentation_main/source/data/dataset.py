@@ -6,7 +6,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageChops
 from torch.utils.data import Dataset
 from torchvision import transforms
 from tqdm import tqdm
@@ -126,16 +126,41 @@ class RoadSegmentationDataset(Dataset):
 
 
 class RoadSegmentationDatasetInference(Dataset):
-    def __init__(self, image_list, transform):
-        # self.device = device # unsure whether we need this, if yes: add parameter device to init
-        self.images = image_list
+    def __init__(self, image_list, transform, crop_size=(400, 400), sanity_check=False):
+        self.image_paths = image_list
         self.transform = transform
 
+        self.preloaded_images = []
+        self.image_number_list = []
+
+        image_cropper = ImageCropper(out_image_size=crop_size)
+
+        # preload test images
+        for file in image_list:
+            filename = os.path.basename(file)
+            if filename.endswith(".png") or filename.endswith(".jpg"):
+                # get image number
+                self.image_number_list.append([int(s) for s in filename[:-4].split("_") if s.isdigit()][0])
+
+                # get cropped images
+                input_image = Image.open(file)
+                cropped_images = image_cropper.get_cropped_images(input_image)
+
+                # concatenate out-images with new cropped-images
+                self.preloaded_images += cropped_images
+
+                if sanity_check:
+                    img_patched = ImageCropper.patch_image_together(cropped_images, mode='RGB', stride=crop_size)
+                    if ImageChops.difference(input_image, img_patched).getbbox() is not None:
+                        print("Images are not equal!")
+
+        self.nr_crops_per_image = int(len(self.preloaded_images) / len(self.image_paths))
+
     def __len__(self):
-        return len(self.images)
+        return len(self.preloaded_images)
 
     def __getitem__(self, index):
-        augmentations = self.transform(image=np.array(self.images[index]))
+        augmentations = self.transform(image=np.array(self.preloaded_images[index]))
 
         return augmentations["image"]
 
@@ -152,6 +177,7 @@ class SimpleToTensorDataset(Dataset):
         img = Image.open(self.img_path_list[index]).convert("RGB")
         img = np.array(img)
         return self.transform(img)
+
 
 class EnsembleDataset(Dataset):
     def __init__(self, image_lists):

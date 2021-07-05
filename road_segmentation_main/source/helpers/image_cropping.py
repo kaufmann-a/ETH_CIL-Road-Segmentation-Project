@@ -5,6 +5,7 @@ Helps splitting an image into multiple smaller images.
 import math
 
 import PIL
+from PIL import Image
 
 
 def get_crop_box(i, j, height, width, stride):
@@ -125,3 +126,21 @@ class ImageCropper:
     def get_number_of_cropped_images(self, image: PIL.Image):
         height_upper_bound, width_upper_bound = self.get_height_width_upper_bound_idx(image.height, image.width)
         return height_upper_bound * width_upper_bound
+
+    @staticmethod
+    def patch_image_together(cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
+        width = total_width
+        height = total_height
+
+        new_image = Image.new(mode, (width, height))
+
+        image_idx = 0
+        for i in range(math.ceil(height / stride[0])):
+            for j in range(math.ceil(width / stride[1])):
+                left, upper, right, lower = get_crop_box(i, j, height, width, stride)
+
+                new_image.paste(cropped_images[image_idx], (left, upper))
+                # new_image.show()
+                image_idx += 1
+
+        return new_image
