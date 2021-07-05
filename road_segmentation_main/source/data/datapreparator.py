@@ -46,7 +46,7 @@ class DataPreparator(object):
             masks = masks_orig + masks_trans
 
         # get image transforms
-        image_transforms = DataPreparator.compute_transformations(images, is_train=is_train)
+        image_transforms = DataPreparator.compute_transformations(engine, images, is_train=is_train)
 
         return DataPreparator.get_dataset(engine, images, masks, image_transforms, name="all")
 
@@ -162,8 +162,8 @@ class DataPreparator(object):
         if len(val_set_images) == 0:
             Logcreator.warn("No validation files assigned.")
         # Create datasets
-        transform_train = DataPreparator.compute_transformations(train_set_images, is_train=True)
-        transform_val = DataPreparator.compute_transformations(train_set_images, is_train=False)
+        transform_train = DataPreparator.compute_transformations(engine, train_set_images, is_train=True)
+        transform_val = DataPreparator.compute_transformations(engine, train_set_images, is_train=False)
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
         use_submission_masks = Configuration.get("training.general.use_submission_masks")
@@ -289,15 +289,15 @@ class DataPreparator(object):
         return set_imgs, set_masks
 
     @staticmethod
-    def compute_transformations(image_paths_train, set_train_norm_statistics=False, is_train=True):
+    def compute_transformations(engine, image_paths_train, set_train_norm_statistics=False, is_train=True):
         if set_train_norm_statistics:
             simple_dataset = SimpleToTensorDataset(image_paths_train)
 
             mean, std = transformation.get_mean_std(simple_dataset)
             Logcreator.info(f"Mean and std on training set: mean {mean}, std {std}")
 
-            transform = transformation.get_transformations(mean=mean, std=std, is_train=is_train)
+            transform = transformation.get_transformations(engine=engine, mean=mean, std=std, is_train=is_train)
         else:
-            transform = transformation.get_transformations(is_train=is_train)
+            transform = transformation.get_transformations(engine=engine, is_train=is_train)
 
         return transform

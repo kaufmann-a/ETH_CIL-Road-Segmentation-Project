@@ -471,8 +471,12 @@ class Engine:
         Logs the model summary.
 
         """
+        nr_channels = 3
+        if hasattr(self, 'lines_layer_path'):
+            nr_channels = 5
+
         cropped_image_size = Configuration.get("training.general.cropped_image_size")
-        input_size = tuple(np.insert(cropped_image_size, 0, values=3))
+        input_size = tuple(np.insert(cropped_image_size, 0, values=nr_channels))
         # redirect stdout to our logger
         sys.stdout = mystdout = StringIO()
         summary(self.model, input_size=input_size, device=DEVICE)

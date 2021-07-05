@@ -180,41 +180,27 @@ class Prediction(object):
 
         return out_image_list, image_number_list
 
-    def run_prediction_loop(self, model, loader, cropped_image_size, nr_crops_per_image):
+    def patch_predictions_together(self, preds, cropped_image_size, nr_crops_per_image):
         mask_probabilistic_list = []
 
-        model.eval()
+        # go through all images of current batch; an image consists of multiple cropped images
+        for i in range(preds.shape[0] // nr_crops_per_image):
+            # split tensor into packages of "nr_crops_per_image" crops and then
+            pred_masks = preds[i * nr_crops_per_image:i * nr_crops_per_image + nr_crops_per_image]
+            crops_list = []
+            for j in range(nr_crops_per_image):
+                crops_list.append(torch.squeeze(pred_masks[j]))
 
-        loop = tqdm(loader)
-        for idx, x in enumerate(loop):
-            x = x.to(device=self.device)
-
-            with torch.no_grad():
-                preds = model(x)
-
-                # We need it because our models are constructed without sigmoid at the end
-                preds = torch.sigmoid(preds)
-
-                # go through all images of current batch; an image consists of multiple cropped images
-                for i in range(preds.shape[0] // nr_crops_per_image):
-                    # split tensor into packages of "nr_crops_per_image" crops and then
-                    pred_masks = preds[i * nr_crops_per_image:i * nr_crops_per_image + nr_crops_per_image]
-                    crops_list = []
-                    for j in range(nr_crops_per_image):
-                        crops_list.append(torch.squeeze(pred_masks[j]))
-
-                    # for every package call patch_image_together to get the original size image
-                    input_image_size = TEST_IMAGE_SIZE
-                    out_patch_size = cropped_image_size
-                    if self.use_submission_mask:
-                        input_image_size = [x // PATCH_SIZE for x in input_image_size]
-                        out_patch_size = [x // PATCH_SIZE for x in out_patch_size]
-                    out_mask = self.patch_masks_together(cropped_images=crops_list,
-                                                         out_image_size=input_image_size,
-                                                         stride=out_patch_size)
-                    mask_probabilistic_list.append(out_mask)
-
-            loop.set_postfix(image_nr=len(mask_probabilistic_list))
+            # for every package call patch_image_together to get the original size image
+            input_image_size = TEST_IMAGE_SIZE
+            out_patch_size = cropped_image_size
+            if self.use_submission_mask:
+                input_image_size = [x // PATCH_SIZE for x in input_image_size]
+                out_patch_size = [x // PATCH_SIZE for x in out_patch_size]
+            out_mask = self.patch_masks_together(cropped_images=crops_list,
+                                                 out_image_size=input_image_size,
+                                                 stride=out_patch_size)
+            mask_probabilistic_list.append(out_mask)
 
         return mask_probabilistic_list
 
@@ -244,10 +230,10 @@ class Prediction(object):
                                 path_prefix=path_prefix)
 
     def run_prediction(self, model, loader, image_number_list, cropped_image_size, nr_crops_per_image, file_prefix=''):
-        mask_probabilistic_list = self.run_prediction_loop(model=model,
-                                                           loader=loader,
-                                                           cropped_image_size=cropped_image_size,
-                                                           nr_crops_per_image=nr_crops_per_image)
+        preds = self.model_prediction_run(loader)
+        mask_probabilistic_list = self.patch_predictions_together(preds,
+                                                                  cropped_image_size=cropped_image_size,
+                                                                  nr_crops_per_image=nr_crops_per_image)
 
         self.run_post_prediction_tasks(mask_probabilistic_list, image_number_list, file_prefix)
 
@@ -260,7 +246,7 @@ class Prediction(object):
         image_list, image_number_list = self.load_test_images(self.images_folder, stride=cropped_image_size)
         nr_crops_per_image = int(len(image_list) / len(image_number_list))
 
-        dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations())
+        dataset = RoadSegmentationDatasetInference(image_list=image_list, transform=get_transformations(self.engine))
         loader = DataLoader(dataset, batch_size=2 * nr_crops_per_image, num_workers=2, pin_memory=True, shuffle=False)
 
         self.run_prediction(self.model, loader, image_number_list, cropped_image_size, nr_crops_per_image)
@@ -316,7 +302,11 @@ class Prediction(object):
 
         loop = tqdm(loader, file=sys.stdout, desc="Prediction run")
         for idx, data in enumerate(loop):
-            images, masks = data
+            if isinstance(data, list):  # if data is a list it contains the ground truth
+                images, masks = data
+            else:
+                images = data
+
             images = images.to(device=self.device)
 
             with torch.no_grad():
