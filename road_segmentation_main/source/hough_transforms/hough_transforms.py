@@ -8,7 +8,6 @@ Builds a torch loss function from configuration.
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
-
 import numpy as np
 from skimage.morphology import skeletonize
 from skimage.transform import hough_line, hough_line_peaks
@@ -19,9 +18,10 @@ from tqdm import tqdm
 
 class HoughTransforms():
 
-    def get_hough_transform(self, image):
+    def get_hough_transform(self, image, draw_on_original=True):
         """
-        image: image of predicted roads (black-white, 1 channel)
+        :param image: image of predicted roads (black-white, 1 channel)
+        :param draw_on_original: True = draw on the original image, False = draw on a blank image
         """
 
         # skeletonize
@@ -35,6 +35,10 @@ class HoughTransforms():
 
         tested_angles = np.linspace(-np.pi / 2, np.pi / 2, 360, endpoint=False)
         h, theta, d = hough_line(skeleton, theta=tested_angles)
+
+        if not draw_on_original:
+            # create a new out image
+            image = np.zeros(image.shape, image.dtype)
 
         # draw lines on out_image
         out_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
