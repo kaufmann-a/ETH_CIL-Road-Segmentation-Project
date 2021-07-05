@@ -14,10 +14,10 @@ import numpy as np
 
 from source.configuration import Configuration
 from source.data import transformation
+from source.data.datacollection import DataCollection, DataCollectionExperiment
 from source.logcreator.logcreator import Logcreator
 
 from source.data.dataset import RoadSegmentationDataset, SimpleToTensorDataset
-from source.exceptions.configurationerror import DatasetError
 
 
 class DataPreparator(object):
@@ -31,15 +31,19 @@ class DataPreparator(object):
 
         # get image and respective mask paths
         if "experiments_dataset" in collection_folders:
+            data_collection_exp = DataCollectionExperiment(path, collection_folders)
+
             train_set_imgs, train_set_masks, val_set_imgs, val_set_masks = \
-                DataPreparator.get_experiment_image_paths(collection_folders, path)
+                data_collection_exp.get_experiment_image_paths()
 
             # combine lists
             images = train_set_imgs + val_set_imgs
             masks = train_set_masks + val_set_masks
         else:
-            images_orig, masks_orig = DataPreparator.get_original_images(collection_folders, path)
-            images_trans, masks_trans = DataPreparator.get_transformed_images(collection_folders, path)
+            data_collection = DataCollection(path, collection_folders)
+
+            images_orig, masks_orig = data_collection.get_original_images()
+            images_trans, masks_trans = data_collection.get_transformed_images()
 
             # combine lists
             images = images_orig + images_trans
@@ -61,9 +65,11 @@ class DataPreparator(object):
             train_ds, val_ds = DataPreparator.experiment_run_datasets(engine, path, collection_folders)
             return train_ds, val_ds
 
+        data_collection = DataCollection(path, collection_folders)
+
         # Get image and respective mask paths
-        images_orig, masks_orig = DataPreparator.get_original_images(collection_folders, path)
-        images_trans, masks_trans = DataPreparator.get_transformed_images(collection_folders, path)
+        images_orig, masks_orig = data_collection.get_original_images()
+        images_trans, masks_trans = data_collection.get_transformed_images()
 
         # Get train / validation split
         train_set_images, train_set_masks, val_set_images, val_set_masks = \
@@ -114,44 +120,6 @@ class DataPreparator(object):
                     val_set_masks.append(masks_trans[idx])
 
         return train_set_images, train_set_masks, val_set_images, val_set_masks
-
-    @staticmethod
-    def get_transformed_images(collection_folders, path):
-        transform_folders = Configuration.get('data_collection.transform_folders')
-
-        transform_folders = [os.path.join(path, cur_collection, cur_transformation)
-                             for cur_transformation in transform_folders
-                             for cur_collection in collection_folders
-                             if os.path.exists(os.path.join(path, cur_collection, cur_transformation))]
-        # Read all transformation images
-        train_set_images_trans, train_set_masks_trans = DataPreparator.assign_masks_to_images(transform_folders)
-
-        return train_set_images_trans, train_set_masks_trans
-
-    @staticmethod
-    def get_original_images(collection_folders, path):
-        """
-        Gets all original images and masks paths that are in the folder "original" in the respective collection folder.
-        A data collection folder needs to have the structure:
-        +-- data-collection-folder
-            +-- original
-                +-- images
-                +-- masks
-
-        :param collection_folders: Data collection folder list.
-        :param path: Path to the data collection folders.
-
-        :return: image path list, mask path list
-        """
-        collections_folders_orig = [os.path.join(path, cur_collection, "original") for cur_collection in
-                                    collection_folders]
-        # Read in original images
-        try:
-            images_orig, masks_orig = DataPreparator.assign_masks_to_images(collections_folders_orig)
-        except ValueError:
-            raise DatasetError()
-
-        return images_orig, masks_orig
 
     @staticmethod
     def get_datasets(engine, train_set_images, train_set_masks, val_set_images, val_set_masks):
@@ -213,80 +181,15 @@ class DataPreparator(object):
         return ds
 
     @staticmethod
-    def assign_masks_to_images(imgs_folders):
-        imgs = []
-        masks = []
-        for cur_imgs_folder in imgs_folders:
-            imgs_cur_imgs_folder = [os.path.join(cur_imgs_folder, "images", img) for img in
-                                              os.listdir(os.path.join(cur_imgs_folder, "images"))
-                                              if img.endswith('.png') or img.endswith('.jpg') or img.endswith('.png')]
-
-            found_masks_cur_folder = []
-            avaliable_masks_cur_folder = os.listdir(os.path.join(cur_imgs_folder, "masks"))
-            imgs_to_delete = []
-
-            for cur_image in imgs_cur_imgs_folder:
-                if os.path.basename(cur_image) in avaliable_masks_cur_folder:
-                    found_masks_cur_folder.append(
-                        os.path.join(cur_imgs_folder, "masks", os.path.basename(cur_image)))
-                    imgs_to_delete.append(False)
-                else:
-                    imgs_to_delete.append(True)
-                    Logcreator.warn("Attention, image ", cur_image,
-                                    " was found in images but not in masks, it is removed from trainingset")
-            imgs_cur_imgs_folder = [img for idx, img in enumerate(imgs_cur_imgs_folder) if
-                                              not imgs_to_delete[idx]]
-
-            imgs += imgs_cur_imgs_folder
-            masks += found_masks_cur_folder
-        return imgs, masks
-
-    @staticmethod
     def experiment_run_datasets(engine, path, collection_folders):
+        data_collection_exp = DataCollectionExperiment(path, collection_folders)
+
         train_set_imgs, train_set_masks, val_set_imgs, val_set_masks = \
-            DataPreparator.get_experiment_image_paths(collection_folders, path)
+            data_collection_exp.get_experiment_image_paths()
 
         train_ds, val_ds = DataPreparator.get_datasets(engine, train_set_imgs, train_set_masks,
                                                        val_set_imgs, val_set_masks)
         return train_ds, val_ds
-
-    @staticmethod
-    def get_experiment_image_paths(collection_folders, path):
-        collection_folder = os.path.join(path, collection_folders[0])
-        train_folders = os.listdir(os.path.join(collection_folder, "train"))
-        train_set_img_folders = [os.path.join(collection_folder, "train", cur_dataset, "images") for cur_dataset in
-                                 train_folders]
-        train_set_mask_folders = [os.path.join(collection_folder, "train", cur_dataset, "masks") for cur_dataset in
-                                  train_folders]
-        validation_folders = os.listdir(os.path.join(collection_folder, "valid"))
-        val_set_img_folders = [os.path.join(collection_folder, "valid", cur_dataset, "images") for cur_dataset in
-                               validation_folders]
-        val_set_mask_folders = [os.path.join(collection_folder, "valid", cur_dataset, "masks") for cur_dataset in
-                                validation_folders]
-        train_set_imgs, train_set_masks = DataPreparator.generate_exp_set(train_set_img_folders, train_set_mask_folders)
-        val_set_imgs, val_set_masks = DataPreparator.generate_exp_set(val_set_img_folders, val_set_mask_folders)
-
-        return train_set_imgs, train_set_masks, val_set_imgs, val_set_masks
-
-    @staticmethod
-    def generate_exp_set(set_img_folders, set_mask_folders):
-        set_imgs = []
-        set_masks = []
-        for idx, folder in enumerate(set_img_folders):
-            cur_img_paths = []
-            cur_mask_paths = []
-            image_names_cur_folder = os.listdir(folder)
-            available_masks_cur_folder = os.listdir(set_mask_folders[idx])
-            for img in image_names_cur_folder:
-                if img in available_masks_cur_folder:
-                    cur_img_paths.append(os.path.join(folder, img))
-                    cur_mask_paths.append(os.path.join(set_mask_folders[idx], img))
-                else:
-                    Logcreator.warn("Attention, image ", img,
-                                    " was found in images but not in masks, it is removed from trainingset")
-            set_imgs += cur_img_paths
-            set_masks += cur_mask_paths
-        return set_imgs, set_masks
 
     @staticmethod
     def compute_transformations(engine, image_paths_train, set_train_norm_statistics=False, is_train=True):
