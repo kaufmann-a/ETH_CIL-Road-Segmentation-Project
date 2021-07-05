@@ -9,7 +9,7 @@
         "collection_names": [
             "eth_dataset"
         ],
-        "transform_folders" : ["original"],
+        "transform_folders" : [],
         "validation_ratio" : 0.2,
         "include_overlapping_patches" : false,
         "test_images_folder": "../data/test_images",
