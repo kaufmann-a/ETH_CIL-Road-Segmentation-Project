@@ -201,7 +201,7 @@ class Prediction(object):
                                 dataset.nr_crops_per_image,
                                 file_prefix='swa-')
 
-    def predict_train_images(self, create_collection_folder_structure=True):
+    def predict_train_images(self, create_collection_folder_structure=False):
         ds = DataPreparator.load_all(self.engine, is_train=False)
         loader = DataLoader(ds, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
 
