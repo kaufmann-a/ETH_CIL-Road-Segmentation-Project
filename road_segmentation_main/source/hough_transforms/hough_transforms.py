@@ -40,7 +40,7 @@ class HoughTransforms():
         out_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
         # TODO: tune these parameters
-        for _, angle, dist in zip(*hough_line_peaks(h, theta, d, threshold=25, min_angle=30, min_distance=30)):
+        for _, angle, dist in zip(*hough_line_peaks(h, theta, d, threshold=30, min_angle=30, min_distance=30)):
             #cv2.LineSegmentDetector
             (x0, y0) = dist * np.array([np.cos(angle), np.sin(angle)])
             a = math.cos(angle)
@@ -58,7 +58,7 @@ class HoughTransforms():
             os.makedirs(out_directory)
         loop = tqdm(os.listdir(in_directory))
         for filename in loop:
-            if filename.endswith(".png"):
+            if filename.endswith(".png") or filename.endswith(".jpg"):
                 image = cv2.imread(os.path.join(in_directory, filename), cv2.IMREAD_GRAYSCALE)
                 out_image = self.get_hough_transform(image)
                 cv2.imwrite(os.path.join(out_directory, filename), out_image)
