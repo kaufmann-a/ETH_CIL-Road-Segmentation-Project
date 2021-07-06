@@ -49,10 +49,7 @@ class DataPreparator(object):
             images = images_orig + images_trans
             masks = masks_orig + masks_trans
 
-        # get image transforms
-        image_transforms = transformation.get_transformations(engine=engine, is_train=is_train)
-
-        return DataPreparator.get_dataset(engine, images, masks, image_transforms, name="all")
+        return DataPreparator.get_dataset(engine, images, masks, is_train, name="All")
 
     @staticmethod
     def load(engine, path=''):
@@ -134,39 +131,20 @@ class DataPreparator(object):
 
     @staticmethod
     def get_datasets(engine, train_set_images, train_set_masks, val_set_images, val_set_masks):
-        Logcreator.info("Trainingset contains " + str(len(train_set_images)) + " images")
-        Logcreator.info("Validationset constains " + str(len(val_set_images)) + " iamges")
-        if len(train_set_images) == 0:
-            Logcreator.warn("No training files assigned.")
-        if len(val_set_images) == 0:
-            Logcreator.warn("No validation files assigned.")
-        # Create datasets
-        transform_train = transformation.get_transformations(engine=engine, is_train=True)
-        transform_val = transformation.get_transformations(engine=engine, is_train=False)
-        foreground_threshold = Configuration.get("training.general.foreground_threshold")
-        cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
-        use_submission_masks = Configuration.get("training.general.use_submission_masks")
-        min_road_percentage = Configuration.get("data_collection.min_road_percentage", optional=True, default=0)
-        include_overlapping_patches = Configuration.get("data_collection.include_overlapping_patches",
-                                                        optional=True, default=True)
-        train_ds = RoadSegmentationDataset(engine, train_set_images, train_set_masks, foreground_threshold, transform_train,
-                                           crop_size=cropped_image_size,
-                                           use_submission_masks=use_submission_masks,
-                                           min_road_percentage=min_road_percentage,
-                                           include_overlapping_patches=include_overlapping_patches)
-        mean_after, std_after = transformation.get_mean_std(train_ds)
-        Logcreator.info(f"Mean and std after transformations: mean {mean_after}, std {std_after}")
-        val_ds = RoadSegmentationDataset(engine, val_set_images, val_set_masks, foreground_threshold, transform_val,
-                                         crop_size=cropped_image_size,
-                                         use_submission_masks=use_submission_masks,
-                                         min_road_percentage=min_road_percentage,
-                                         # TODO should we also remove images in the validation set that do not contain road?
-                                         include_overlapping_patches=include_overlapping_patches)
+        train_ds = DataPreparator.get_dataset(engine, train_set_images, train_set_masks,
+                                              is_train=True,
+                                              name="Training",
+                                              compute_stats=True)
+
+        val_ds = DataPreparator.get_dataset(engine, val_set_images, val_set_masks,
+                                            is_train=False,
+                                            name="Validation")
+
         return train_ds, val_ds
 
     @staticmethod
-    def get_dataset(engine, images, masks, image_transforms, name="training", compute_stats=False):
-        Logcreator.info(name, "set contains " + str(len(images)) + " images")
+    def get_dataset(engine, images, masks, is_train, name="training", compute_stats=False):
+        Logcreator.h1(name, "set contains " + str(len(images)) + " images")
         if len(images) == 0:
             Logcreator.warn("No ", name, "files assigned.")
 
@@ -178,8 +156,11 @@ class DataPreparator(object):
         include_overlapping_patches = Configuration.get("data_collection.include_overlapping_patches",
                                                         optional=True, default=True)
 
+        # get image transforms
+        image_transforms = transformation.get_transformations(engine=engine, is_train=is_train)
+
         ds = RoadSegmentationDataset(engine, images, masks, foreground_threshold,
-                                     image_transforms,
+                                     transformation=image_transforms,
                                      crop_size=cropped_image_size,
                                      use_submission_masks=use_submission_masks,
                                      min_road_percentage=min_road_percentage,
