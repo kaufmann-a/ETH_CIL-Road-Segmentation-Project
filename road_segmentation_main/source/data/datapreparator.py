@@ -141,8 +141,8 @@ class DataPreparator(object):
         if len(val_set_images) == 0:
             Logcreator.warn("No validation files assigned.")
         # Create datasets
-        transform_train = DataPreparator.compute_transformations(engine, train_set_images, is_train=True)
-        transform_val = DataPreparator.compute_transformations(engine, train_set_images, is_train=False)
+        transform_train = transformation.get_transformations(engine=engine, is_train=True)
+        transform_val = transformation.get_transformations(engine=engine, is_train=False)
         foreground_threshold = Configuration.get("training.general.foreground_threshold")
         cropped_image_size = tuple(Configuration.get("training.general.cropped_image_size"))
         use_submission_masks = Configuration.get("training.general.use_submission_masks")
@@ -201,17 +201,3 @@ class DataPreparator(object):
         train_ds, val_ds = DataPreparator.get_datasets(engine, train_set_imgs, train_set_masks,
                                                        val_set_imgs, val_set_masks)
         return train_ds, val_ds
-
-    @staticmethod
-    def compute_transformations(engine, image_paths_train, set_train_norm_statistics=False, is_train=True):
-        if set_train_norm_statistics:
-            simple_dataset = SimpleToTensorDataset(image_paths_train)
-
-            mean, std = transformation.get_mean_std(simple_dataset)
-            Logcreator.info(f"Mean and std on training set: mean {mean}, std {std}")
-
-            transform = transformation.get_transformations(engine=engine, mean=mean, std=std, is_train=is_train)
-        else:
-            transform = transformation.get_transformations(engine=engine, is_train=is_train)
-
-        return transform
