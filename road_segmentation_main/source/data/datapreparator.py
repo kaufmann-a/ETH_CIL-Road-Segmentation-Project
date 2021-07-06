@@ -50,7 +50,7 @@ class DataPreparator(object):
             masks = masks_orig + masks_trans
 
         # get image transforms
-        image_transforms = DataPreparator.compute_transformations(engine, images, is_train=is_train)
+        image_transforms = transformation.get_transformations(engine=engine, is_train=is_train)
 
         return DataPreparator.get_dataset(engine, images, masks, image_transforms, name="all")
 
