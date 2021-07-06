@@ -2,7 +2,7 @@
 # coding: utf8
 
 """
-Loads and handels training and validation data collections.
+Loads and handles training and validation data collections.
 """
 
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
@@ -24,6 +24,14 @@ class DataPreparator(object):
 
     @staticmethod
     def load_all(engine, path='', is_train=False):
+        """
+        Loads all data in one dataset.
+
+        :param engine: The engine.
+        :param path: Path to the data folder.
+        :param is_train: True = The set is used for training: load dataset with training transformations.
+        :return: dataset containing all images and masks
+        """
         if not path:
             path = Configuration.get_path('data_collection.folder', False)
 
@@ -54,7 +62,14 @@ class DataPreparator(object):
         return DataPreparator.get_dataset(engine, images, masks, is_train, name="All")
 
     @staticmethod
-    def load(engine, path=''):
+    def load_train_val(engine, path=''):
+        """
+        Loads the training and validation data.
+
+        :param engine: The engine.
+        :param path: Path to the data folder.
+        :return: train dataset, validation dataset
+        """
         if not path:
             path = Configuration.get_path('data_collection.folder', False)
 
@@ -83,6 +98,14 @@ class DataPreparator(object):
 
     @staticmethod
     def load_test(engine, path='', crop_size=(608, 608)):
+        """
+        Loads the test data.
+
+        :param engine: The engine.
+        :param path: Path to the data folder.
+        :param crop_size:  The size to which the images should be cropped.
+        :return: test dataset
+        """
         if not path:
             path = Configuration.get_path('data_collection.folder', False)
 
@@ -94,6 +117,15 @@ class DataPreparator(object):
 
     @staticmethod
     def get_train_validation_split(images_orig, masks_orig, images_trans, masks_trans):
+        """
+        Splits the image list into a training and validation set according to the configuration.
+
+        :param images_orig: image path list
+        :param masks_orig: mask path list
+        :param images_trans: image transformed path list
+        :param masks_trans: mask transformed path list
+        :return: train image path list, train mask path list, validation image path list, validation mask path list
+        """
         val_ratio = Configuration.get('data_collection.validation_ratio', default=0.2)
 
         # Create mask for validation set
@@ -134,6 +166,16 @@ class DataPreparator(object):
 
     @staticmethod
     def get_datasets(engine, train_set_images, train_set_masks, val_set_images, val_set_masks):
+        """
+        Gets the training and validation datasets.
+
+        :param engine: The engine.
+        :param train_set_images: train image list
+        :param train_set_masks: train mask list
+        :param val_set_images: validation image list
+        :param val_set_masks: validation mask list
+        :return: training dataset, validation dataset
+        """
         train_ds = DataPreparator.get_dataset(engine, train_set_images, train_set_masks,
                                               is_train=True,
                                               name="Training",
@@ -147,6 +189,17 @@ class DataPreparator(object):
 
     @staticmethod
     def get_dataset(engine, images, masks, is_train, name="training", compute_stats=False):
+        """
+        Gets a single dataset based on the provided image and mask list.
+
+        :param engine: The engine.
+        :param images: image path list
+        :param masks: mask path list
+        :param is_train: True = training transforms are applied, False = validation transforms are applied
+        :param name: The name for logging purpose.
+        :param compute_stats: True = compute mean and std of the dataset.
+        :return: dataset
+        """
         Logcreator.h1(name, "set contains " + str(len(images)) + " images")
         if len(images) == 0:
             Logcreator.warn("No ", name, "files assigned.")
@@ -177,6 +230,14 @@ class DataPreparator(object):
 
     @staticmethod
     def experiment_run_datasets(engine, path, collection_folders):
+        """
+        Loads the special experiments dataset.
+
+        param engine: The engine.
+        :param path: Path to the data folder.
+        :param collection_folders: The data collection folder list.
+        :return: training dataset, validation dataset
+        """
         data_collection_exp = DataCollectionExperiment(path, collection_folders)
 
         train_set_imgs, train_set_masks, val_set_imgs, val_set_masks = \

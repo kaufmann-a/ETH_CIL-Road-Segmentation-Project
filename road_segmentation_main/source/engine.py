@@ -107,7 +107,7 @@ class Engine:
 
         :param epoch_nr: Start training from this epoch. Useful to continue training with a saved model checkpoint.
         """
-        training_data, validation_data = DataPreparator.load(self)
+        training_data, validation_data = DataPreparator.load_train_val(self)
 
         # Load training parameters from config file
         train_parms = Configuration.get('training.general')
