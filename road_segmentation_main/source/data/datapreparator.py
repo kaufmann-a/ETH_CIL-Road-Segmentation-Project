@@ -29,10 +29,11 @@ class DataPreparator(object):
 
         collection_folders = Configuration.get('data_collection.collection_names')
 
-        # get image and respective mask paths
-        if "experiments_dataset" in collection_folders:
+        # detect special experiment dataset
+        if DataCollectionExperiment.experiments_dataset_folder in collection_folders:
             data_collection_exp = DataCollectionExperiment(path, collection_folders)
 
+            # get image and respective mask paths
             train_set_imgs, train_set_masks, val_set_imgs, val_set_masks = \
                 data_collection_exp.get_experiment_image_paths()
 
@@ -42,6 +43,7 @@ class DataPreparator(object):
         else:
             data_collection = DataCollection(path, collection_folders)
 
+            # get image and respective mask paths
             images_orig, masks_orig = data_collection.get_original_images()
             images_trans, masks_trans = data_collection.get_transformed_images()
 
@@ -58,7 +60,8 @@ class DataPreparator(object):
 
         collection_folders = Configuration.get('data_collection.collection_names')
 
-        if "experiments_dataset" in collection_folders:
+        # detect special experiment dataset
+        if DataCollectionExperiment.experiments_dataset_folder in collection_folders:
             train_ds, val_ds = DataPreparator.experiment_run_datasets(engine, path, collection_folders)
             return train_ds, val_ds
 
