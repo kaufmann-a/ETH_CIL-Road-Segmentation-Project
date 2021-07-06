@@ -160,7 +160,7 @@ class DataPreparator(object):
         image_transforms = transformation.get_transformations(engine=engine, is_train=is_train)
 
         ds = RoadSegmentationDataset(engine, images, masks, foreground_threshold,
-                                     transformation=image_transforms,
+                                     transform=image_transforms,
                                      crop_size=cropped_image_size,
                                      use_submission_masks=use_submission_masks,
                                      min_road_percentage=min_road_percentage,
