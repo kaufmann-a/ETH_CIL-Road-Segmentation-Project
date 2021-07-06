@@ -474,6 +474,8 @@ class Engine:
         nr_channels = 3
         if hasattr(self, 'lines_layer_path'):
             nr_channels = 5
+            Logcreator.info("Lines layer path :", self.lines_layer_path)
+            Logcreator.info("Predicted layer path :", self.predicted_masks_path)
 
         cropped_image_size = Configuration.get("training.general.cropped_image_size")
         input_size = tuple(np.insert(cropped_image_size, 0, values=nr_channels))
