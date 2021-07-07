@@ -28,6 +28,8 @@ if __name__ == "__main__":
                         default=False,
                         type=argumenthelper.boolean_string,
                         help="Optional: Reset the learning rate when the --weights parameter is set to load a checkpoint.")
+    parser.add_argument('--lines_layer_path', default = '', type=str)
+    parser.add_argument('--predicted_masks_path', default = '', type=str)
 
     args = argumenthelper.parse_args(parser)
     start = time.time()
@@ -38,7 +40,7 @@ if __name__ == "__main__":
     Logcreator.h1("Some title")
     Logcreator.info("Environment: %s" % Configuration.get('environment.name'))
 
-    engine = Engine()
+    engine = Engine(args)
 
     if args.weights:
         epoch, train_loss, train_acc, val_loss, val_acc = engine.load_checkpoints(args.weights, args.resetlr)

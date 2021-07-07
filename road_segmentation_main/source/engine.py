@@ -45,16 +45,21 @@ class Engine:
     Handles the training of the model.
     """
 
-    def __init__(self):
+    def __init__(self, args=None):
         """
         Initializes the model, optimizer, learning rate scheduler and the loss function
         using the respective Factory classes.
+
+        :param args:
         """
 
         # fix random seeds
         seed = 49626446
         self.fix_random_seeds(seed)
         self.fix_deterministic_operations()
+        if args is not None and args.lines_layer_path != '':
+            self.lines_layer_path = args.lines_layer_path
+            self.predicted_masks_path = args.predicted_masks_path
 
         # initialize model
         self.model = ModelFactory.build().to(DEVICE)
@@ -102,7 +107,7 @@ class Engine:
 
         :param epoch_nr: Start training from this epoch. Useful to continue training with a saved model checkpoint.
         """
-        training_data, validation_data = DataPreparator.load()
+        training_data, validation_data = DataPreparator.load_train_val(self)
 
         # Load training parameters from config file
         train_parms = Configuration.get('training.general')
@@ -466,8 +471,14 @@ class Engine:
         Logs the model summary.
 
         """
+        nr_channels = 3
+        if hasattr(self, 'lines_layer_path'):
+            nr_channels = 5
+            Logcreator.info("Lines layer path :", self.lines_layer_path)
+            Logcreator.info("Predicted layer path :", self.predicted_masks_path)
+
         cropped_image_size = Configuration.get("training.general.cropped_image_size")
-        input_size = tuple(np.insert(cropped_image_size, 0, values=3))
+        input_size = tuple(np.insert(cropped_image_size, 0, values=nr_channels))
         # redirect stdout to our logger
         sys.stdout = mystdout = StringIO()
         summary(self.model, input_size=input_size, device=DEVICE)

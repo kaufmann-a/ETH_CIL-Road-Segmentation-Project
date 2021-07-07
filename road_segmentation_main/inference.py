@@ -62,6 +62,10 @@ if __name__ == "__main__":
     )
     parser.add_argument('--run_folder', default='',
                         type=str, help="Input here the folder path of the training run you want to use for inference")
+    parser.add_argument('--predict_on_train', default=False,
+                        type=bool, help="If true uses the training data collection to predict.")
+    parser.add_argument('--lines_layer_path', default = '', type=str)
+    parser.add_argument('--predicted_masks_path', default = '', type=str)
 
     args = parser.parse_args()
     start = time.time()
@@ -71,7 +75,7 @@ if __name__ == "__main__":
     Logcreator.h1("This is a prediction run with test-images")
 
     # Init engine
-    engine = Engine()
+    engine = Engine(args)
     epoch, train_loss, train_accuracy, val_loss, val_accuracy = engine.load_checkpoints(args.weights)
 
     # Run predictions
@@ -87,4 +91,7 @@ if __name__ == "__main__":
                            use_swa_model=Configuration.get("training.general.stochastic_weight_averaging.on")
                            )
 
-    predictor.predict()
+    if not args.predict_on_train:
+        predictor.predict()
+    else:
+        predictor.predict_train_images()
