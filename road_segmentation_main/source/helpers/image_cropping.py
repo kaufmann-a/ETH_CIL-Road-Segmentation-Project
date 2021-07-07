@@ -5,7 +5,9 @@ Helps splitting an image into multiple smaller images.
 import math
 
 import PIL
+import torch
 from PIL import Image
+from matplotlib import pyplot
 
 
 def get_crop_box(i, j, height, width, stride):
@@ -144,3 +146,73 @@ class ImageCropper:
                 image_idx += 1
 
         return new_image
+
+    @staticmethod
+    def patch_masks_together(cropped_images, device, out_image_size=(608, 608), stride=(400, 400),
+                             mode='avg', debug=False):
+        """
+        Stitches a image mask together from multiple cropped image masks.
+
+        :param cropped_images: list of 2d-image tensors
+        :param device: cuda or cpu
+        :param out_image_size: (output image width, output image height)
+        :param stride: size of cropped images
+        :param mode: 'avg': take the average of the overlapping areas,
+                     'max': take the maximum of the overlapping areas,
+                     'overwrite': overwrite the overlapping areas
+        :param debug: True = plot images
+
+        :return: the combined image
+        """
+        width = out_image_size[0]
+        height = out_image_size[1]
+
+        out_array = torch.zeros(size=(width, height)).to(device)
+        out_overlap_count = torch.ones(size=(width, height)).to(device)  # stores nr of intersection at pixels
+        mem_right = mem_lower = right = lower = 0
+
+        image_idx = 0
+        for i in range(math.ceil(height / stride[0])):
+            for j in range(math.ceil(width / stride[1])):
+                mem_lower = lower if mem_lower < lower < height else mem_lower
+                mem_right = right if mem_right < right < width else mem_right
+                left, upper, right, lower = get_crop_box(i, j, height, width, stride)
+
+                # TODO how to patch together: addition, average, smooth corners, ...?
+
+                if mode == 'avg':
+                    # get overlaping ranges
+                    overlapping_indices_2 = torch.nonzero(out_array[upper:lower, left:right], as_tuple=True)
+                    # Check if there is any overlap at all
+                    if len(overlapping_indices_2[0]) > 0 and len(overlapping_indices_2[1]) > 0:
+                        upper_overlap = int(torch.min(overlapping_indices_2[0])) + upper
+                        lower_overlap = int(torch.max(overlapping_indices_2[0])) + upper + 1
+                        left_overlap = int(torch.min(overlapping_indices_2[1])) + left
+                        right_overlap = int(torch.max(overlapping_indices_2[1])) + left + 1
+
+                        out_overlap_count[upper_overlap:lower_overlap, left_overlap:right_overlap] += 1
+
+                        # case bottom right image was placed, we need to subtract bottom right square again
+                        if torch.max(out_overlap_count) == 4:
+                            out_overlap_count[mem_lower:lower, mem_right:right] -= 1
+
+                    out_array[upper:lower, left:right] = torch.add(out_array[upper:lower, left:right],
+                                                                   cropped_images[image_idx])
+                elif mode == 'max':
+                    out_array[upper:lower, left:right] = torch.maximum(out_array[upper:lower, left:right],
+                                                                       cropped_images[image_idx])
+                else:
+                    # overwrite overlapping areas
+                    out_array[upper:lower, left:right] = cropped_images[image_idx]
+
+                if debug:
+                    # print(left, upper, right, lower)
+                    # print(cropped_images[image_idx].shape)
+                    plot_array = out_array > 0.5
+                    pyplot.imshow(plot_array.cpu(), cmap='gray', vmin=0, vmax=1)
+                    pyplot.show()
+
+                image_idx += 1
+        if mode == 'avg':
+            out_array = torch.div(out_array, out_overlap_count)
+        return out_array

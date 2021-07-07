@@ -8,19 +8,17 @@ Class for prediction of a set of images
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 
-import math
 import os
 import sys
 
 import torch
-from matplotlib import pyplot
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from source.configuration import Configuration
 from source.data.datapreparator import DataPreparator
 from source.helpers import predictionhelper, imagesavehelper
-from source.helpers.image_cropping import get_crop_box
+from source.helpers.image_cropping import ImageCropper
 from source.helpers.predictionhelper import run_post_processing
 from source.logcreator.logcreator import Logcreator
 
@@ -57,74 +55,6 @@ class Prediction(object):
         self.use_submission_mask = use_submission_masks
         self.use_swa_model = use_swa_model
 
-    def patch_masks_together(self, cropped_images, out_image_size=(608, 608), stride=(400, 400),
-                             mode='avg', debug=False):
-        """
-        Stitches a image mask together from multiple cropped image masks.
-
-        :param cropped_images: list of 2d-image tensors
-        :param out_image_size: (output image width, output image height)
-        :param stride: size of cropped images
-        :param mode: 'avg': take the average of the overlapping areas,
-                     'max': take the maximum of the overlapping areas,
-                     'overwrite': overwrite the overlapping areas
-        :param debug: True = plot images
-
-        :return: the combined image
-        """
-        width = out_image_size[0]
-        height = out_image_size[1]
-
-        out_array = torch.zeros(size=(width, height)).to(self.device)
-        out_overlap_count = torch.ones(size=(width, height)).to(self.device)  # stores nr of intersection at pixels
-        mem_right = mem_lower = right = lower = 0
-
-        image_idx = 0
-        for i in range(math.ceil(height / stride[0])):
-            for j in range(math.ceil(width / stride[1])):
-                mem_lower = lower if mem_lower < lower < height else mem_lower
-                mem_right = right if mem_right < right < width else mem_right
-                left, upper, right, lower = get_crop_box(i, j, height, width, stride)
-
-                # TODO how to patch together: addition, average, smooth corners, ...?
-
-                if mode == 'avg':
-                    # get overlaping ranges
-                    overlapping_indices_2 = torch.nonzero(out_array[upper:lower, left:right], as_tuple=True)
-                    # Check if there is any overlap at all
-                    if len(overlapping_indices_2[0]) > 0 and len(overlapping_indices_2[1]) > 0:
-                        upper_overlap = int(torch.min(overlapping_indices_2[0])) + upper
-                        lower_overlap = int(torch.max(overlapping_indices_2[0])) + upper + 1
-                        left_overlap = int(torch.min(overlapping_indices_2[1])) + left
-                        right_overlap = int(torch.max(overlapping_indices_2[1])) + left + 1
-
-                        out_overlap_count[upper_overlap:lower_overlap, left_overlap:right_overlap] += 1
-
-                        # case bottom right image was placed, we need to subtract bottom right square again
-                        if torch.max(out_overlap_count) == 4:
-                            out_overlap_count[mem_lower:lower, mem_right:right] -= 1
-
-                    out_array[upper:lower, left:right] = torch.add(out_array[upper:lower, left:right],
-                                                                   cropped_images[image_idx])
-                elif mode == 'max':
-                    out_array[upper:lower, left:right] = torch.maximum(out_array[upper:lower, left:right],
-                                                                       cropped_images[image_idx])
-                else:
-                    # overwrite overlapping areas
-                    out_array[upper:lower, left:right] = cropped_images[image_idx]
-
-                if debug:
-                    # print(left, upper, right, lower)
-                    # print(cropped_images[image_idx].shape)
-                    plot_array = out_array > 0.5
-                    pyplot.imshow(plot_array.cpu(), cmap='gray', vmin=0, vmax=1)
-                    pyplot.show()
-
-                image_idx += 1
-        if mode == 'avg':
-            out_array = torch.div(out_array, out_overlap_count)
-        return out_array
-
     def patch_predictions_together(self, preds, cropped_image_size, nr_crops_per_image):
         mask_probabilistic_list = []
 
@@ -142,9 +72,10 @@ class Prediction(object):
             if self.use_submission_mask:
                 input_image_size = [x // PATCH_SIZE for x in input_image_size]
                 out_patch_size = [x // PATCH_SIZE for x in out_patch_size]
-            out_mask = self.patch_masks_together(cropped_images=crops_list,
-                                                 out_image_size=input_image_size,
-                                                 stride=out_patch_size)
+            out_mask = ImageCropper.patch_masks_together(cropped_images=crops_list,
+                                                         device=self.device,
+                                                         out_image_size=input_image_size,
+                                                         stride=out_patch_size)
             mask_probabilistic_list.append(out_mask)
 
         return mask_probabilistic_list
