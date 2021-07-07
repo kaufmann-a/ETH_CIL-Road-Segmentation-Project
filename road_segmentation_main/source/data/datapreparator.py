@@ -15,9 +15,8 @@ import numpy as np
 from source.configuration import Configuration
 from source.data import transformation
 from source.data.datacollection import DataCollection, DataCollectionExperiment
+from source.data.dataset import RoadSegmentationDataset, RoadSegmentationDatasetInference
 from source.logcreator.logcreator import Logcreator
-
-from source.data.dataset import RoadSegmentationDataset, SimpleToTensorDataset, RoadSegmentationDatasetInference
 
 
 class DataPreparator(object):
