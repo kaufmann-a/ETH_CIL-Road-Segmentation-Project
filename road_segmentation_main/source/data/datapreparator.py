@@ -233,7 +233,7 @@ class DataPreparator(object):
         """
         Loads the special experiments dataset.
 
-        param engine: The engine.
+        :param engine: The engine.
         :param path: Path to the data folder.
         :param collection_folders: The data collection folder list.
         :return: training dataset, validation dataset
