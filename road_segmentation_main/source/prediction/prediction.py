@@ -93,91 +93,6 @@ class Prediction(object):
 
         return mask_probabilistic_list
 
-    def run_post_prediction_tasks(self, mask_probabilistic_list, image_number_list, path_prefix):
-        Logcreator.info("Saving submission file")
-        predictionhelper.images_to_submission_file(mask_probabilistic_list, image_number_list,
-                                                   patch_size=PATCH_SIZE,
-                                                   foreground_threshold=self.foreground_threshold,
-                                                   folder=Configuration.output_directory,
-                                                   file_prefix=path_prefix,
-                                                   use_submission_mask=self.use_submission_mask)
-
-        mask_binary_list = imagesavehelper.save_masks_as_images(mask_probabilistic_list, image_number_list,
-                                                                folder=Configuration.output_directory,
-                                                                is_prob=True,
-                                                                pixel_threshold=self.foreground_threshold,
-                                                                save_submission_img=not self.use_submission_mask,
-                                                                folder_prefix=path_prefix)
-        if self.enable_postprocessing:
-            Logcreator.info("Running post processing")
-            run_post_processing(mask_binary_list,
-                                folder=Configuration.output_directory,
-                                postprocessing_params=self.postprocessing_params,
-                                image_number_list=image_number_list,
-                                patch_size=PATCH_SIZE,
-                                foreground_threshold=self.foreground_threshold,
-                                path_prefix=path_prefix)
-
-    def run_prediction(self, model, loader, image_number_list, cropped_image_size, nr_crops_per_image, file_prefix=''):
-        preds = self.model_prediction_run(model, loader)
-        mask_probabilistic_list = self.patch_predictions_together(preds,
-                                                                  cropped_image_size=cropped_image_size,
-                                                                  nr_crops_per_image=nr_crops_per_image)
-
-        self.run_post_prediction_tasks(mask_probabilistic_list, image_number_list, file_prefix)
-
-    def predict(self):
-        if self.use_original_image_size:
-            cropped_image_size = TEST_IMAGE_SIZE
-        else:
-            cropped_image_size = Configuration.get("training.general.cropped_image_size")
-
-        dataset = DataPreparator.load_test(self.engine, path=self.images_folder, crop_size=cropped_image_size)
-
-        loader = DataLoader(dataset, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
-
-        self.run_prediction(self.model, loader, dataset.image_number_list, cropped_image_size,
-                            dataset.nr_crops_per_image)
-
-        if self.use_swa_model:
-            Logcreator.info("Stochastic Weight Averaging prediction run")
-            self.run_prediction(self.swa_model, loader, dataset.image_number_list, cropped_image_size,
-                                dataset.nr_crops_per_image,
-                                file_prefix='swa-')
-
-    def predict_train_images(self, create_collection_folder_structure=False):
-        ds = DataPreparator.load_all(self.engine, is_train=False)
-        loader = DataLoader(ds, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
-
-        preds_masks_list = self.model_prediction_run(self.model, loader)
-
-        from pathlib import Path
-        file_paths = [Path(img) for img in ds.images_filtered]
-
-        folder_out_path = Path(os.path.join(Configuration.output_directory, "pred-masks-original"))
-        folder_out_path.mkdir(parents=True, exist_ok=True)  # create folders if they do not exist
-
-        import torchvision
-
-        for prediction_mask, file_path in tqdm(zip(preds_masks_list, file_paths),
-                                               total=len(file_paths),
-                                               file=sys.stdout,
-                                               desc="Saving preds."):
-            # probabilities to binary
-            out_preds = (prediction_mask > self.foreground_threshold).float()
-
-            # create folder structure
-            if create_collection_folder_structure:
-                file_relative_path = file_path.relative_to(file_path.parent.parent.parent.parent)
-                file_out_path = folder_out_path.joinpath(file_relative_path)
-            else:
-                file_out_path = folder_out_path.joinpath(file_path.name)
-
-            file_out_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # save prediction
-            torchvision.utils.save_image(out_preds, file_out_path.absolute())
-
     def model_prediction_run(self, model, loader):
         """
         Makes prediction for all images in the data loader and returns them.
@@ -213,3 +128,105 @@ class Prediction(object):
         preds_masks_list = torch.vstack(preds_masks_list)
 
         return preds_masks_list
+
+    def run_post_prediction(self, mask_probabilistic_list, image_number_list, path_prefix):
+        """
+        Runs post prediction tasks like saving the submission file and running postprocessing.
+
+        :param mask_probabilistic_list: list containing the predicted road masks
+        :param image_number_list: list containing the corresponding image number
+        :param path_prefix: a prefix for the folder name
+        """
+        Logcreator.info("Saving submission file")
+        predictionhelper.images_to_submission_file(mask_probabilistic_list, image_number_list,
+                                                   patch_size=PATCH_SIZE,
+                                                   foreground_threshold=self.foreground_threshold,
+                                                   folder=Configuration.output_directory,
+                                                   file_prefix=path_prefix,
+                                                   use_submission_mask=self.use_submission_mask)
+
+        mask_binary_list = imagesavehelper.save_masks_as_images(mask_probabilistic_list, image_number_list,
+                                                                folder=Configuration.output_directory,
+                                                                is_prob=True,
+                                                                pixel_threshold=self.foreground_threshold,
+                                                                save_submission_img=not self.use_submission_mask,
+                                                                folder_prefix=path_prefix)
+        if self.enable_postprocessing:
+            Logcreator.info("Running post processing")
+            run_post_processing(mask_binary_list,
+                                folder=Configuration.output_directory,
+                                postprocessing_params=self.postprocessing_params,
+                                image_number_list=image_number_list,
+                                patch_size=PATCH_SIZE,
+                                foreground_threshold=self.foreground_threshold,
+                                path_prefix=path_prefix)
+
+    def prediction_loop(self, model, loader, file_prefix=''):
+        """
+        Runs one prediction loop for with the provided model and data loader.
+
+        :param model: The model used to predict masks.
+        :param loader: The data loader.
+        :param file_prefix: A prefix for the folder/file name.
+        """
+        # get predictions
+        preds = self.model_prediction_run(model, loader)
+
+        # patch predictions together to target image size
+        cropped_image_size = loader.dataset.crop_size
+        nr_crops_per_image = loader.dataset.nr_crops_per_image
+        mask_probabilistic_list = self.patch_predictions_together(preds,
+                                                                  cropped_image_size=cropped_image_size,
+                                                                  nr_crops_per_image=nr_crops_per_image)
+        # run postprocessing
+        img_nr_list = loader.dataset.image_number_list
+        self.run_post_prediction(mask_probabilistic_list, img_nr_list, file_prefix)
+
+    def predict(self):
+        if self.use_original_image_size:
+            cropped_image_size = TEST_IMAGE_SIZE
+        else:
+            cropped_image_size = Configuration.get("training.general.cropped_image_size")
+
+        dataset = DataPreparator.load_test(self.engine, path=self.images_folder, crop_size=cropped_image_size)
+
+        loader = DataLoader(dataset, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
+
+        self.prediction_loop(self.model, loader)
+
+        if self.use_swa_model:
+            Logcreator.info("Stochastic Weight Averaging prediction run")
+            self.prediction_loop(self.swa_model, loader, file_prefix='swa-')
+
+    def predict_train_images(self, create_collection_folder_structure=False):
+        ds = DataPreparator.load_all(self.engine, is_train=False)
+        loader = DataLoader(ds, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
+
+        preds_masks_list = self.model_prediction_run(self.model, loader)
+
+        from pathlib import Path
+        file_paths = [Path(img) for img in ds.images_filtered]
+
+        folder_out_path = Path(os.path.join(Configuration.output_directory, "pred-masks-original"))
+        folder_out_path.mkdir(parents=True, exist_ok=True)  # create folders if they do not exist
+
+        import torchvision
+
+        for prediction_mask, file_path in tqdm(zip(preds_masks_list, file_paths),
+                                               total=len(file_paths),
+                                               file=sys.stdout,
+                                               desc="Saving preds."):
+            # probabilities to binary
+            out_preds = (prediction_mask > self.foreground_threshold).float()
+
+            # create folder structure
+            if create_collection_folder_structure:
+                file_relative_path = file_path.relative_to(file_path.parent.parent.parent.parent)
+                file_out_path = folder_out_path.joinpath(file_relative_path)
+            else:
+                file_out_path = folder_out_path.joinpath(file_path.name)
+
+            file_out_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # save prediction
+            torchvision.utils.save_image(out_preds, file_out_path.absolute())
