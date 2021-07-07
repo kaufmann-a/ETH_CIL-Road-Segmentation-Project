@@ -81,10 +81,10 @@ if __name__ == "__main__":
     # Run predictions
 
     predictor = Prediction(engine=engine,
-                           images=Configuration.get_path('data_collection.test_images_folder'),
+                           image_folder=Configuration.get_path('data_collection.test_images_folder'),
                            device=DEVICE,
                            threshold=Configuration.get('inference.general.foreground_threshold'),
-                           postprocessing=Configuration.get('inference.postprocessing'),
+                           postprocessing_params=Configuration.get('inference.postprocessing'),
                            use_original_image_size=Configuration.get('inference.general.use_original_image_size'),
                            enable_postprocessing=Configuration.get('inference.general.enable_postprocessing'),
                            use_submission_masks=Configuration.get("training.general.use_submission_masks"),

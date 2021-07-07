@@ -29,17 +29,22 @@ TEST_IMAGE_SIZE = (608, 608)
 
 class Prediction(object):
 
-    def __init__(self, engine, images, device, threshold, postprocessing, use_original_image_size,
+    def __init__(self, engine, image_folder, device, threshold, postprocessing_params, use_original_image_size,
                  enable_postprocessing=False,
                  use_submission_masks=False,
                  use_swa_model=False):
         """
 
-        :param engine:
-        :param images:
-        :param device:
-        :param threshold:
-        :param use_original_image_size: False = patch image together from small subpatches of same size as in training
+        :param engine: The main engine.
+        :param image_folder:  The path to the image folder.
+        :param device: cuda or cpu
+        :param threshold: The threshold used to convert 16x16 image patches to road labels.
+        :param postprocessing_params: Object with the postprocessing parameters.
+        :param use_original_image_size: False = Patch image together from small subpatches of same size as in training.
+        :param enable_postprocessing: True = Postprocessing is executed.
+        :param use_submission_masks: True = No 16x16 converting needs to be done, 
+                                            since the model predicts already 16x16 patches.
+        :param use_swa_model: True = use the swa model to predict road masks. 
         """
 
         self.device = device
@@ -47,15 +52,23 @@ class Prediction(object):
         self.model = engine.model
         self.swa_model = engine.swa_model
         self.model.to(device)
-        self.images_folder = images
+        self.images_folder = image_folder
         self.foreground_threshold = threshold
         self.enable_postprocessing = enable_postprocessing
-        self.postprocessing = postprocessing
+        self.postprocessing_params = postprocessing_params
         self.use_original_image_size = use_original_image_size
         self.use_submission_mask = use_submission_masks
         self.use_swa_model = use_swa_model
 
     def patch_predictions_together(self, preds, cropped_image_size, nr_crops_per_image):
+        """
+        Patches the target image together from smaller sub-images if necessary.
+
+        :param preds: The model predictions.
+        :param cropped_image_size: The sub-images size.
+        :param nr_crops_per_image: The number of sub-images per target image.
+        :return: predictions in original image size
+        """
         mask_probabilistic_list = []
 
         # go through all images of current batch; an image consists of multiple cropped images
@@ -99,7 +112,7 @@ class Prediction(object):
             Logcreator.info("Running post processing")
             run_post_processing(mask_binary_list,
                                 folder=Configuration.output_directory,
-                                postprocessing_params=self.postprocessing,
+                                postprocessing_params=self.postprocessing_params,
                                 image_number_list=image_number_list,
                                 patch_size=PATCH_SIZE,
                                 foreground_threshold=self.foreground_threshold,
