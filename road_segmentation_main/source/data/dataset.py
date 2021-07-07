@@ -29,6 +29,7 @@ class RoadSegmentationDataset(Dataset):
         self.images_filtered = []
         self.masks = mask_list
         self.foreground_threshold = threshold
+        self.crop_size = crop_size
         self.use_submission_masks = use_submission_masks
         self.min_road_percentage = min_road_percentage if 1 >= min_road_percentage >= 0 else 0
         self.image_cropper = ImageCropper(out_image_size=crop_size,
@@ -127,7 +128,7 @@ class RoadSegmentationDatasetInference(Dataset):
     def __init__(self, engine, image_list, transform, crop_size=(400, 400), sanity_check=False):
         self.image_paths = image_list
         self.transform = transform
-
+        self.crop_size = crop_size
         self.preloaded_images = []
         self.image_number_list = []
 
