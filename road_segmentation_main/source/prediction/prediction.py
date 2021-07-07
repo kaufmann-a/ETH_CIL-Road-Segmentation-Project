@@ -27,7 +27,7 @@ from source.logcreator.logcreator import Logcreator
 
 PATCH_SIZE = 16
 
-TEST_IMAGE_SIZE = (608, 608)
+TEST_IMAGE_SIZE = (400, 400)
 
 
 class Prediction(object):
@@ -57,7 +57,7 @@ class Prediction(object):
         self.use_submission_mask = use_submission_masks
         self.use_swa_model = use_swa_model
 
-    def patch_image_together(self, cropped_images, mode='RGB', total_width=608, total_height=608, stride=(400, 400)):
+    def patch_image_together(self, cropped_images, mode='RGB', total_width=400, total_height=400, stride=(400, 400)):
         width = total_width
         height = total_height
 
@@ -74,7 +74,7 @@ class Prediction(object):
 
         return new_image
 
-    def patch_masks_together(self, cropped_images, out_image_size=(608, 608), stride=(400, 400),
+    def patch_masks_together(self, cropped_images, out_image_size=(400, 400), stride=(400, 400),
                              mode='avg', debug=False):
         """
         Stitches a image mask together from multiple cropped image masks.
