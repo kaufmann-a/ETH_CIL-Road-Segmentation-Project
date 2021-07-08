@@ -27,7 +27,7 @@ def get_mean_std(dataset, debug=False):
 
     source: https://stackoverflow.com/questions/60101240/finding-mean-and-standard-deviation-across-image-channels-pytorch
 
-    :param dataset:
+    :param dataset: The dataset used the compute the statistics.
     :return: mean, std
     """
 
@@ -78,6 +78,16 @@ def get_default_config():
 
 
 def get_transformations(engine, mean=None, std=None, use_train_statistics=False, is_train=False):
+    """
+    Constructs a composition of transformations based on the configuration.
+
+    :param engine: The main engine.
+    :param mean: If not None will be used for normalization.
+    :param std: If not None will be used for normalization.
+    :param use_train_statistics: True = Use the precomputed mean and std in normalization.
+    :param is_train: True = Includes training transformation specified in the configuration.
+    :return: transformations
+    """
     if hasattr(engine, 'lines_layer_path'):
         if mean is None:
             mean = [0.0, 0.0, 0.0, 0.0, 0.0]
