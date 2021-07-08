@@ -10,7 +10,7 @@ from utils.postprocess import labelledRoadData, downSampleImage, hasRoad
 # FS config
 DIR_PATH_SAT = './mined/images/'
 DIR_PATH_ROAD = './mined/masks/'
-FILE_NAME_SAT = 'extra_sat_{}_{}.png'
+FILE_NAME_SAT = 'extra_sat_{}_{}.jpg'
 FILE_NAME_ROAD = 'extra_sat_{}_{}.png'
 COORD_SIGNIFICANT_DECIMAL = 7
 
@@ -119,15 +119,17 @@ def main():
                 filePathSat = DIR_PATH_SAT + FILE_NAME_SAT.format(lat, lng)
                 filePathRoad = DIR_PATH_ROAD + FILE_NAME_ROAD.format(lat, lng)
 
-                downloadAndProcessSat(lat, lng, filePathSat)
-                roadImage = downloadAndProcessRoad(lat, lng, filePathRoad)
+                # Only download if file does not exists already
+                if not os.path.exists(filePathSat) or not os.path.exists(filePathRoad):
+                    downloadAndProcessSat(lat, lng, filePathSat)
+                    roadImage = downloadAndProcessRoad(lat, lng, filePathRoad)
 
-                # Check if image even has road, otherwise delete
-                if not hasRoad(roadImage):
-                    logging.warning('Data does not contain any road. Deleting files again...')
-                    areasSkippedBecauseOfNoRoad += 1
-                    os.remove(filePathSat)
-                    os.remove(filePathRoad)
+                    # Check if image even has road, otherwise delete
+                    if not hasRoad(roadImage):
+                        logging.warning('Data does not contain any road. Deleting files again...')
+                        areasSkippedBecauseOfNoRoad += 1
+                        os.remove(filePathSat)
+                        os.remove(filePathRoad)
 
     # Some additional information at the end
     timeEnd = time.time()
