@@ -182,7 +182,7 @@ class Prediction(object):
         img_nr_list = loader.dataset.image_number_list
         self.run_post_prediction(mask_probabilistic_list, img_nr_list, file_prefix)
 
-    def predict(self):
+    def predict_test_images(self):
         """
         Executes the predictions on the test set and creates the submission file.
         """

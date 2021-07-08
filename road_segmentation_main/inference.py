@@ -25,31 +25,38 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def process_args(args):
-    if args.run_folder:
-        args.workingdir = filehelper.build_abspath(args.run_folder, os.getcwd()) #In case relative path was passed in args
+    """
+    Processes the command line arguments.
 
-        #Load ConfigFile
-        args.configuration = glob.glob(os.path.join(args.workingdir, '*.jsonc')) #Assuming only the config file is of type jsonc
+    :param args: The command line arguments.
+    """
+    if args.run_folder:
+        args.workingdir = filehelper.build_abspath(args.run_folder, os.getcwd())  # In case relative path was passed in args
+
+        # Load the configuration file from the specified directory
+        args.configuration = glob.glob(os.path.join(args.workingdir, '*.jsonc'))  # Assuming only the config file is of type jsonc
         if len(args.configuration) != 1:
             print("More than one config file found or no config file found at all - abort!")
             sys.exit()
         else:
             args.configuration = args.configuration[0]
 
-        #Get weights
+        # Get the model checkpoint weights
         try:
+            # First try to find a "best" model checkpoint
             args.weights = filehelper.get_latest(os.path.join(args.workingdir, 'weights_checkpoint'), '*best.pth')
         except ValueError:
             print("No 'best' weights-checkpoint fond falling back to normal checkpoint")
             try:
+                # If no "best" model checkpoint exists we load the default checkpoint
                 args.weights = filehelper.get_latest(os.path.join(args.workingdir, 'weights_checkpoint'), '*.pth')
             except ValueError:
                 print("No weights found, make sure you use a training with stored weights")
                 sys.exit()
 
-        #Init config and logger
+        # Initialize config and logger
         Configuration.initialize(args.configuration, args.workingdir, create_output_train=False, create_output_inf=True)
-        Logcreator.initialize(False) #Don't write a logfile
+        Logcreator.initialize(False)  # Don't write a logfile
     else:
         print("No folder of a previous training run provided, add one in arguments")
 
@@ -64,8 +71,8 @@ if __name__ == "__main__":
                         type=str, help="Input here the folder path of the training run you want to use for inference")
     parser.add_argument('--predict_on_train', default=False,
                         type=bool, help="If true uses the training data collection to predict.")
-    parser.add_argument('--lines_layer_path', default = '', type=str)
-    parser.add_argument('--predicted_masks_path', default = '', type=str)
+    parser.add_argument('--lines_layer_path', default='', type=str)
+    parser.add_argument('--predicted_masks_path', default='', type=str)
 
     args = parser.parse_args()
     start = time.time()
@@ -92,6 +99,6 @@ if __name__ == "__main__":
                            )
 
     if not args.predict_on_train:
-        predictor.predict()
+        predictor.predict_test_images()
     else:
         predictor.predict_train_images()
