@@ -38,7 +38,7 @@ def get_sat_image(x, y, zoom, nr_tile_width, nr_tile_height, file):
 if __name__ == '__main__':
     data_folder_path = "./"
     recompute_masks = False
-    location_files = ['locations_2.json', 'locations.json']
+    location_files = ['../locations_custom.json', '../locations.json']
 
     data_folder_images = os.path.join(data_folder_path, "images")
     if not os.path.exists(data_folder_images):
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     zoom = 18
 
     for loc_file_name in location_files:
-        with open(loc_file_name) as json_file:
+        with open(os.path.abspath(loc_file_name)) as json_file:
             locations = json.load(json_file)
 
         loop = tqdm(locations, file=sys.stdout)
