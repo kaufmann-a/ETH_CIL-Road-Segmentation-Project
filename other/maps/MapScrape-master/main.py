@@ -8,16 +8,16 @@ from utils.scrape import downloadAreaSat, downloadAreaRoad, getTileCoordinatesFo
 from utils.postprocess import labelledRoadData, downSampleImage, hasRoad
 
 # FS config
-DIR_PATH_SAT = './mined/images/'
-DIR_PATH_ROAD = './mined/masks/'
+DIR_PATH_SAT = './custom/original/images/'
+DIR_PATH_ROAD = './custom/original/masks/'
 FILE_NAME_SAT = 'extra_sat_{}_{}.jpg'
 FILE_NAME_ROAD = 'extra_sat_{}_{}.png'
 COORD_SIGNIFICANT_DECIMAL = 7
 
 # Scraping config
-FILE_PATH_LOCATIONS = '../maps/locations_2.json'
-AREA_SIZE = 1250
-NEIGHBOR_COUNT = 3
+FILE_PATH_LOCATIONS = '../locations_custom.json'
+AREA_SIZE = 800
+NEIGHBOR_COUNT = 4
 NEIGHBOR_COORD_OFFSET = 0.0035
 
 
