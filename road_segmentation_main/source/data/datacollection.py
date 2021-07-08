@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+# coding: utf8
+
+"""
+Handles the folder structure of the different datasets.
+"""
+
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
+
 import os
 
 from source.configuration import Configuration
@@ -6,17 +17,19 @@ from source.logcreator.logcreator import Logcreator
 
 
 class DataCollection:
-    def __init__(self, path, collection_folders):
-        """
+    """
         A data collection folder needs to have the structure:
         +-- data-collection-folder
             +-- original
                 +-- images
                 +-- masks
-            +-- transforms_1
+            +-- [transformation-folders] e.g. {flip_hor, flip_hor_90, flip_ver, ...}
                 +-- images
                 +-- masks
-            ...
+    """
+
+    def __init__(self, path, collection_folders):
+        """
 
         :param path: Path to the data collection folders.
         :param collection_folders: Data collection folder list.
@@ -60,6 +73,12 @@ class DataCollection:
 
     @staticmethod
     def assign_masks_to_images(imgs_folders):
+        """
+        Reads the paths of all the images and masks in the provided folder.
+
+        :param imgs_folders: The parent folder containing the "images" and "masks" folders.
+        :return: image list, mask list
+        """
         imgs = []
         masks = []
         for cur_imgs_folder in imgs_folders:
@@ -89,13 +108,39 @@ class DataCollection:
 
 
 class DataCollectionExperiment:
+    """
+        The experiment folder needs to have the structure:
+        +-- experiment folder
+            +-- train
+                +-- original
+                    +-- images
+                    +-- masks
+                +-- [transformation-folders] e.g. {flip_hor, flip_hor_90, flip_ver, ...}
+                    +-- images
+                    +-- masks
+            +-- valid
+                +-- original
+                    +-- images
+                    +-- masks
+    """
     experiments_dataset_folder = "experiments_dataset"
 
     def __init__(self, path, collection_folders):
+        """
+
+        :param path: Path to the data collection folders.
+        :param collection_folders: Data collection folder list.
+
+        """
         self.path = path
         self.collection_folders = collection_folders
 
     def get_experiment_image_paths(self):
+        """
+        Gets all images and masks paths of the experiment dataset.
+
+        :return: train image path list, train mask path list, validation image path list, validation mask path list
+        """
         collection_folder = os.path.join(self.path, DataCollectionExperiment.experiments_dataset_folder)
 
         train_folders = os.listdir(os.path.join(collection_folder, "train"))
@@ -119,6 +164,13 @@ class DataCollectionExperiment:
 
     @staticmethod
     def generate_exp_set(set_img_folders, set_mask_folders):
+        """
+        Reads the paths of all the images and masks in the provided folder.
+
+        :param set_img_folders: The folder containing the images.
+        :param set_mask_folders: The folder containing the masks.
+        :return: image list, mask list
+        """
         set_imgs = []
         set_masks = []
         for idx, folder in enumerate(set_img_folders):
