@@ -1,5 +1,5 @@
 """
- Based on: https://github.com/rishikksh20/ResUnet
+Contains a variety of modules used by the models.
 """
 
 import torch
@@ -8,6 +8,10 @@ from torch.nn import functional as F
 
 
 class ResidualConv(nn.Module):
+    """
+    Based on: https://github.com/rishikksh20/ResUnet
+    """
+
     def __init__(self, input_dim, output_dim, stride, padding):
         super(ResidualConv, self).__init__()
 
@@ -29,6 +33,10 @@ class ResidualConv(nn.Module):
 
 
 class Upsample(nn.Module):
+    """
+    Based on: https://github.com/rishikksh20/ResUnet
+    """
+
     def __init__(self, input_dim, output_dim, kernel, stride):
         super(Upsample, self).__init__()
 
@@ -41,6 +49,10 @@ class Upsample(nn.Module):
 
 
 class Squeeze_Excite_Block(nn.Module):
+    """
+    Based on: https://github.com/rishikksh20/ResUnet
+    """
+
     def __init__(self, channel, reduction=16):
         super(Squeeze_Excite_Block, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -102,6 +114,10 @@ class ASPP(nn.Module):
 
 
 class Upsample_(nn.Module):
+    """
+    Based on: https://github.com/rishikksh20/ResUnet
+    """
+
     def __init__(self, scale=2):
         super(Upsample_, self).__init__()
 
@@ -112,6 +128,10 @@ class Upsample_(nn.Module):
 
 
 class AttentionBlock(nn.Module):
+    """
+    Based on: https://github.com/rishikksh20/ResUnet
+    """
+
     def __init__(self, input_encoder, input_decoder, output_dim):
         super(AttentionBlock, self).__init__()
 
