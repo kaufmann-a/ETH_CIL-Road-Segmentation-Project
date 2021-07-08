@@ -77,10 +77,6 @@ class Engine:
         self.swa_model = AveragedModel(self.model).to(DEVICE)
         self.swa_enabled = Configuration.get("training.general.stochastic_weight_averaging.on")
         self.swa_start_epoch = Configuration.get("training.general.stochastic_weight_averaging.start_epoch")
-        # TODO Maybe add learning rate scheduler for swa
-        #  see https://pytorch.org/blog/pytorch-1.6-now-includes-stochastic-weight-averaging/
-        # self.swa_scheduler = torch.optim.swa_utils.SWALR(optimizer, \
-        #          anneal_strategy="linear", anneal_epochs=5, swa_lr=0.05)
 
         # Print model summary
         self.print_modelsummary()
@@ -422,7 +418,6 @@ class Engine:
 
         epoch = checkpoint['epoch']
 
-        # TODO should we do this or should we start from zero or save the scheduler?
         # init the step count of the learning rate scheduler
         self.lr_scheduler = LRSchedulerFactory.build(self.optimizer, last_epoch=epoch + 1)
 
@@ -430,7 +425,6 @@ class Engine:
         train_accuracy = checkpoint['train_accuracy']
         val_loss = checkpoint['val_loss']
         val_accuracy = checkpoint['val_accuracy']
-        # ToDo: add patch_accuracy to checkpoints
 
         return epoch, train_loss, train_accuracy, val_loss, val_accuracy
 

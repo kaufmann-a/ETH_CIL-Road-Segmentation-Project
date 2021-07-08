@@ -178,8 +178,6 @@ class ImageCropper:
                 mem_right = right if mem_right < right < width else mem_right
                 left, upper, right, lower = get_crop_box(i, j, height, width, stride)
 
-                # TODO how to patch together: addition, average, smooth corners, ...?
-
                 if mode == 'avg':
                     # get overlaping ranges
                     overlapping_indices_2 = torch.nonzero(out_array[upper:lower, left:right], as_tuple=True)

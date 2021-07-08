@@ -42,7 +42,7 @@ class ModelFactory(object):
         model_config = Configuration.get('training.model', optional=False)
 
         # add an attribute to the model configuration
-        model_config = AttrWrapper(model_config)  # TODO only quick fix
+        model_config = AttrWrapper(model_config)
         setattr(model_config, "use_submission_masks", Configuration.get('training.general.use_submission_masks'))
 
         all_models = BaseModel.__subclasses__()
