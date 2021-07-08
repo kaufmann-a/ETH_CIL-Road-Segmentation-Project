@@ -183,6 +183,9 @@ class Prediction(object):
         self.run_post_prediction(mask_probabilistic_list, img_nr_list, file_prefix)
 
     def predict(self):
+        """
+        Executes the predictions on the test set and creates the submission file.
+        """
         if self.use_original_image_size:
             cropped_image_size = TEST_IMAGE_SIZE
         else:
@@ -199,6 +202,12 @@ class Prediction(object):
             self.prediction_loop(self.swa_model, loader, file_prefix='swa-')
 
     def predict_train_images(self, create_collection_folder_structure=False):
+        """
+        Executes the prediction on the entire training dataset.
+
+        :param create_collection_folder_structure: True = Saves the predictions with the same folder structure as
+               the images in the collection folders including three parent folders.
+        """
         ds = DataPreparator.load_all(self.engine, is_train=False)
         loader = DataLoader(ds, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
 
