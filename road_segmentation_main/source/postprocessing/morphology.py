@@ -1,9 +1,11 @@
 import numpy as np
 import cv2
 
-# this is function for continuous dilations followed by erosions
-# to maintain road width pixel resolution set numdilate = numerode
 def erodedilate_v0(img, numdilate=4, numerode=4, nummedian=2, kernelsz=16, mediansz=5 ):
+    """
+    This is a function for continuous dilations followed by erosions
+    to maintain road width pixel resolution set numdilate = numerode
+    """
     kernel_allones = np.ones((kernelsz,kernelsz))
     #Continuous dilations. Spreads out the pixels to join the roads.
     kernel_allones = kernel_allones.astype('uint8')
@@ -26,9 +28,11 @@ def erodedilate_v0(img, numdilate=4, numerode=4, nummedian=2, kernelsz=16, media
     return out_img
 
 
-# this is function for continuous dilations followed by erosions
-# to maintain road width pixel resolution set numdilate = numerode
 def erodedilate_v1(img, numdilate=4, numerode=4, nummedian=2, kernelsz=16, mediansz=5 ):
+    """
+    This is a function for continuous dilations followed by erosions
+    to maintain road width pixel resolution set numdilate = numerode
+    """
     kernel_1 = np.zeros((kernelsz,kernelsz))
 
     # central element 1s
