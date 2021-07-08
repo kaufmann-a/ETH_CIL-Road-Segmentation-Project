@@ -49,8 +49,7 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
     :param pixel_threshold: probability threshold that a pixel is a road
     :param device: cuda/cpu
     :param is_prob: True = The output of the model are probabilities.
-    :individual_saving: True = Every predicted mask is saved separately to a file.
-    :return:
+    :param individual_saving: True = Every predicted mask is saved separately to a file.
     """
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -98,13 +97,14 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
     """
     Save the predictions of the model as images.
 
-    :preds: list of predictions
-    :index: the index list of the individual predictions
+    :param preds: list of predictions
+    :param index: the index list of the individual predictions
     :param folder: output folder to save the images in (is created if it does not exist)
     :param pixel_threshold: probability threshold that a pixel is a road
     :param is_prob: True = The output of the model are probabilities.
-    :return:
-
+    :param save_submission_img: saves the submission image to a file
+    :param folder_prefix: prefix for the folder where the images are saved
+    :return: predictions as masks
     """
     folder_normal_size = os.path.join(folder, folder_prefix + "pred-masks-original")
     if not os.path.exists(folder_normal_size):
