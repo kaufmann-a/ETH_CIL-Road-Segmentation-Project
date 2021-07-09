@@ -41,6 +41,12 @@ Software Versions used for this Project (Proposal by Andreas):
 
 ### Example commands
 
+#### Baselines
+| Model | Command |
+| ----- | ------- |
+| U-Net |`bsub -n 4 -J "gcdcnn_exp_baseline" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/gcdcnn_exp_baseline.jsonc'`|
+| GC-DCNN |`bsub -n 4 -J "unet_exp_baseline" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/unet_exp_baseline.jsonc'`|
+
 #### Dataset experiments
 | Dataset | Command |
 | ------- | ------- |
