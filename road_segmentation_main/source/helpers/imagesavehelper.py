@@ -1,12 +1,30 @@
+"""
+Helps saving model predictions.
+"""
+
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
 import os
 import torch
 import torchvision as torchvision
 
 from source.helpers.maskconverthelper import mask_to_submission_mask
-from comet_ml import Experiment
 
 
 def save_predictions_to_comet(engine, loader, epoch, pixel_threshold, device, is_prob, nr_saves):
+    """
+    Uploads the predictions of the given model using the provided data loader to comet.
+
+    :param engine: The main engine.
+    :param loader: A pytroch data loader.
+    :param epoch: The current epoch number which is used for the naming of the predictions.
+    :param pixel_threshold: The probabilistic threshold that decides that a predicted pixel is a road pixel.
+    :param device: cpu or cuda
+    :param is_prob: True = The output of the model is probabilistic.
+    :param nr_saves: External counter variable to indicate the number of uploads done so far.
+    :return:
+    """
     engine.model.eval()
 
     pred_img_idx = 0
@@ -43,10 +61,10 @@ def save_predictions_as_imgs(loader, model, folder="../data/train-predictions", 
     """
     Save the predictions of the model as images.
 
-    :param loader: the data loader to use
-    :param model: the model to get the predictions
-    :param folder: output folder to save the images in (is created if it does not exist)
-    :param pixel_threshold: probability threshold that a pixel is a road
+    :param loader: A pytroch data loader.
+    :param model: The model to use.
+    :param folder: Output folder to save the images in (is created if it does not exist).
+    :param pixel_threshold: Probability threshold that a pixel is a road.
     :param device: cuda/cpu
     :param is_prob: True = The output of the model are probabilities.
     :param individual_saving: True = Every predicted mask is saved separately to a file.
@@ -97,13 +115,13 @@ def save_masks_as_images(preds, index, folder, pixel_threshold=0.5, is_prob=True
     """
     Save the predictions of the model as images.
 
-    :param preds: list of predictions
-    :param index: the index list of the individual predictions
-    :param folder: output folder to save the images in (is created if it does not exist)
-    :param pixel_threshold: probability threshold that a pixel is a road
+    :param preds: List of predictions.
+    :param index: The index list of the individual predictions.
+    :param folder: Output folder to save the images in (is created if it does not exist).
+    :param pixel_threshold: Probability threshold that a pixel is a road.
     :param is_prob: True = The output of the model are probabilities.
-    :param save_submission_img: saves the submission image to a file
-    :param folder_prefix: prefix for the folder where the images are saved
+    :param save_submission_img: Saves the submission image to a file.
+    :param folder_prefix: Prefix for the folder where the images are saved.
     :return: predictions as masks
     """
     folder_normal_size = os.path.join(folder, folder_prefix + "pred-masks-original")
