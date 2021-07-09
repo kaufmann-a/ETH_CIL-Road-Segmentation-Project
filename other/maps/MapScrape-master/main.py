@@ -11,7 +11,7 @@ from utils.postprocess import labelledRoadData, downSampleImage, hasRoad
 DIR_PATH_SAT = './custom/original/images/'
 DIR_PATH_ROAD = './custom/original/masks/'
 FILE_NAME_SAT = 'extra_sat_{}_{}.jpg'
-FILE_NAME_ROAD = 'extra_sat_{}_{}.png'
+FILE_NAME_ROAD = 'extra_sat_{}_{}.jpg'
 COORD_SIGNIFICANT_DECIMAL = 7
 
 # Scraping config
@@ -63,6 +63,7 @@ def downloadAndProcessRoad(lat, lng, filePathRoad):
     areaImageRoad = downloadAreaRoad(lat, lng, AREA_SIZE)
     areaImageRoad = labelledRoadData(areaImageRoad)
     areaImageRoad = downSampleImage(areaImageRoad)
+    areaImageRoad = areaImageRoad.convert("RGB")
     areaImageRoad.save(filePathRoad)
     return areaImageRoad
 
