@@ -39,11 +39,23 @@ Software Versions used for this Project (Proposal by Andreas):
    - peek stdout log `bpeek`
 5. Find your training results with `ls ./trainings/`
 
+### Example commands
+
+#### U-Net augmentations runs
+| Augmentations | Command |
+| ------------- | ------- |
+| - | `bsub -n 4 -J "0000_unet_exp_augmentation" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/augmentations/unet/0000_unet_exp_augmentation.jsonc'`|
+| ShiftScaleRotate (SSR) |`bsub -n 4 -J "0004_unet_exp_augmentation" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/augmentations/unet/0004_unet_exp_augmentation.jsonc'`|
+| SSR+ChanelShuffle |`bsub -n 4 -J "0403_unet_exp_augmentation" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/augmentations/unet/0403_unet_exp_augmentation.jsonc'`|
+| SSR+RandomContrast (RC) |`bsub -n 4 -J "0409_unet_exp_augmentation" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/augmentations/unet/0409_unet_exp_augmentation.jsonc'`|
+| SSR+RC+GaussNoise |`bsub -n 4 -J "040908_unet_exp_augmentation" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/augmentations/unet/040908_unet_exp_augmentation.jsonc'`|
+
+
 ## Run submission
 1. Load environment
 2. Navigate to the road segmentation folder `cd road_segmentation_main/` 
 3. Run job on GPU
-   - `bsub -n 1 -J "submission-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/20210415-181009-default'`
+   - `bsub -n 1 -J "submission-job" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/20210415-181009-default'`
         - change the run folder name to the trainings' folder created during training: `--run_folder ./trainings/20210415-181009-default`
 4. Find the submission file in your run folder
 
