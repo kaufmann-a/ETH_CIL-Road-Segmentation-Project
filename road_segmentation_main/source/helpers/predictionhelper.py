@@ -1,12 +1,26 @@
+"""
+Helper functions for inference and submission mask format.
+"""
+
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
 import os
-import torch
+
 import cv2
+import torch
 
 from source.postprocessing.postprocessing import postprocess
 
 
 def patch_to_label(foreground_threshold, patch):
-    # assign a label to a patch
+    """
+    Assign a label to the given patch.
+
+    :param foreground_threshold: If the mean is greater then this threshold a 1 is assigned to the patch.
+    :param patch: The patch as a tensor.
+    :return: 0 = Mean is below threshold, 1 = else
+    """
     df = torch.mean(patch)
     if df > foreground_threshold:
         return 1
@@ -15,6 +29,16 @@ def patch_to_label(foreground_threshold, patch):
 
 
 def mask_to_submission_strings(image, image_nr, patch_size=16, foreground_threshold=0.25, use_submission_mask=False):
+    """
+    Creates out of a predicted mask a string in submission format.
+
+    :param image: The predicted image mask.
+    :param image_nr: The test image number.
+    :param patch_size: The patch size to use.
+    :param foreground_threshold: The threshold used to decide if a patch is road or not.
+    :param use_submission_mask: True = The given image mask is already in submission format.
+    :return: the mask as a submission string
+    """
     # iterate over prediction, just use every 16th pixel
     if use_submission_mask:
         # mask is already patched
@@ -34,12 +58,24 @@ def mask_to_submission_strings(image, image_nr, patch_size=16, foreground_thresh
                 yield ("{:03d}_{}_{},{}".format(image_nr, j, i, label))
 
 
-def images_to_submission_file(out_image_list, image_number_list, patch_size, foreground_threshold, folder, file_prefix, use_submission_mask=False):
+def images_to_submission_file(image_list, image_number_list, patch_size, foreground_threshold, folder, file_prefix,
+                              use_submission_mask=False):
+    """
+    Converts a list of predicted road image masks to the submission file using the submission format.
+
+    :param image_list: The predicted road masks.
+    :param image_number_list: The image numbers.
+    :param patch_size: The patch size to use.
+    :param foreground_threshold: The threshold used to decide if a patch is road or not.
+    :param folder: The folder where the submission file is saved to.
+    :param file_prefix: A prefix used for the submission file.
+    :param use_submission_mask: True = The given image mask is already in submission format.
+    """
     file_path = os.path.join(folder, file_prefix + 'submission.csv')
     with open(file_path, 'w') as f:
         f.write('id,prediction\n')
 
-        for image_nr_list_idx, out_image in enumerate(out_image_list):
+        for image_nr_list_idx, out_image in enumerate(image_list):
             # and then convert mask to string
             f.writelines('{}\n'.format(s)
                          for s in mask_to_submission_strings(image=out_image,
@@ -52,6 +88,17 @@ def images_to_submission_file(out_image_list, image_number_list, patch_size, for
 # TODO: Handle if morphological operations aren't defined.
 def run_post_processing(preds_list, folder, postprocessing_params, image_number_list, patch_size, foreground_threshold,
                         path_prefix):
+    """
+    Runs the post processing on the given predictions.
+
+    :param preds_list:
+    :param folder:
+    :param postprocessing_params:
+    :param image_number_list:
+    :param patch_size:
+    :param foreground_threshold:
+    :param path_prefix:
+    """
     folder_postprocessed = os.path.join(folder, path_prefix + "pred-masks-postprocessed")
     if not os.path.exists(folder_postprocessed):
         os.makedirs(folder_postprocessed)
