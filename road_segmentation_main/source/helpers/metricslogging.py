@@ -1,11 +1,26 @@
+"""
+Helper functions to initialize the different loggers.
+"""
+
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
 import glob
 import os
+
 from comet_ml import Experiment
 from torch.utils.tensorboard import SummaryWriter
+
 from source.configuration import Configuration
 from source.logcreator.logcreator import Logcreator
 
+
 def init_comet():
+    """
+    Initializes the comet experiment.
+
+    :return: the comet experiment
+    """
     if not Configuration.get('training.general.comet.log_to_comet'):
         return None
 
@@ -44,6 +59,8 @@ def init_comet():
             experiment.log_parameter("Transformations", data_collection_params.transform_folders)
         except:
             Logcreator.info("Transformations can't be logged, because parameter not available")
+
+        # upload the configuration file
         try:
             cfg_file = glob.glob(os.path.join(Configuration.output_directory, '*.jsonc'))[0]
             experiment.log_code(cfg_file)
@@ -51,6 +68,7 @@ def init_comet():
             Logcreator.error("Upload of config file failed")
 
         return experiment
+
     except ValueError:
         Logcreator.error("Comet initialization was not successful, the following information was missing:")
         if api_key is None:
@@ -59,12 +77,19 @@ def init_comet():
             Logcreator.error("- COMET_PROJECT_NAME")
         if workspace is None:
             Logcreator.error("- COMET_WORKSPACE")
+
         Logcreator.error("Pleas add the missing parameters to a file called .env")
         Logcreator.info("Training now continues without logging to Comet")
+
         return None
 
-# initialize tensorboard logger
+
 def init_tensorboard():
+    """
+    Initializes the tensor board logger.
+
+    :return: summary writer
+    """
     Configuration.tensorboard_folder = os.path.join(Configuration.output_directory, "tensorboard")
     if not os.path.exists(Configuration.tensorboard_folder):
         os.makedirs(Configuration.tensorboard_folder)
