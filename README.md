@@ -42,36 +42,47 @@ Software Versions used for this Project (Proposal by Andreas):
    - shorter run: `bsub -n 2 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
         - change the configuration file name if you use a different one `--configuration ./configurations/default.jsonc`
    - longer run with larger dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
-   - check job status `bbjobs` 
-   - peek stdout log `bpeek`
+   - check job status `bbjobs -w` 
+   - peek stdout log `bpeek` or `bpeek -f` to continuously read the log
 5. Find your training results with `ls ./trainings/`
 
-### Commands to reproduce results
+### Reproducibility
 
-On the Leonhard cluster we used following base submission command, which selects enough cpu memory as well as the 2080Ti GPU.
+We used following base submission command on the Leonhard cluster which selects enough cpu memory as well as the 2080Ti GPU.
 ```
 bsub -n 4 -J "description" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python <....>'
 ```
 
+To get reproducible results we fixed the random seeds of `torch`, `random` and `numpy` at various points in the code.
+Additionally, we set `torch.backends.cudnn.deterministic = True` as suggested on the official pytroch reproducibility 
+page: https://pytorch.org/docs/1.9.0/notes/randomness.html.
+
+The results of the U-Net are 100% reproducible.
+The GC-DCNN lacks exact reproducibility because the pyramid pooling module (PPM) uses the pytorch function `F.interpolate`
+which is not numerically stable (as in pytroch version 3.8.5). As a result we evaluated how much the validation accuracy varies,
+by running 10 runs of the GC-DCNN baseline using the "experiments dataset".
+- min validation accuracy: 0.9724 (removed one outlier with validation accuracy of 0.9715)
+- max validation accuracy: 0.9732
+
 #### Baselines
+For the baselines we use the "experiments dataset" which is a combination of the ETH and the GMaps-public dataset with a 
+predefined train and validation split. The images of the GMaps-public dataset were center cropped to size 400x400 to match the
+ETH dataset image size.
+
 | Model | Command |
 | ----- | ------- |
 | U-Net |`bsub -n 4 -J "gcdcnn_exp_baseline" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/gcdcnn_exp_baseline.jsonc'`|
 | GC-DCNN |`bsub -n 4 -J "unet_exp_baseline" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/unet_exp_baseline.jsonc'`|
 
 #### Final
-For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom.
+For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom with a validation split of 20%.
 
 | Description | Command |
 | ----------- | ------- |
-| U-Net + Aug.: SSR, RC |`bsub -n 4 -J "unet_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final.jsonc'`|
-|GC-DCNN + Aug.: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final.jsonc'`|
-|GC-DCNN plus + Aug.: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_plus_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_plus_final.jsonc'`|
-
-```
-bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final_plus.jsonc'
-bsub -n 4 -J "unet_final_plus_filter_lowlr" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final_plus_filter_lowlr.jsonc'
-```
+| U-Net<br>Augmentations: SSR, RC|`bsub -n 4 -J "unet_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final.jsonc'`|
+| U-Net+<br>Augmentations: SSR, RC|`bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final_plus.jsonc'`|
+|GC-DCNN<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final.jsonc'`|
+|GC-DCNN+<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final_plus.jsonc'`|
 
 ## Run submission
 1. Load environment
@@ -119,4 +130,4 @@ bsub -n 4 -J "unet_final_plus_filter_lowlr" -W 24:00 -R "rusage[mem=10240, ngpus
 
 1. cd to location of augmentations script `cd /cluster/home/{username}/cil-road-segmentation/preprocessing`
 2. Load environment
-3. run augmentation.py, add location of data as arguemnt: `python augmentations.py "/cluster/scratch/{username}/data"`
+3. run augmentation.py, add location of data as argument: `python augmentations.py "/cluster/scratch/{username}/data"`
