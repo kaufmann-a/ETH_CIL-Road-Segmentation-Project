@@ -1,6 +1,6 @@
 {
     "environment": {
-        "name": "unet final: augmentations, data",
+        "name": "unet plus",
         "output_path": "getenv('OUTPUT_DIR')",
         "log_file": "logs.txt"
     },
@@ -70,17 +70,17 @@
                 256,
                 512
             ],
-            "filtersize": 3,
-            "pool_kernelsize" : 2,
+            "filtersize": 5,
+            "pool_kernelsize" : 4,
             "pool_stride" : 2,
             "stride" : 1,
             "dilation" : 1,
-            "pool_padding": 0,
+            "pool_padding": 1,
         },
         "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
-            "lr": 0.001
+            "lr": 0.0001
         },
         "lr_scheduler": {
             "name": "multiStepLR",

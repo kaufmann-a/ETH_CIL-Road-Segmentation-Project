@@ -1,12 +1,12 @@
 {
     "environment": {
-        "name": "augmentation test",
+        "name": "gcdcnn plus",
         "output_path": "getenv('OUTPUT_DIR')",
         "log_file": "logs.txt"
     },
     "data_collection": {
         "folder": "getenv('DATA_COLLECTION_DIR')",
-        "collection_names": ["eth_dataset", "jkfrie", "jkfrie_additional"],
+        "collection_names": ["eth_dataset", "gmaps_public", "gmaps_custom"],
         "transform_folders" : ["rotate_90", "rotate_180", "rotate_270",
                                "flip_hor", "flip_hor_90", "flip_ver", "flip_ver_90",
                                ],
