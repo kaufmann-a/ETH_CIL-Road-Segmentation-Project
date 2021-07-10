@@ -62,7 +62,8 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-final-gcdcnn"
+                    "official-final-gcdcnn",
+                    "final"
                 ]
             }
         },

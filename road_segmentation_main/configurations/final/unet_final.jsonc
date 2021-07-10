@@ -56,7 +56,8 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-final-unet"
+                    "official-final-unet",
+                    "final"
                 ]
             }
         },
