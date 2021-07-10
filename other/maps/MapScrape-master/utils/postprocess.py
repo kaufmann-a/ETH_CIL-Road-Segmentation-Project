@@ -1,7 +1,7 @@
 from PIL import Image, ImageFilter
 
 # Post processing config
-TARGET_AREA_SIZE = 400
+TARGET_AREA_SIZE = 608
 ROAD_ALPHA_RANGE = list(range(45, 55))
 LABEL_ROAD = (255, 255, 255)
 LABEL_NOT_ROAD = (0, 0, 0)
