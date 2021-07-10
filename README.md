@@ -16,9 +16,15 @@ Software Versions used for this Project (Proposal by Andreas):
         - `python -m venv my_venv`
         - `source ./my_venv/bin/activate`
         - `pip install -r ./road_segmentation_main/requirements.txt`
-3. Preprocess images
-   - `cd ./cil-road-segmentation/preprocessing/`
-   - `python augmentations.py`
+3. Create a `.env` file in the folder `cil-road-segmentation/road_segmentation_main`
+    - `cd road_segmentation_main/`
+    - `vim .env`
+        ```
+        DATA_COLLECTION_DIR=../data/training
+        OUTPUT_DIR=trainings
+        ```
+    - on the leonhard cluster it is advisable to use the scratch as output directory,
+      due to space constraints of the home directory
 
 ## General: loading environment
 1. `cd ./cil-road-segmentation/`
