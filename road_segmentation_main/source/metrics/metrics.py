@@ -1,3 +1,10 @@
+"""
+Classes with custom metrics
+"""
+
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
 import torch
 import torchmetrics
 from torch.utils.tensorboard import SummaryWriter

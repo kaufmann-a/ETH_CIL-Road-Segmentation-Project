@@ -2,6 +2,9 @@
 Helps splitting an image into multiple smaller images.
 """
 
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
 import math
 
 import PIL

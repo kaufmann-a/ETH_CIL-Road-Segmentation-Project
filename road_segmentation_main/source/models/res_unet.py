@@ -4,6 +4,9 @@
    https://github.com/Kaido0/Brain-Tissue-Segment-Keras/blob/4ce27857b0bec8109c03db8263a9b2f41e3a6a55/net/res_unet.py
 """
 
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
 import torch
 import torch.nn as nn
 

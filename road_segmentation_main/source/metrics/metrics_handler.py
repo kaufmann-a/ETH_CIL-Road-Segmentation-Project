@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # coding: utf8
 
+"""
+Handles a group of metrics by updating, computing and logging them.
+"""
+
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
 __email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
 

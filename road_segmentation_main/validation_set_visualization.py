@@ -1,3 +1,10 @@
+"""
+Visualization of the validation set
+"""
+
+__author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
+__email__ = "ankaufmann@student.ethz.ch, jonbraun@student.ethz.ch, fluebeck@student.ethz.ch, abaranwal@student.ethz.ch"
+
 import os
 
 import matplotlib.pyplot as plt

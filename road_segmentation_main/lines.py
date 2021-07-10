@@ -2,7 +2,7 @@
 # coding: utf8
 
 """
-Main class for inference
+Main class to generate the lines layer
 """
 
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
