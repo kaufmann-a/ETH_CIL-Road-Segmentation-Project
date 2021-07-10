@@ -21,19 +21,13 @@
                 {
                     "name": "ShiftScaleRotate",
                     "params": {
-                        "p": 0.4
+                        "p": 0.5
                     }
                 },
                 {
                     "name": "RandomContrast",
                     "params": {
-                        "p": 0.4
-                    }
-                },
-                {
-                    "name": "GaussNoise",
-                    "params": {
-                        "p": 0.4
+                        "p": 0.5
                     }
                 }
             ],
