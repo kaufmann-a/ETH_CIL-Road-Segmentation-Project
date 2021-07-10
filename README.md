@@ -23,8 +23,9 @@ Software Versions used for this Project (Proposal by Andreas):
         DATA_COLLECTION_DIR=../data/training
         OUTPUT_DIR=trainings
         ```
-    - on the leonhard cluster it is advisable to use the scratch as output directory,
-      due to space constraints of the home directory
+    - On the leonhard cluster it is advisable to use the scratch as output directory,
+      due to space constraints of the home directory. For instance use
+      `OUTPUT_DIR=/cluster/scratch/<username>/cil_trainings`.
 
 ## General: loading environment
 1. `cd ./cil-road-segmentation/`
@@ -45,7 +46,26 @@ Software Versions used for this Project (Proposal by Andreas):
    - peek stdout log `bpeek`
 5. Find your training results with `ls ./trainings/`
 
-### Example commands
+### Commands to reproduce results
+
+On the Leonhard cluster we used following base submission command, which selects enough cpu memory as well as the 2080Ti GPU.
+```
+bsub -n 4 -J "description" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python <....>'
+```
+
+#### Final
+For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom.
+
+| Description | Command |
+| ----------- | ------- |
+| U-Net + Aug.: SSR, RC |`bsub -n 4 -J "unet_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final.jsonc'`|
+|GC-DCNN + Aug.: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final.jsonc'`|
+|GC-DCNN plus + Aug.: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_plus_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_plus_final.jsonc'`|
+
+```
+bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final_plus.jsonc'
+bsub -n 4 -J "unet_final_plus_filter_lowlr" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/unet_final_plus_filter_lowlr.jsonc'
+```
 
 #### Baselines
 | Model | Command |
