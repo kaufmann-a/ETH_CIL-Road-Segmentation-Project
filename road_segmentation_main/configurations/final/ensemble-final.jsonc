@@ -1,0 +1,15 @@
+{
+    "environment": {
+        "name" : "Name of the Run - this is just a default config file",
+        "output_path": "getenv('OUTPUT_DIR')",
+        "log_file" : "logs.txt"
+    },
+    "dirs_prediction" : ["20210710-115819-gcdcnn_final/prediction-20210711-095823",
+                         "20210710-115820-gcdcnn_plus_final/prediction-20210711-112218",
+                         "20210710-115820-unet_final_plus/prediction-20210711-095738",
+                         "20210710-115821-unet_final/prediction-20210710-235855",
+                         "20210709-163934-unet_exp_baseline/prediction-20210710-093845",
+                         "20210709-155952-gcdcnn_exp_baseline/prediction-20210711-120117"],
+    "mode" : "binary",
+    "voting_threshold" : 0.5
+}
