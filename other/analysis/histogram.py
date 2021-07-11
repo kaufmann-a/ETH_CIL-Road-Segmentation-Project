@@ -73,14 +73,17 @@ def get_histograms(image_list, name="train", save_images=False, debug=False):
     return img_hist_list, img_cdf_list
 
 
-def plot_histogram_cdf(img_hist_per_channel, img_cfd_per_channel, title="", fname=None, dir="", bins=np.arange(256)):
+def plot_histogram_cdf(img_hist_per_channel, img_cfd_per_channel, title="", fname=None, dir="", bins=np.arange(256),
+                       plot_cdf=False):
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(16, 8))
     for c, c_color in enumerate(('red', 'green', 'blue')):
         img_hist = img_hist_per_channel[c]
         img_cdf = img_cfd_per_channel[c]
-        axes[c].plot(bins, img_hist / img_hist.max())
-        axes[c].plot(bins, img_cdf)
-        axes[c].set_ylabel(c_color)
+        axes[c].plot(bins, img_hist, color=c_color)
+        if plot_cdf:
+            axes[c].plot(bins, img_cdf)
+        axes[c].set_ylabel("count")
+        axes[c].set_xlabel(c_color + ": intensity value")
     fig.suptitle(title)
     if fname is not None:
         if not os.path.exists(dir):
@@ -180,14 +183,14 @@ if __name__ == '__main__':
 
     # test data
     dirEthTestImages = "../../data/test_images/"
-    process_on_dataset(dirEthTestImages, "ETH test")
+    process_on_dataset(dirEthTestImages, "ETH test images")
 
     # training data
     DIR = "../../data/training/"
-    process_on_dataset(os.path.join(DIR, "eth_dataset/original/images"), "ETH train")
+    process_on_dataset(os.path.join(DIR, "eth_dataset/original/images"), "ETH train images")
 
     # other datasets
-    datasets_dir = ["jkfrie", "matejsladek", "alessiapacca", "osm_roadtracer", "ottawa"]
+    datasets_dir = ["gmaps_public", "gmaps_custom", "matejsladek", "alessiapacca", "osm_roadtracer", "ottawa"]
 
     for dataset in datasets_dir:
         print(dataset)
