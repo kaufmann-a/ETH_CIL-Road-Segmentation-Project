@@ -51,12 +51,12 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet","retrain-binary","dilation","20210710-115820-unet_final_plus"
+                    "official-exp-unet-pconv","retrain-binary","dilation","20210710-115820-unet_final_plus"
                 ]
             }
         },
         "model": {
-            "name": "unet",
+            "name": "unet_pconv_dilation",
             "in_channels" : 3,
             "out_channels" : 1,
             "features" : [

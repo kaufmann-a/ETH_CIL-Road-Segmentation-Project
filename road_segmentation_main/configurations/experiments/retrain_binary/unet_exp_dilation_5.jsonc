@@ -51,7 +51,7 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet","retrain-binary","dilation"
+                    "official-exp-unet","retrain-binary","dilation","20210710-115820-unet_final_plus"
                 ]
             }
         },

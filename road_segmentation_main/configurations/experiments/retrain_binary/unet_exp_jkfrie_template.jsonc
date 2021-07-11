@@ -1,22 +1,21 @@
 {
     "environment": {
-        "name": "augmentation test",
+        "name": "retrain binary test",
         "output_path": "getenv('OUTPUT_DIR')",
         "log_file": "logs.txt"
     },
     "data_collection": {
         "folder": "getenv('DATA_COLLECTION_DIR')",
         "collection_names": [
-            "experiments_dataset_binary"
+            "jkfrie"
         ],
-	"transform_folders" : ["original"],
+	"transform_folders" : ["original",],
         "include_overlapping_patches" : false,
-        "test_images_folder": "../data/binarynew_test_images",
+        "test_images_folder": "../data/test_images",
         "include_val_transforms": false,
-        "min_road_percentage" : 0.00001, //Removes images with 16px road
-	"validation_ratio" : 0.2,
-	"include_val_transforms": false,
+        "min_road_percentage" : 0.0001, //Removes images with 16px road
         "save_imgs": true,
+	"validation_ratio": 0.2,
         "augmentations": {
             "list": [
                 {
@@ -32,15 +31,15 @@
     },
     "training": {
         "general": {
-            "batch_size": 8,
-            "num_epochs": 200,
-            "checkpoint_save_interval": 10,
+            "batch_size": 4,
+            "num_epochs": 80,
+            "checkpoint_save_interval": 30,
             "num_workers": 8,
             "shuffle_data": true,
             "foreground_threshold": 0.5,
             "cropped_image_size": [
-                400,
-                400
+                608,
+                608
             ],
             "submission_loss": false,
             "use_submission_masks": false,
@@ -51,7 +50,7 @@
             "comet": {
                 "log_to_comet": true,
                 "tags": [
-                    "official-exp-unet","retrain-binary","dilation","20210710-115820-unet_final_plus"
+                    "official-exp-unet","retrain-binary-608"
                 ]
             }
         },
@@ -75,7 +74,7 @@
         "loss_function": "dice_loss",
         "optimizer": {
             "name": "adam",
-            "lr": 0.0001
+            "lr": 0.001
         },
         "lr_scheduler": {
             "name": "multiStepLR",
@@ -101,7 +100,7 @@
         "general": {
             "foreground_threshold": 0.25,
             "use_original_image_size": true,
-            "enable_postprocessing": true
+            "enable_postprocessing": true,
         },
         "postprocessing": {
             "morphology": {
