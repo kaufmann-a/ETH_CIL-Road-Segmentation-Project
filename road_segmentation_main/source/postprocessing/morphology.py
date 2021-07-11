@@ -1,5 +1,9 @@
+#!/usr/bin/env python3
+# coding: utf8
+
 """
-Helperfunctions for postprocessing
+Morphological functions for post processing.
+    erodedilate_v0 and erodedilate_v1 are the 2 variants of filters.
 """
 
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
@@ -10,9 +14,11 @@ import cv2
 
 def erodedilate_v0(img, numdilate=4, numerode=4, nummedian=2, kernelsz=16, mediansz=5 ):
     """
-    This is a function for continuous dilations followed by erosions
-    to maintain road width pixel resolution set numdilate = numerode
+    Continuous dilations followed by erosions, to maintain road width pixel resolution set numdilate = numerode.
+    Median filtering to sharpen edges at the end.
+    Morphological filters are kernels with all ones
     """
+
     kernel_allones = np.ones((kernelsz,kernelsz))
     #Continuous dilations. Spreads out the pixels to join the roads.
     kernel_allones = kernel_allones.astype('uint8')
@@ -37,8 +43,10 @@ def erodedilate_v0(img, numdilate=4, numerode=4, nummedian=2, kernelsz=16, media
 
 def erodedilate_v1(img, numdilate=4, numerode=4, nummedian=2, kernelsz=16, mediansz=5 ):
     """
-    This is a function for continuous dilations followed by erosions
-    to maintain road width pixel resolution set numdilate = numerode
+    Continuous dilations followed by erosions, to maintain road width pixel resolution set numdilate = numerode
+    Median filtering to sharpen edges at the end.
+    Morphological filters are kernels with only central elements as ones
+        successive filters applied are: middle column as 1s, middle row as 1s, left diagonal as 1s, right diagonal as 1s.
     """
     kernel_1 = np.zeros((kernelsz,kernelsz))
 
