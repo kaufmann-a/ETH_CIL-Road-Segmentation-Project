@@ -32,11 +32,11 @@ Since we only have 100 training images we increased our training set by:
 ### Models
 We employed two models the [U-Net](http://arxiv.org/abs/1505.04597) and
 the [GC-DCNN](https://www.sciencedirect.com/science/article/pii/S0020025520304862). To evaluate the influence of the
-architecture we additionally adapt both models to improve the predictive results. In the following we refer to the **
-U-Net plus** as the U-Net where we increased the pool kernel size from 2 to 4 resulting in a significant improvement.
+architecture we additionally adapt both models to improve the predictive results. In the following we refer to the 
+**U-Net plus** as the U-Net where we increased the pool kernel size from 2 to 4 resulting in a slight improvement.
 The **GC-DCNN plus** refers to a deeper version of the original GC-DCNN and can be viewed as a novel combination of the
 GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/1606.00915v2) (used as a bridge replacing
-the Pyramid Pooling Module) and the [Attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards branch).
+the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards branch).
 
 ### Results
 - the largest factor was contributed by using more data
