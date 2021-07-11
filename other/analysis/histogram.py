@@ -180,12 +180,14 @@ if __name__ == '__main__':
 
     # test data
     dirEthTestImages = "../../data/test_images/"
-    process_on_dataset(dirEthTestImages, "eth_data_test")
+    process_on_dataset(dirEthTestImages, "ETH test")
 
     # training data
     DIR = "../../data/training/"
+    process_on_dataset(os.path.join(DIR, "eth_dataset/original/images"), "ETH train")
 
-    datasets_dir = ["eth_dataset", "jkfrie", "matejsladek", "alessiapacca", "osm_roadtracer", "ottawa"]
+    # other datasets
+    datasets_dir = ["jkfrie", "matejsladek", "alessiapacca", "osm_roadtracer", "ottawa"]
 
     for dataset in datasets_dir:
         print(dataset)
