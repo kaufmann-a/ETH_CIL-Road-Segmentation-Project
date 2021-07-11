@@ -136,3 +136,4 @@ trainings/
 
 # vscode 
 .vscode
+/road_segmentation_main/lsf.*
