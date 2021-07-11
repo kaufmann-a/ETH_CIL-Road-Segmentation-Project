@@ -14,32 +14,56 @@ prediction accuracy significantly, these procedures are able to improve some of 
 
 ### Data
 
-The ETH training comprises 100 train images and 94 test images. The train image are not only different in size (400x400
+The ETH training data comprises only 100 train images and 94 test images. The train image are not only different in size (400x400
 vs. 608x608) from the ETH test data but are also of different quality. Comparing the mean histograms we find that the
-test images are missing a lot of color values. These facts increase the complexity of the problem and make it harder to
+test images are missing a lot of color intensity values. These facts increase the complexity of the problem and make it harder to
 generalize from the train images to the test images.
-![mean-test-histograms](./other/analysis/histograms/ETH test images_mean_hist.png)
-![mean-train-histograms](./other/analysis/histograms/ETH train images_mean_hist.png)
+<p>
+<img src="./other/analysis/histograms/ETH test images_mean_hist.png" alt="mean-test-histograms" height="300" >
+<img src="./other/analysis/histograms/ETH train images_mean_hist.png" alt="mean-train-histograms" height="300">
+</p>
+
+Since we only have 100 training images we increased our training set by:
+- creating augmented ETH images. For that we flipped the original image and stored it separately. Further we saved the
+  rotated versions (by 90, 180, 270 degrees) of the original and the flipped image. This increases the training set from
+  100 images to a total of 800 images. (see [ETH-dataset](./data/training/eth_dataset))
+- using additional training data from Google Maps: [GMaps-public](./data/training/gmaps_public), [GMaps-custom](./data/training/gmaps_custom)
+
+### Models
+We employed two models the [U-Net](http://arxiv.org/abs/1505.04597) and
+the [GC-DCNN](https://www.sciencedirect.com/science/article/pii/S0020025520304862). To evaluate the influence of the
+architecture we additionally adapt both models to improve the predictive results. In the following we refer to the **
+U-Net plus** as the U-Net where we increased the pool kernel size from 2 to 4 resulting in a significant improvement.
+The **GC-DCNN plus** refers to a deeper version of the original GC-DCNN and can be viewed as a novel combination of the
+GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/1606.00915v2) (used as a bridge replacing
+the Pyramid Pooling Module) and the [Attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards branch).
+
+### Results
+- the largest factor was contributed by using more data
+- the model architecutre as well as the postprocessing played an important but in comparision a minor factor
 
 ## Project Code Structure
 
 ```
 +-- cil-road-segmentation
-   +-- data                      [contains thetraining data]
+   +-- data                      [contains the training data]
    +-- ...
    +-- road_segmentation_main
        +-- configurations        [folder that contains the training parameters in form of *.jsonc files]
        +-- source                [contains the main code to train and run the models]
        +-- train.py              [script to run a training]
        +-- inference.py          [script to predict on the test data]
-       +-- ensemble.py           [script that creats out of mutliple preditions a ensemble prediction by averaging]
+       +-- ensemble.py           [script that creats out of mutliple preditions an ensemble prediction by averaging]
 
 ```
 
 ## Reproducibility
 
 - python version: 3.8.5
-- library version according to [requirements](requirements.txt) file
+- cuda: 10.1.243
+- cudnn: 7.6.4
+- gcc 6.3.0
+- python library version according to [requirements](requirements.txt) file
 
 ### Setup on leonhard cluster
 
