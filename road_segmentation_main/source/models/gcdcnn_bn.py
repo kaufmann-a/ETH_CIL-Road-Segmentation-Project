@@ -4,6 +4,10 @@
 """"
 GlobalContextDilatedCNN (GC-DCNN)
 
+The difference to the gcdcnn.py file is that
+- at various position we use batch normalization to stabilize training
+- higher configurability: for instance the ASPP can be used as a bridge or attention in the up branch
+
 Implementation based on:
     Paper: Global context based automatic road segmentation via dilated convolutional neural network
            by Meng Lan, Yipeng Zhang, Lefei Zhang, Bo Du
