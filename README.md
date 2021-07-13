@@ -10,39 +10,50 @@ pipeline, we conclude that the greatest impact can be reached by using a large a
 minor contribution of model architecture alternations, we propose two post-processing techniques. Albeit not improving
 prediction accuracy significantly, these procedures are able to improve some of the predicted roads visually.
 
-## Findings & Results 
+## Findings & Results
 
 ### Data
 
-The ETH training data comprises only 100 train images and 94 test images. The train image are not only different in size (400x400
-vs. 608x608) from the ETH test data but are also of different quality. Comparing the mean histograms we find that the
-test images are missing a lot of color intensity values. These facts increase the complexity of the problem and make it harder to
-generalize from the train images to the test images.
+The ETH training data comprises only 100 train images and 94 test images. The train image are not only different in
+size (400x400 vs. 608x608) from the ETH test data but are also of different quality. Comparing the mean histograms we
+find that the test images are missing a lot of color intensity values. These facts increase the complexity of the
+problem and make it harder to generalize from the train images to the test images.
 <p>
-<img src="./other/analysis/histograms/ETH test images_mean_hist.png" alt="mean-test-histograms" height="300" >
-<img src="./other/analysis/histograms/ETH train images_mean_hist.png" alt="mean-train-histograms" height="300">
+<img src="./other/analysis/histograms/ETH test images_mean_hist.png" alt="mean-test-histograms" height="100%" >
+<img src="./other/analysis/histograms/ETH train images_mean_hist.png" alt="mean-train-histograms" height="100%">
 </p>
 
 Since we only have 100 training images we increased our training set by:
+
 - creating augmented ETH images. For that we flipped the original image and stored it separately. Further we saved the
   rotated versions (by 90, 180, 270 degrees) of the original and the flipped image. This increases the training set from
   100 images to a total of 800 images. (see [ETH-dataset](./data/training/eth_dataset))
-- using additional training data from Google Maps: [GMaps-public](./data/training/gmaps_public), [GMaps-custom](./data/training/gmaps_custom)
+- using additional training data from Google Maps: [GMaps-public](./data/training/gmaps_public)
+  , [GMaps-custom](./data/training/gmaps_custom)
 
 ### Models
+
 We employed two models the [U-Net](http://arxiv.org/abs/1505.04597) and
 the [GC-DCNN](https://www.sciencedirect.com/science/article/pii/S0020025520304862). To evaluate the influence of the
-architecture we additionally adapt both models to improve the predictive results. In the following we refer to the 
+architecture we additionally adapt both models to improve the predictive results. In the following we refer to the
 **U-Net plus** as the U-Net where we increased the pool kernel size from 2 to 4 resulting in a slight improvement.
 The **GC-DCNN plus** refers to a deeper version of the original GC-DCNN and can be viewed as a novel combination of the
-GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/1606.00915v2) (used as a bridge replacing
-the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards branch).
+GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/1606.00915v2) (used as a bridge
+replacing the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards
+branch).
+
+## Postprocessing
+
+TODO: short description + image (same as in report)
 
 ### Results
+
 - the largest factor was contributed by using more data
-- the model architecutre as well as the postprocessing played an important but in comparision a minor factor
+- the model architecture as well as the postprocessing played an important but in comparison a minor factor
 
 ## Project Code Structure
+
+Below we give a short non-exhaustive overview of the different folders and files together with their usage.
 
 ```
 +-- cil-road-segmentation
@@ -54,8 +65,22 @@ the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.
        +-- train.py              [script to run a training]
        +-- inference.py          [script to predict on the test data]
        +-- ensemble.py           [script that creats out of mutliple preditions an ensemble prediction by averaging]
-
+       +-- ...
 ```
+
+Our code is build such that it allows to
+
+1. reproduce runs
+2. compare runs
+3. keep results of finished runs
+
+We use configuration files to simplify not only to run different models with different configurations but also to
+reproduce past runs. Configuration files can be found in the
+folder `cil-road-segmentation/road_segmentation_main/configurations`. They allow to change the dataset, data
+augmentations, model, model parameters, optimizer, learning rate scheduler, and so on. Moreover, logging with
+`tensorboard` and `comet` gives us the ability to track and compare results of different runs at ease. For every run a
+"run-folder" is created which takes the name `<datetime>-<configfile-name>`. This folder keeps the `stdout` log,
+the `tensorboard` log and additionally the model weights-checkpoint. This serves as a back up of executed runs.
 
 ## Reproducibility
 
@@ -63,7 +88,7 @@ the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.
 - cuda: 10.1.243
 - cudnn: 7.6.4
 - gcc 6.3.0
-- python library version according to [requirements](requirements.txt) file
+- python library version according to [requirements](./road_segmentation_main/requirements.txt) file
 
 ### Setup on leonhard cluster
 
