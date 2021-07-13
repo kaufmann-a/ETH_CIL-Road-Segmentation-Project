@@ -44,7 +44,7 @@ GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/
 replacing the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards
 branch).
 
-### Postprocessing_
+### Postprocessing
 _**TODO: short description + image (same as in report)**_
 
 ### Results
