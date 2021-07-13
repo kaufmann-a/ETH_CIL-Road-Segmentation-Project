@@ -42,15 +42,15 @@ GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/
 replacing the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards
 branch).
 
-### Postprocessing
-**TODO: short description + image (same as in report)**
+### Postprocessing_
+_**TODO: short description + image (same as in report)**_
 
 ### Results
 
 - the largest factor was contributed by using more data
 - the model architecture as well as the postprocessing played an important but in comparison a minor factor
 
-**TODO: add short text maybe copy conclusion of report?**
+_**TODO: add short text maybe copy conclusion of report?**_
 
 ## Project Code Structure
 
@@ -61,7 +61,7 @@ Below we give a short non-exhaustive overview of the different folders and files
    +-- data                      [contains the training data]
    +-- ...
    +-- road_segmentation_main
-       +-- configurations        [folder that contains the training parameters in form of *.jsonc files]
+       +-- configurations        [contains the training parameters in form of *.jsonc files]
        +-- source                [contains the main code to train and run the models]
        +-- train.py              [script to run a training]
        +-- inference.py          [script to predict on the test data]
@@ -70,23 +70,41 @@ Below we give a short non-exhaustive overview of the different folders and files
 ```
 
 Our code is build such that it allows to
+1. Reproduce runs
+2. Compare runs
+3. Keep results of finished runs
 
-1. reproduce runs
-2. compare runs
-3. keep results of finished runs
-
-We use configuration files to simplify not only to run different models with different configurations but also to
+We use configuration files to not only run different models with different configurations but also to
 reproduce past runs. Configuration files can be found in the
 folder `cil-road-segmentation/road_segmentation_main/configurations`. They allow to change the dataset, data
 augmentations, model, model parameters, optimizer, learning rate scheduler, and so on. Moreover, logging with
 `tensorboard` and `comet` gives us the ability to track and compare results of different runs at ease. For every run a
 "run-folder" is created which takes the name `<datetime>-<configfile-name>`. This folder keeps the `stdout` log,
-the `tensorboard` log and additionally the model weights-checkpoint (see [Training folder structure](#training-folder-structure). This folder serves as a back up of executed runs.
+the `tensorboard` log and additionally the model weights-checkpoint (see [Training folder structure](#training-folder-structure). 
+This folder serves as a back up of executed runs.
 
 `train.py`:
 This is the main script to run a training. The main commandline argument is `--configuration` which contains the configuration file path.
 
 `inference.py`: This script helps to get model predictions using the ETH test dataset. The main commandline argument is `--run_folder` which takes the path to the "run-folder" created during training. Then this script will automatically load the best model checkpoint and create the submission.csv file inside the "run-folder" in the folder `prediction-<datetime>`.
+
+### Training folder structure
+```
++-- trainings
+    +-- <datetime>-<configfile_name>      [this is a training "run-folder"]
+        +-- prediction-<datetime>         [contains the model predictions and the submission file]
+        |   +-- <configfile>              [copy of the configuration file used in inference]
+        |   +-- submission.csv            [the submission file to hand in predictions]
+        +-- tensorboard                   [contains the tensorboard log]
+        |   +-- events.out.tfevents.*
+        +-- weights_checkpoint            [contains the model checkpoints]
+        |   +-- <epoch>_*.pth             [model checkpoint file]
+        |   +-- ...
+        +-- <configfile>                  [copy of the configuration file used in training]
+        +-- logs.txt                      [contains the stdout log]
+```
+
+`weights_checkpoint`: There are two model weights checkpoints. The interval based checkpoint files called `<epoch>_checkpoint.pth` created after a curtain number of epochs and the files `<epoch>_best.pth` created whenever the model achives a new best validation accuracy.
 
 ## Reproducibility
 
@@ -199,20 +217,4 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 
 ### 6. Run an ensemble prediction
 
-**TODO: reporduciblity of ensemble.py prediction**
-
-## Training folder structure
-```
-+-- trainings
-    +-- <datetime>-<configfile_name>
-        +-- prediction-<datetime>
-        |   +-- <configfile>
-        |   +-- submission.csv   
-        +-- tensorboard
-        |   +-- events.out.tfevents.*
-        +-- weights_checkpoint
-        |   +-- <epoch>_*.pth
-        |   +-- ...
-        +-- <configfile>
-        +-- logs.txt
-```
+_**TODO: reporduciblity of ensemble.py prediction**_
