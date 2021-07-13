@@ -10,6 +10,8 @@ pipeline, we conclude that the greatest impact can be reached by using a large a
 minor contribution of model architecture alternations, we propose two post-processing techniques. Albeit not improving
 prediction accuracy significantly, these procedures are able to improve some of the predicted roads visually.
 
+_**TODO: Add image**_
+
 ## Findings & Results
 
 ### Data
@@ -107,7 +109,7 @@ This is the main script to run a training. The main commandline argument is `--c
 `weights_checkpoint`: There are two model weights checkpoints. The interval based checkpoint files called `<epoch>_checkpoint.pth` created after a curtain number of epochs and the files `<epoch>_best.pth` created whenever the model achives a new best validation accuracy.
 
 ## Reproducibility
-
+Here we list the used library versions, which are which are loaded and or installed when following the steps below (and working with the leonhard cluster).
 - python version: 3.8.5
 - cuda: 10.1.243
 - cudnn: 7.6.4
@@ -176,7 +178,7 @@ To get reproducible results we fixed the random seeds of `torch`, `random` and `
 Additionally, we set `torch.backends.cudnn.deterministic = True` as suggested on the official pytroch reproducibility
 page: https://pytorch.org/docs/1.9.0/notes/randomness.html.
 
-The results of the U-Net are 100% reproducible. The GC-DCNN lacks exact reproducibility because the pyramid pooling
+The results of the U-Net are reproducible. The GC-DCNN lacks exact reproducibility because the pyramid pooling
 module (PPM) uses the pytorch function `F.interpolate`
 which is not numerically stable (as in pytroch version 3.8.5). As a result we evaluated how much the validation accuracy
 varies, by running 10 runs of the GC-DCNN baseline using the "experiments dataset".
@@ -217,4 +219,4 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 
 ### 6. Run an ensemble prediction
 
-_**TODO: reporduciblity of ensemble.py prediction**_
+_**TODO: reporducibility of ensemble.py prediction**_
