@@ -42,14 +42,15 @@ GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/
 replacing the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards
 branch).
 
-## Postprocessing
-
-TODO: short description + image (same as in report)
+### Postprocessing
+**TODO: short description + image (same as in report)**
 
 ### Results
 
 - the largest factor was contributed by using more data
 - the model architecture as well as the postprocessing played an important but in comparison a minor factor
+
+**TODO: add short text maybe copy conclusion of report?**
 
 ## Project Code Structure
 
@@ -80,7 +81,12 @@ folder `cil-road-segmentation/road_segmentation_main/configurations`. They allow
 augmentations, model, model parameters, optimizer, learning rate scheduler, and so on. Moreover, logging with
 `tensorboard` and `comet` gives us the ability to track and compare results of different runs at ease. For every run a
 "run-folder" is created which takes the name `<datetime>-<configfile-name>`. This folder keeps the `stdout` log,
-the `tensorboard` log and additionally the model weights-checkpoint. This serves as a back up of executed runs.
+the `tensorboard` log and additionally the model weights-checkpoint (see [Training folder structure](#training-folder-structure). This folder serves as a back up of executed runs.
+
+`train.py`:
+This is the main script to run a training. The main commandline argument is `--configuration` which contains the configuration file path.
+
+`inference.py`: This script helps to get model predictions using the ETH test dataset. The main commandline argument is `--run_folder` which takes the path to the "run-folder" created during training. Then this script will automatically load the best model checkpoint and create the submission.csv file inside the "run-folder" in the folder `prediction-<datetime>`.
 
 ## Reproducibility
 
@@ -90,19 +96,25 @@ the `tensorboard` log and additionally the model weights-checkpoint. This serves
 - gcc 6.3.0
 - python library version according to [requirements](./road_segmentation_main/requirements.txt) file
 
-### Setup on leonhard cluster
+### 1. Initial setup on leonhard and environement installation
 
-1. Clone `git clone git@github.com:FrederikeLuebeck/cil-road-segmentation.git`
-2. Setup environment
-    - Load software modules: `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
-    - Create virtual env and install packages:
+1. Clone this git repository `git clone git@github.com:FrederikeLuebeck/cil-road-segmentation.git`
+2. Environment setup
+    - Load the leonhard software modules:  `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
+    - Create a virtual environment and install the required python packages:
         - `cd ./cil-road-segmentation/`
-        - `python -m venv my_venv`
-        - `source ./my_venv/bin/activate`
+        - `python -m venv cil_venv`
+        - `source ./cil_venv/bin/activate`
         - `pip install -r ./road_segmentation_main/requirements.txt`
-3. Create a `.env` file in the folder `cil-road-segmentation/road_segmentation_main`
+
+### 2. Add environment variables
+3. Create a file called `.env` in the folder `cil-road-segmentation/road_segmentation_main`. This file should contain the configuration of the data collection directory as well as the output directory.
     - `cd road_segmentation_main/`
     - `vim .env`
+4. Add the following environment variables to the file:
+    - `DATA_COLLECTION_DIR`=Path to the training data
+    - `OUTPUT_PATH`=Path to which the training runs (model checkpoints etc.) should be saved
+    - For instance:
         ```
         DATA_COLLECTION_DIR=../data/training
         OUTPUT_DIR=trainings
@@ -111,30 +123,27 @@ the `tensorboard` log and additionally the model weights-checkpoint. This serves
       home directory. For instance use
       `OUTPUT_DIR=/cluster/scratch/<username>/cil_trainings`.
 
-##
-
-### General: loading environment
+### 3. Loading environment
 
 1. `cd ./cil-road-segmentation/`
-2. Load software modules: `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
-3. Load python env: `source ./my_venv/bin/activate`
-4. If you want to work with tmux, start tmux with `tmux` (see tmux guide below)
+2. Load the **leonhard** software modules: `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
+3. Load the python environment: `source ./cil_venv/bin/activate`
+4. If you want to work with tmux, start tmux with `tmux`
 
-### Run training
+### 4. Run the training
 
-1. Load environment
+1. Load the environment ([3. Loading environment](#3-loading-environment))
 2. Navigate to the road segmentation folder `cd road_segmentation_main/`
-3. Edit the configuration file to your needs
-    - `vim ./configurations/default.jsonc`
-4. Run job on GPU
-    - shorter
-      run: `bsub -n 2 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
-        - change the configuration file name if you use a different one `--configuration ./configurations/default.jsonc`
-    - longer run with larger
-      dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
-    - check job status `bbjobs -w`
-    - peek stdout log `bpeek` or `bpeek -f` to continuously read the log
-5. Find your training results with `ls ./trainings/`
+3. Run a training job on the GPU using the python script `train.py`
+    - First select a configuration file. All configuration files can be found in the folder `.configurations/`.
+    - Example to run a job using the default configuration file `./configurations/default.jsonc`:
+         - 4h run: `bsub -n 2 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
+        - 24h run with larger dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
+    - Check the job status `bbjobs -w`
+    - Peek the `stdout` log `bpeek` or `bpeek -f` to continuously read the log
+4. The result of the trainings can be found by default (see [2. Add environment variables](#2-add-environment-variables)) in the folder `./trainings`
+   - The folders have following naming convention: `<datetime>-<configfile_name>` (see [Training folder structure](#training-folder-structure))
+
 
 #### Reproducibility
 
@@ -179,12 +188,31 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 |GC-DCNN<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final.jsonc'`|
 |GC-DCNN+<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final_plus.jsonc'`|
 
-### Run submission
+### 5. Run the inference
 
-1. Load environment
+1. Load the environment ([3. Loading environment](#3-loading-environment))
 2. Navigate to the road segmentation folder `cd road_segmentation_main/`
-3. Run job on GPU
-    - `bsub -n 1 -J "submission-job" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/20210415-181009-default'`
-        - change the run folder name to the trainings' folder created during
-          training: `--run_folder ./trainings/20210415-181009-default`
-4. Find the submission file in your run folder
+3. Run an inference job on the GPU using the python script `inference.py`
+    - The command line argument `--run_folder` of the inference script `inference.py` takes the path to the trainings' folder created during training, for example: `--run_folder ./trainings/<datetime>-<configfile_name>`
+    - **Leonhard** command to run an inference job: `bsub -n 1 -J "submission-job" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/<datetime>-<configfile_name>'`
+4. During the inference job a folder called `prediction-<datetime>` is created inside the `run_folder`. This folder will contain the submission file `submission.csv` (see [Training folder structure](#training-folder-structure)).
+
+### 6. Run an ensemble prediction
+
+**TODO: reporduciblity of ensemble.py prediction**
+
+## Training folder structure
+```
++-- trainings
+    +-- <datetime>-<configfile_name>
+        +-- prediction-<datetime>
+        |   +-- <configfile>
+        |   +-- submission.csv   
+        +-- tensorboard
+        |   +-- events.out.tfevents.*
+        +-- weights_checkpoint
+        |   +-- <epoch>_*.pth
+        |   +-- ...
+        +-- <configfile>
+        +-- logs.txt
+```
