@@ -57,7 +57,6 @@ We implemented different postprocessing techniques to make the quality of predic
     - Increasing the receptive field: We tried experiments with increasing dilation which improved connectivity of disjoint segments.
 3. Learning hough transforms:
    We nudge the network towards predicting connected roads by explicitly presenting possible connected line fragments.
- 
 
 ### Results
 
@@ -88,10 +87,10 @@ Our code is build such that it allows to
 2. Compare runs
 3. Keep results of finished runs
 
-We use configuration files to not only run different models with different configurations but also to
-reproduce past runs. Configuration files can be found in the
-folder `cil-road-segmentation/road_segmentation_main/configurations`. They allow to change the dataset, data
-augmentations, model, model parameters, optimizer, learning rate scheduler, and so on. Moreover, logging with
+We use configuration files to not only run different models with different configurations but also to reproduce past
+runs. Configuration files can be found in the folder `cil-road-segmentation/road_segmentation_main/configurations`. They
+allow to change the dataset, data augmentations, model, model parameters, optimizer, learning rate scheduler, and so on.
+Moreover, logging with
 `tensorboard` and `comet` gives us the ability to track and compare results of different runs at ease. For every run a
 "run-folder" is created which takes the name `<datetime>-<configfile-name>`. This folder keeps the `stdout` log,
 the `tensorboard` log and additionally the model weights-checkpoint (see [Training folder structure](#training-folder-structure). 
@@ -107,6 +106,7 @@ load the best model checkpoint and create the submission.csv file inside the "ru
 folder `prediction-<datetime>`.
 
 ### Training folder structure
+
 ```
 +-- trainings
     +-- <datetime>-<configfile_name>      [this is a training "run-folder"]
@@ -236,9 +236,12 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 1. Load the environment ([3. Loading environment](#3-loading-environment))
 2. Navigate to the road segmentation folder `cd road_segmentation_main/`
 3. Run an inference job on the GPU using the python script `inference.py`
-    - The command line argument `--run_folder` of the inference script `inference.py` takes the path to the trainings' folder created during training, for example: `--run_folder ./trainings/<datetime>-<configfile_name>`
-    - **Leonhard** command to run an inference job: `bsub -n 1 -J "submission-job" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/<datetime>-<configfile_name>'`
-4. During the inference job a folder called `prediction-<datetime>` is created inside the `run_folder`. This folder will contain the submission file `submission.csv` (see [Training folder structure](#training-folder-structure)).
+    - The command line argument `--run_folder` of the inference script `inference.py` takes the path to the trainings'
+      folder created during training, for example: `--run_folder ./trainings/<datetime>-<configfile_name>`
+    - **Leonhard** command to run an inference
+      job: `bsub -n 1 -J "submission-job" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/<datetime>-<configfile_name>'`
+4. During the inference job a folder called `prediction-<datetime>` is created inside the `run_folder`. This folder will
+   contain the submission file `submission.csv` (see [Training folder structure](#training-folder-structure)).
 
 ### 6. Run an ensemble prediction
 
@@ -273,7 +276,7 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
           variable `OUTPUT_DIR` specified as in [2. Add environment variables](#2-add-environment-variables).
     - To run the ensemble prediction with the final ensemble file one can use following **Leonhard** command:
       `bsub -n 1 -J "ensemble" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python ensemble.py --configuration configurations/final/ensemble-final.jsonc'`
-4. The result of the ensemble prediction can be found in the directory where environment variable `OUTPUT_DIR` points
-   to.
+4. The result of the ensemble prediction can be found in the directory where the environment variable `OUTPUT_DIR`
+   points to.
     - The folder has the following naming convention: `<datetime>-<configfile_name>`
     - The `submission.csv` file can be found directly in this folder.    
