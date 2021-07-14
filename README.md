@@ -46,12 +46,17 @@ branch).
 
 ### Postprocessing
 
+We implemented different postprocessing techniques to make the quality of predictions better.
 1. Classical methods:
+    - Repeated dilation followed by same number of erosions
+    - Median filtering
+   The filter size and the type was too dependent on the kind of image, so instead of hand tuning these we looked for machine learning based solutions.  
 2. Retrain on binary:
-    We used the best predictions of the U-Net & GCDCNN as a training set and used it to retrain the network to learn to connect roads by joining lines and remove noisy  predictions.
-    - U-Net with partial convolution: 
-    - Increasing the receptive field:
+    We used the best predictions of the U-Net & GCDCNN as a training set and used it to retrain the network to learn to connect roads by joining lines and remove noisy predictions.
+    - U-Net with partial convolution: We replace the normal convolutions with partial convolution layers in UNET. This gave sharper and denoised predictions compared to normal UNET.
+    - Increasing the receptive field: We tried experiments with increasing dilation which improved connectivity of disjoint segments.
 3. Learning hough transforms:
+   We nudge the network towards predicting connected roads by explicitly presenting possible connected line fragments.
  
 
 ### Results
