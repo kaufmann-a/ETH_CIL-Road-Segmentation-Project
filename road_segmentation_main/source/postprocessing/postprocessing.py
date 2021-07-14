@@ -22,6 +22,5 @@ def postprocess(img, morphparam):
     morphparam.nummedian: number of time median filters are applied
     morphparam.mediansz: size of the median filter kernel
     """
-    #out_img = erodedilate_v0(img, morphparam.numdilate, morphparam.numerode, morphparam.nummedian, morphparam.kernelsz, morphparam.mediansz)
-    out_img = img
+    out_img = erodedilate_v0(img, morphparam.numdilate, morphparam.numerode, morphparam.nummedian, morphparam.kernelsz, morphparam.mediansz)
     return out_img
