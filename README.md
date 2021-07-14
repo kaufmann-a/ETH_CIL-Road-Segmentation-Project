@@ -45,7 +45,14 @@ replacing the Pyramid Pooling Module) and the [attention gate](https://arxiv.org
 branch).
 
 ### Postprocessing
-_**TODO: short description + image (same as in report)**_
+
+1. Classical methods:
+2. Retrain on binary:
+    We used the best predictions of the U-Net & GCDCNN as a training set and used it to retrain the network to learn to connect roads by joining lines and remove noisy  predictions.
+    - U-Net with partial convolution: 
+    - Increasing the receptive field:
+3. Learning hough transforms:
+ 
 
 ### Results
 
