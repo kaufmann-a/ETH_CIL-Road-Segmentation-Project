@@ -78,27 +78,27 @@ Below we give a short non-exhaustive overview of the different folders and files
        +-- source                [contains the main code to train and run the models]
        +-- train.py              [script to run a training]
        +-- inference.py          [script to predict on the test data]
-       +-- ensemble.py           [script that creats out of mutliple preditions an ensemble prediction by averaging]
+       +-- ensemble.py           [script that given mutliple preditions creats an ensemble prediction]
        +-- ...
 ```
 
 Our code is build such that it allows to
 1. Reproduce runs
 2. Compare runs
-3. Keep results of finished runs
+3. Keep results of completed runs
 
-We use configuration files to not only run different models with different configurations but also to reproduce past
+We use configuration files not only to run different models with different configurations but also to reproduce past
 runs. Configuration files can be found in the folder `cil-road-segmentation/road_segmentation_main/configurations`. They
 allow to change the dataset, data augmentations, model, model parameters, optimizer, learning rate scheduler, and so on.
 Moreover, logging with
 `tensorboard` and `comet` gives us the ability to track and compare results of different runs at ease. For every run a
-"run-folder" is created which takes the name `<datetime>-<configfile-name>`. This folder keeps the `stdout` log,
+"run-folder" is created which takes the name `<datetime>-<config-file-name>`. This folder keeps the `stdout` log,
 the `tensorboard` log and additionally the model weights-checkpoint (see [Training folder structure](#training-folder-structure). 
 This folder serves as a back up of executed runs.
 
 `train.py`:
-This is the main script to run a training. The main commandline argument is `--configuration` which contains the
-configuration file path.
+This is the main script to run a training. The main commandline argument is `--configuration` which takes the
+path to the configuration file.
 
 `inference.py`: This script helps to get model predictions using the ETH test dataset. The main commandline argument
 is `--run_folder` which takes the path to the "run-folder" created during training. Then this script will automatically
@@ -109,16 +109,16 @@ folder `prediction-<datetime>`.
 
 ```
 +-- trainings
-    +-- <datetime>-<configfile_name>      [this is a training "run-folder"]
+    +-- <datetime>-<config-file-name>     [this is a training "run-folder"]
         +-- prediction-<datetime>         [contains the model predictions and the submission file]
-        |   +-- <configfile>              [copy of the configuration file used in inference]
+        |   +-- <config-file>             [copy of the configuration file used in inference]
         |   +-- submission.csv            [the submission file to hand in predictions]
         +-- tensorboard                   [contains the tensorboard log]
         |   +-- events.out.tfevents.*
         +-- weights_checkpoint            [contains the model checkpoints]
         |   +-- <epoch>_*.pth             [model checkpoint file]
         |   +-- ...
-        +-- <configfile>                  [copy of the configuration file used in training]
+        +-- <config-file>                 [copy of the configuration file used in training]
         +-- logs.txt                      [contains the stdout log]
 ```
 
@@ -151,7 +151,7 @@ with the leonhard cluster).
 ### 2. Add environment variables
 
 3. Create a file called `.env` in the folder `cil-road-segmentation/road_segmentation_main`. This file should contain
-   the configuration of the data collection directory as well as the output directory.
+   the configuration of the data directory as well as the output directory.
     - `cd road_segmentation_main/`
     - `vim .env`
 4. Add the following environment variables to the file:
@@ -185,7 +185,7 @@ with the leonhard cluster).
     - Check the job status `bbjobs -w`
     - Peek the `stdout` log `bpeek` or `bpeek -f` to continuously read the log
 4. The result of the trainings can be found by default (see [2. Add environment variables](#2-add-environment-variables)) in the folder `./trainings`
-   - The folders have following naming convention: `<datetime>-<configfile_name>` (see [Training folder structure](#training-folder-structure))
+   - The folders have following naming convention: `<datetime>-<config-file-name>` (see [Training folder structure](#training-folder-structure))
 
 
 #### Reproducibility
@@ -237,9 +237,9 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 2. Navigate to the road segmentation folder `cd road_segmentation_main/`
 3. Run an inference job on the GPU using the python script `inference.py`
     - The command line argument `--run_folder` of the inference script `inference.py` takes the path to the trainings'
-      folder created during training, for example: `--run_folder ./trainings/<datetime>-<configfile_name>`
+      folder created during training, for example: `--run_folder ./trainings/<datetime>-<config-file-name>`
     - **Leonhard** command to run an inference
-      job: `bsub -n 1 -J "submission-job" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/<datetime>-<configfile_name>'`
+      job: `bsub -n 1 -J "submission-job" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python inference.py --run_folder ./trainings/<datetime>-<config-file-name>'`
 4. During the inference job a folder called `prediction-<datetime>` is created inside the `run_folder`. This folder will
    contain the submission file `submission.csv` (see [Training folder structure](#training-folder-structure)).
 
@@ -278,5 +278,5 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
       `bsub -n 1 -J "ensemble" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python ensemble.py --configuration configurations/final/ensemble-final.jsonc'`
 4. The result of the ensemble prediction can be found in the directory where the environment variable `OUTPUT_DIR`
    points to.
-    - The folder has the following naming convention: `<datetime>-<configfile_name>`
+    - The folder has the following naming convention: `<datetime>-<config-file-name>`
     - The `submission.csv` file can be found directly in this folder.    
