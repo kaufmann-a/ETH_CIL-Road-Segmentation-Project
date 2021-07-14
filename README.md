@@ -98,9 +98,13 @@ the `tensorboard` log and additionally the model weights-checkpoint (see [Traini
 This folder serves as a back up of executed runs.
 
 `train.py`:
-This is the main script to run a training. The main commandline argument is `--configuration` which contains the configuration file path.
+This is the main script to run a training. The main commandline argument is `--configuration` which contains the
+configuration file path.
 
-`inference.py`: This script helps to get model predictions using the ETH test dataset. The main commandline argument is `--run_folder` which takes the path to the "run-folder" created during training. Then this script will automatically load the best model checkpoint and create the submission.csv file inside the "run-folder" in the folder `prediction-<datetime>`.
+`inference.py`: This script helps to get model predictions using the ETH test dataset. The main commandline argument
+is `--run_folder` which takes the path to the "run-folder" created during training. Then this script will automatically
+load the best model checkpoint and create the submission.csv file inside the "run-folder" in the
+folder `prediction-<datetime>`.
 
 ### Training folder structure
 ```
@@ -118,17 +122,22 @@ This is the main script to run a training. The main commandline argument is `--c
         +-- logs.txt                      [contains the stdout log]
 ```
 
-`weights_checkpoint`: There are two model weights checkpoints. The interval based checkpoint files called `<epoch>_checkpoint.pth` created after a curtain number of epochs and the files `<epoch>_best.pth` created whenever the model achives a new best validation accuracy.
+`weights_checkpoint`: There are two model weights checkpoints. The interval based checkpoint files
+called `<epoch>_checkpoint.pth` created after a curtain number of epochs and the files `<epoch>_best.pth` created
+whenever the model achieves a new best validation accuracy.
 
 ## Reproducibility
-Here we list the used library versions, which are which are loaded and or installed when following the steps below (and working with the leonhard cluster).
+
+Here we list the used library versions, which are loaded and or installed when following the steps below (and working
+with the leonhard cluster).
+
 - python version: 3.8.5
 - cuda: 10.1.243
 - cudnn: 7.6.4
 - gcc 6.3.0
 - python library version according to [requirements](./road_segmentation_main/requirements.txt) file
 
-### 1. Initial setup on leonhard and environement installation
+### 1. Initial setup on leonhard and environment installation
 
 1. Clone this git repository `git clone git@github.com:FrederikeLuebeck/cil-road-segmentation.git`
 2. Environment setup
@@ -140,7 +149,9 @@ Here we list the used library versions, which are which are loaded and or instal
         - `pip install -r ./road_segmentation_main/requirements.txt`
 
 ### 2. Add environment variables
-3. Create a file called `.env` in the folder `cil-road-segmentation/road_segmentation_main`. This file should contain the configuration of the data collection directory as well as the output directory.
+
+3. Create a file called `.env` in the folder `cil-road-segmentation/road_segmentation_main`. This file should contain
+   the configuration of the data collection directory as well as the output directory.
     - `cd road_segmentation_main/`
     - `vim .env`
 4. Add the following environment variables to the file:
@@ -170,7 +181,7 @@ Here we list the used library versions, which are which are loaded and or instal
     - First select a configuration file. All configuration files can be found in the folder `.configurations/`.
     - Example to run a job using the default configuration file `./configurations/default.jsonc`:
          - 4h run: `bsub -n 2 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
-        - 24h run with larger dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
+         - 24h run with larger dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
     - Check the job status `bbjobs -w`
     - Peek the `stdout` log `bpeek` or `bpeek -f` to continuously read the log
 4. The result of the trainings can be found by default (see [2. Add environment variables](#2-add-environment-variables)) in the folder `./trainings`
@@ -192,7 +203,7 @@ page: https://pytorch.org/docs/1.9.0/notes/randomness.html.
 
 The results of the U-Net are reproducible. The GC-DCNN lacks exact reproducibility because the pyramid pooling
 module (PPM) uses the pytorch function `F.interpolate`
-which is not numerically stable (as in pytroch version 3.8.5). As a result we evaluated how much the validation accuracy
+which is not numerically stable (as in pytorch version 3.8.5). As a result we evaluated how much the validation accuracy
 varies, by running 10 runs of the GC-DCNN baseline using the "experiments dataset".
 
 - min validation accuracy: 0.9724 (removed one outlier with validation accuracy of 0.9715)
@@ -231,4 +242,38 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 
 ### 6. Run an ensemble prediction
 
-_**TODO: reporducibility of ensemble.py prediction**_
+1. Load the environment ([3. Loading environment](#3-loading-environment))
+2. Navigate to the road segmentation folder `cd road_segmentation_main/`
+3. Run an ensemble job on the GPU using the python script `ensemble.py`
+    - The ensemble.py script has the argument `--configuration` which takes the path to the "special" ensemble
+      configuration file which is different from the normal configuration files.
+        - Contrary to the normal configuration files an ensemble configuration file **needs to be adjusted** because it
+          contains a list of relative paths to prediction folders.
+        - As a starting point the final ensemble configuration file can be
+          used: [ensemble-final.json](./road_segmentation_main/configurations/final/ensemble-final.jsonc)
+         ```
+         {
+             "environment": {
+                 "name" : "Name of the Run - this is just a default config file",
+                 "output_path": "getenv('OUTPUT_DIR')",
+                 "log_file" : "logs.txt"
+             },
+             "dirs_prediction" : ["20210710-115819-gcdcnn_final/prediction-20210711-095823",
+                                  "20210710-115820-gcdcnn_plus_final/prediction-20210711-112218",
+                                  "20210710-115820-unet_final_plus/prediction-20210711-095738",
+                                  "20210710-115821-unet_final/prediction-20210710-235855",
+                                  "20210709-163934-unet_exp_baseline/prediction-20210710-093845",
+                                  "20210709-155952-gcdcnn_exp_baseline/prediction-20210711-120117"],
+             "mode" : "binary",
+             "voting_threshold" : 0.5
+         }
+         ```
+        - The main thing that needs to be adjusted is the parameter `"dirs_prediction"`, which is a list of relative
+          paths to prediction folders. By default, the paths are relative with respect to the environment
+          variable `OUTPUT_DIR` specified as in [2. Add environment variables](#2-add-environment-variables).
+    - To run the ensemble prediction with the final ensemble file one can use following **Leonhard** command:
+      `bsub -n 1 -J "ensemble" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python ensemble.py --configuration configurations/final/ensemble-final.jsonc'`
+4. The result of the ensemble prediction can be found in the directory where environment variable `OUTPUT_DIR` points
+   to.
+    - The folder has the following naming convention: `<datetime>-<configfile_name>`
+    - The `submission.csv` file can be found directly in this folder.    
