@@ -243,7 +243,14 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 4. During the inference job a folder called `prediction-<datetime>` is created inside the `run_folder`. This folder will
    contain the submission file `submission.csv` (see [Training folder structure](#training-folder-structure)).
 
-### 6. Run an ensemble prediction
+### 6. Postprocessing using retraining
+1. Create the binary training dataset by running inference on the entire original dataset used for training.
+   Sample training datasets created in this way are UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
+2. Update the binary test images by running the inference on the colored test images 
+3. Using [4. Run the training](#4-run-the-training) and [5. Run the inference](#5-run-the-inference) with the updated train and test dataset to run this part.
+   Lowering the learning rate by 10X while retraining gives better results.
+
+### 7. Run an ensemble prediction
 
 1. Load the environment ([3. Loading environment](#3-loading-environment))
 2. Navigate to the road segmentation folder `cd road_segmentation_main/`
