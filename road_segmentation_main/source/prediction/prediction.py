@@ -201,30 +201,35 @@ class Prediction(object):
             Logcreator.info("Stochastic Weight Averaging prediction run")
             self.prediction_loop(self.swa_model, loader, file_prefix='swa-')
 
-    def predict_train_images(self, create_collection_folder_structure=True):
+    def predict_train_images(self, create_collection_folder_structure=True, save_gt_mask=True):
         """
         Executes the prediction on the entire training dataset.
 
         :param create_collection_folder_structure: True = Saves the predictions with the same folder structure as
                the images in the collection folders including four parent folders.
+        :param save_gt_mask: True = saves the ground truth masks
         """
         ds = DataPreparator.load_all(self.engine, is_train=False)
         loader = DataLoader(ds, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
 
         preds_masks_list = self.model_prediction_run(self.model, loader)
 
+        image_paths = ds.images_filtered
+        mask_paths = ds.masks_filtered
+
         from pathlib import Path
-        file_paths = [Path(img) for img in ds.images_filtered]
+        file_paths = [Path(img) for img in image_paths]
 
         folder_out_path = Path(os.path.join(Configuration.output_directory, "pred-masks-original"))
         folder_out_path.mkdir(parents=True, exist_ok=True)  # create folders if they do not exist
 
         import torchvision
+        import shutil
 
-        for prediction_mask, file_path in tqdm(zip(preds_masks_list, file_paths),
-                                               total=len(file_paths),
-                                               file=sys.stdout,
-                                               desc="Saving preds."):
+        for idx, (prediction_mask, file_path) in tqdm(enumerate(zip(preds_masks_list, file_paths)),
+                                                      total=len(file_paths),
+                                                      file=sys.stdout,
+                                                      desc="Saving preds."):
             # probabilities to binary
             out_preds = (prediction_mask > self.foreground_threshold).float()
 
@@ -235,7 +240,19 @@ class Prediction(object):
             else:
                 file_out_path = folder_out_path.joinpath(file_path.name)
 
+            # create directory if it does not exist
             file_out_path.parent.mkdir(parents=True, exist_ok=True)
 
             # save prediction
             torchvision.utils.save_image(out_preds, file_out_path.absolute())
+
+            if save_gt_mask:
+                # replace folder name images with folder masks
+                mask_out_path = file_out_path.parent.parent
+                mask_out_path = mask_out_path.joinpath("masks").joinpath(file_out_path.name)
+
+                # create directory if it does not exist
+                mask_out_path.parent.mkdir(parents=True, exist_ok=True)
+
+                # copy ground truth mask
+                shutil.copyfile(mask_paths[idx], mask_out_path)
