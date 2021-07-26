@@ -139,6 +139,8 @@ with the leonhard cluster).
 
 ### 1. Initial setup on leonhard and environment installation
 
+## 1.1 Clone repository and environment setup
+
 1. Clone this git repository `git clone git@github.com:FrederikeLuebeck/cil-road-segmentation.git`
 2. Environment setup
     - Load the leonhard software modules:  `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
@@ -148,7 +150,7 @@ with the leonhard cluster).
         - `source ./cil_venv/bin/activate`
         - `pip install -r ./road_segmentation_main/requirements.txt`
 
-#### 1.1 Download the data
+#### 1.2 Download the data
 
 1. Go to https://polybox.ethz.ch/index.php/s/la14vk4qmlCdRof and download the zip folder `data.zip`
 2. Unzip the folder directly below the root folder `cil-road-segmentation`
