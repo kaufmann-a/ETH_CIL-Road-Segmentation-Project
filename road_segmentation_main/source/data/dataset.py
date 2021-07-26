@@ -26,8 +26,9 @@ class RoadSegmentationDataset(Dataset):
         # self.device = device # unsure whether we need this, if yes: add parameter device to init
         self.transform = transform
         self.images = image_list
-        self.images_filtered = []
         self.masks = mask_list
+        self.images_filtered = []
+        self.masks_filtered = []
         self.foreground_threshold = threshold
         self.crop_size = crop_size
         self.use_submission_masks = use_submission_masks
@@ -86,8 +87,10 @@ class RoadSegmentationDataset(Dataset):
                 masks = [_mask for _mask, keep in zip(masks, keep_idx) if keep]
                 if any(keep_idx):
                     self.images_filtered.append(image_path)
+                    self.masks_filtered.append(mask_path)
             else:
                 self.images_filtered = self.images
+                self.masks_filtered = self.masks
 
             # concatenate lists
             self.images_preloaded += images
