@@ -201,12 +201,12 @@ class Prediction(object):
             Logcreator.info("Stochastic Weight Averaging prediction run")
             self.prediction_loop(self.swa_model, loader, file_prefix='swa-')
 
-    def predict_train_images(self, create_collection_folder_structure=False):
+    def predict_train_images(self, create_collection_folder_structure=True):
         """
         Executes the prediction on the entire training dataset.
 
         :param create_collection_folder_structure: True = Saves the predictions with the same folder structure as
-               the images in the collection folders including three parent folders.
+               the images in the collection folders including four parent folders.
         """
         ds = DataPreparator.load_all(self.engine, is_train=False)
         loader = DataLoader(ds, batch_size=4, num_workers=2, pin_memory=True, shuffle=False)
@@ -230,7 +230,7 @@ class Prediction(object):
 
             # create folder structure
             if create_collection_folder_structure:
-                file_relative_path = file_path.relative_to(file_path.parent.parent.parent.parent)
+                file_relative_path = file_path.relative_to(file_path.parent.parent.parent.parent.parent)
                 file_out_path = folder_out_path.joinpath(file_relative_path)
             else:
                 file_out_path = folder_out_path.joinpath(file_path.name)
