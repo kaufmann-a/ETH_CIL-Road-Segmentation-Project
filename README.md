@@ -148,13 +148,28 @@ with the leonhard cluster).
         - `source ./cil_venv/bin/activate`
         - `pip install -r ./road_segmentation_main/requirements.txt`
 
+#### 1.1 Download the data
+
+1. Go to https://polybox.ethz.ch/index.php/s/la14vk4qmlCdRof and download the zip folder `data.zip`
+2. Unzip the folder directly below the root folder `cil-road-segmentation`
+3. The directory structure should now be as following:
+   ```
+   +-- cil-road-segmentation
+      +-- data
+          +-- binary_test_images
+          +-- ...
+          +-- test_images
+          +-- training
+      +-- ...
+   ```
+
 ### 2. Add environment variables
 
-3. Create a file called `.env` in the folder `cil-road-segmentation/road_segmentation_main`. This file should contain
+1. Create a file called `.env` in the folder `cil-road-segmentation/road_segmentation_main`. This file should contain
    the configuration of the data directory as well as the output directory.
     - `cd road_segmentation_main/`
     - `vim .env`
-4. Add the following environment variables to the file:
+2. Add the following environment variables to the file:
     - `DATA_COLLECTION_DIR`=Path to the training data
     - `OUTPUT_PATH`=Path to which the training runs (model checkpoints etc.) should be saved
     - For instance:
