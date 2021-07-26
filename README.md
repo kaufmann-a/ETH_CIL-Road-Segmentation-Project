@@ -139,7 +139,7 @@ with the leonhard cluster).
 
 ### 1. Initial setup on leonhard and environment installation
 
-## 1.1 Clone repository and environment setup
+#### 1.1 Clone repository and setup environment
 
 1. Clone this git repository `git clone git@github.com:FrederikeLuebeck/cil-road-segmentation.git`
 2. Environment setup
