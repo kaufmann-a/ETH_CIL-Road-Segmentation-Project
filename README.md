@@ -47,14 +47,18 @@ branch).
 ### Postprocessing
 
 We implemented different postprocessing techniques to make the quality of predictions better.
+
 1. Classical methods:
     - Repeated dilation followed by same number of erosions
-    - Median filtering
-   The filter size and the type was too dependent on the kind of image, so instead of hand tuning these we looked for machine learning based solutions.  
+    - Median filtering The filter size and the type was too dependent on the kind of image, so instead of hand tuning
+      these we looked for machine learning based solutions.
 2. Retrain on binary:
-    We used the best predictions of the U-Net & GCDCNN as a training set and used it to retrain the network to learn to connect roads by joining lines and remove noisy predictions.
-    - U-Net with partial convolution: We replace the normal convolutions with partial convolution layers in UNET. This gave sharper and denoised predictions compared to normal UNET.
-    - Increasing the receptive field: We tried experiments with increasing dilation which improved connectivity of disjoint segments.
+   We used the best predictions of the U-Net & GCDCNN as a training set and used it to retrain the network to learn to
+   connect roads by joining lines and remove noisy predictions.
+    - U-Net with partial convolution: We replace the normal convolutions with partial convolution layers in UNET. This
+      gave sharper and denoised predictions compared to normal UNET.
+    - Increasing the receptive field: We tried experiments with increasing dilation which improved connectivity of
+      disjoint segments.
 3. Learning hough transforms:
    We nudge the network towards predicting connected roads by explicitly presenting possible connected line fragments.
 
@@ -83,6 +87,7 @@ Below we give a short non-exhaustive overview of the different folders and files
 ```
 
 Our code is build such that it allows to
+
 1. Reproduce runs
 2. Compare runs
 3. Keep results of completed runs
@@ -97,8 +102,8 @@ the `tensorboard` log and additionally the model weights-checkpoint (see [Traini
 This folder serves as a back up of executed runs.
 
 `train.py`:
-This is the main script to run a training. The main commandline argument is `--configuration` which takes the
-path to the configuration file.
+This is the main script to run a training. The main commandline argument is `--configuration` which takes the path to
+the configuration file.
 
 `inference.py`: This script helps to get model predictions using the ETH test dataset. The main commandline argument
 is `--run_folder` which takes the path to the "run-folder" created during training. Then this script will automatically
@@ -197,13 +202,16 @@ with the leonhard cluster).
 3. Run a training job on the GPU using the python script `train.py`
     - First select a configuration file. All configuration files can be found in the folder `.configurations/`.
     - Example to run a job using the default configuration file `./configurations/default.jsonc`:
-         - 4h run: `bsub -n 2 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
-         - 24h run with larger dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
+        - 4h
+          run: `bsub -n 2 -J "training-job" -W 4:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python train.py --configuration ./configurations/default.jsonc'`
+        - 24h run with larger
+          dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
     - Check the job status `bbjobs -w`
     - Peek the `stdout` log `bpeek` or `bpeek -f` to continuously read the log
-4. The result of the trainings can be found by default (see [2. Add environment variables](#2-add-environment-variables)) in the folder `./trainings`
-   - The folders have following naming convention: `<datetime>-<config-file-name>` (see [Training folder structure](#training-folder-structure))
-
+4. The result of the trainings can be found by default (
+   see [2. Add environment variables](#2-add-environment-variables)) in the folder `./trainings`
+    - The folders have following naming convention: `<datetime>-<config-file-name>` (
+      see [Training folder structure](#training-folder-structure))
 
 #### Reproducibility
 
@@ -248,6 +256,22 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 |GC-DCNN<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final.jsonc'`|
 |GC-DCNN+<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final_plus.jsonc'`|
 
+##### Ensemble prediction
+
+For the ensemble prediction we combined the results of all five runs listed above in [Baselines](#baselines)
+and [Final](#final). To execute the ensemble prediction follow the steps listed
+in [7. Run an ensemble prediction](#7-run-an-ensemble-prediction).
+
+##### Postprocessing: binary retraining with partial convolutions
+
+We applied the postprocessing on the runs U-Net+, GC-DCNN+ and the ensemble prediction.
+In [6. Postprocessing using retraining](6-postproceessing-using-retraining) we show how these results can be reporuced.
+
+##### Intermediate results
+
+The commands to reproduce the intermediate experiments can be found
+in: [intermediate_experiments.md](./intermediate_experiments.md)
+
 ### 5. Run the inference
 
 1. Load the environment ([3. Loading environment](#3-loading-environment))
@@ -261,11 +285,12 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
    contain the submission file `submission.csv` (see [Training folder structure](#training-folder-structure)).
 
 ### 6. Postprocessing using retraining
-1. Create the binary training dataset by running inference on the entire original dataset used for training.
-   Sample training datasets created in this way are UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
-2. Update the binary test images by running the inference on the colored test images 
-3. Using [4. Run the training](#4-run-the-training) and [5. Run the inference](#5-run-the-inference) with the updated train and test dataset to run this part.
-   Lowering the learning rate by 10X while retraining gives better results.
+
+1. Create the binary training dataset by running inference on the entire original dataset used for training. Sample
+   training datasets created in this way are UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
+2. Update the binary test images by running the inference on the colored test images
+3. Using [4. Run the training](#4-run-the-training) and [5. Run the inference](#5-run-the-inference) with the updated
+   train and test dataset to run this part. Lowering the learning rate by 10X while retraining gives better results.
 
 ### 7. Run an ensemble prediction
 
