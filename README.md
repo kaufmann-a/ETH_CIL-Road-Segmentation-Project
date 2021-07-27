@@ -265,7 +265,7 @@ in [7. Run an ensemble prediction](#7-run-an-ensemble-prediction).
 ##### Postprocessing: binary retraining with partial convolutions
 
 We applied the postprocessing on the runs U-Net+, GC-DCNN+ and the ensemble prediction.
-In [6. Postprocessing using retraining](6-postproceessing-using-retraining) we show how these results can be reporuced.
+In [6. Postprocessing using retraining](#6-postprocessing-using-retraining) we show how these results can be reporuced.
 
 ##### Intermediate results
 
