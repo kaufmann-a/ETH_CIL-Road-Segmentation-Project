@@ -146,7 +146,7 @@ with the leonhard cluster).
 
 #### 1.1 Clone repository and setup environment
 
-1. Clone this git repository `git clone git@github.com:FrederikeLuebeck/cil-road-segmentation.git`
+1. Clone this git repository `git clone https://github.com/FrederikeLuebeck/cil-road-segmentation.git`
 2. Environment setup
     - Load the leonhard software modules:  `module load gcc/6.3.0 python_gpu/3.8.5 tmux/2.6 eth_proxy`
     - Create a virtual environment and install the required python packages:
