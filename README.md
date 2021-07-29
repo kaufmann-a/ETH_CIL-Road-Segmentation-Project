@@ -7,7 +7,7 @@ slight architecture variations of increasing complexity. In this work, we analyz
 modifications of a U-Net, namely the GC-DCNN and other self-developed variations. We find that the exact model
 architecture results in solely minor changes in prediction accuracy. Comparing this to other factors in the modeling
 pipeline, we conclude that the greatest impact can be reached by using a large and diverse training set. Considering the
-minor contribution of model architecture alternations, we propose two post-processing techniques. Albeit not improving
+minor contribution of model architecture alternations, we propose two post-processing techniques. Although not improving
 prediction accuracy significantly, these procedures are able to improve some of the predicted roads visually.
 
 _**TODO: Add image**_
