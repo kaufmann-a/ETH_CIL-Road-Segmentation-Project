@@ -290,7 +290,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
    training datasets created in this way are UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
     1. The `inference.py` script can create the binary training dataset.
     2. To do this follow [5. Run the inference](#5-run-the-inference) but additionally set the
-       parameter `--predict_on_train True`.
+       commandline argument `--predict_on_train True`.
     3. Then inside the `run_folder `the folder `prediction-<datetime>/pred-masks-original` contains the binary training
        dataset folder:
        ```
