@@ -158,7 +158,7 @@ with the leonhard cluster).
 #### 1.2 Download the data
 
 1. Go to https://polybox.ethz.ch/index.php/s/la14vk4qmlCdRof and download the zip folder `data.zip`
-2. Unzip the folder directly below the root folder `cil-road-segmentation`
+2. Unzip the folder directly into the root folder `cil-road-segmentation`
 3. The directory structure should now be as following:
    ```
    +-- cil-road-segmentation
