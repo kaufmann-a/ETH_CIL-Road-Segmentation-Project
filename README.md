@@ -288,6 +288,18 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 1. Create the binary training dataset by running inference on the entire original dataset used for training. Sample
    training datasets created in this way are UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
+    1. The `inference.py` script can create the binary training dataset.
+    2. To do this follow [5. Run the inference](#5-run-the-inference) but additionally set the
+       parameter `--predict_on_train True`.
+    3. Then inside the `run_folder `the folder `prediction-<datetime>/pred-masks-original` contains the binary training
+       dataset folder:
+       ```
+       +-- trainings
+           +-- <datetime>-<config-file-name>     [this is a training "run-folder"]
+               +-- prediction-<datetime>         [contains the model predictions and the submission file]
+                   +-- pred-masks-original       [contains the binary training dataset]
+                       +-- experiments_dataset   [this is the binary training dataset]
+       ```
 2. Update the binary test images by running the inference on the colored test images
 3. Using [4. Run the training](#4-run-the-training) and [5. Run the inference](#5-run-the-inference) with the updated
    train and test dataset to run this part. Lowering the learning rate by 10X while retraining gives better results.
