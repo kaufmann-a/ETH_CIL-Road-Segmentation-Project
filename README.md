@@ -331,19 +331,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
 
-### 7. Postprocessing using Hough Transformations
-
-1. Create the binary training data set as in [6. Postprocessing using retraining](#6-postprocessing-using-retraining).
-2. Create the images with line-completion using Hough Transformations, both for the training set as well as for the predictions.
-   1. Run the script `lines.py` with the command line argument `--prediction_folder`, where you specify the folder that contains the folder _pred-masks-original_ with the binary predictions. This creates another folder named _pred-lines_ in the specified directory.
-3. Train the post-processing network as in [4. Run the training](#4-run-the-training). In the configuration file, you have to change the number of input channels to 5, i.e. `"in_channels" : 5`. Add the following command line arguments:
-   1. `--lines_layer_path` - path to the directory containing the lines.
-   2. `--predicted_masks_path`- path to the directory containing the predicted masks.
-4. Run the inference script as in [5. Run the inference](#5-run-the-inference). In addition, add the following command line arguments:
-   1. `--lines_layer_path` - path to the directory containing the lines.
-   2. `--predicted_masks_path`- path to the directory containing the predicted masks.
-
-### 8. Run an ensemble prediction
+### 7. Run an ensemble prediction
 
 1. Before you can run an ensemble prediction, make sure you executed ([5. Run the inference](#5-run-the-inference)) for every training run you want to include into the ensemble prediction
 2. Load the environment ([3. Loading environment](#3-loading-environment))
