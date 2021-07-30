@@ -280,10 +280,10 @@ For the ensemble prediction we combined the results of all five runs listed abov
 and [Final](#final). To execute the ensemble prediction follow the steps listed
 in [8. Run an ensemble prediction](#8-run-an-ensemble-prediction).
 
-##### Postprocessing: binary retraining with partial convolutions
+##### Postprocessing: binary retraining
 
 We applied the postprocessing on the runs U-Net+, GC-DCNN+ and the ensemble prediction.
-In [6. Postprocessing using retraining](#6-postprocessing-using-retraining) we show how these results can be reporuced.
+In [6. Postprocessing using retraining](#6-postprocessing-using-retraining) we show how these results can be reproduced.
 
 ##### Intermediate results
 
@@ -319,7 +319,16 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
                        +-- experiments_dataset   [this is the binary training dataset]
        ```
        The training images created in this way used for Table III in the report are here: [Unet-Plus](https://polybox.ethz.ch/index.php/s/QFrOwuiYLnAwmhb), [GCDCNN-Plus](https://polybox.ethz.ch/index.php/s/JI1UobMe9A5IrCw)
-2. Update the path for DATA_COLLECTION_DIR in the .env file to point to the binary dataset as in [2. Add environment variables](#2-add-environment-variables).
+2. Adjust the path to the dataset folder by adjusting the parameter `data_collection.folder` in the configuration file.
+   The parameter `data_collection.folder` should link to the folder that contains the folders with names as specified
+   with the parameter `data_collection.collection_names`. For example:
+   ```
+   "data_collection": { 
+        "folder": "./trainings/<datetime>-<config-file-name>/prediction-<datetime>/pred-masks-original",
+        "collection_names": [
+            "experiments_dataset"
+   ],
+   ```
 3.  Run the retraining using [4. Run the training](#4-run-the-training).
     - To reproduce the result in Table. III the commands is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
 3. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
