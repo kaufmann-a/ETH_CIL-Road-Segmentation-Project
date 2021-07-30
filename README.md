@@ -283,7 +283,7 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 
 For the ensemble prediction we combined the results of all five runs listed above in [Baselines](#baselines)
 and [Final](#final). To execute the ensemble prediction follow the steps listed
-in [7. Run an ensemble prediction](#7-run-an-ensemble-prediction).
+in [8. Run an ensemble prediction](#8-run-an-ensemble-prediction).
 
 ##### Postprocessing: binary retraining with partial convolutions
 
@@ -331,8 +331,16 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
 
+### 7. Postprocessing using Hough Transformations
 
-### 7. Run an ensemble prediction
+1. Create the binary training data set as in [6.1] (#6-postprocessing-using-retraining).
+2. Create the images with line-completion using Hough Transformations, both for the training set as well as for the predictions.
+  1. Run the inference script on the training data set 
+
+
+
+
+### 8. Run an ensemble prediction
 
 1. Before you can run an ensemble prediction, make sure you executed ([5. Run the inference](#5-run-the-inference)) for every training run you want to include into the ensemble prediction
 2. Load the environment ([3. Loading environment](#3-loading-environment))
