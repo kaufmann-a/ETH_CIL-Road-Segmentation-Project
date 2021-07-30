@@ -82,7 +82,6 @@ We implemented different postprocessing techniques to make the quality of predic
 - the largest factor was contributed by using more data
 - the model architecture as well as the postprocessing played an important but in comparison a minor factor
 
-_**TODO: add short text maybe copy conclusion of report?**_
 
 ## Project Code Structure
 
