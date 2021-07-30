@@ -2,15 +2,7 @@
 
 ## Abstract
 
-A major part of recent research in the field of semantic image segmentation directs attention to the development of
-slight architecture variations of increasing complexity. In this work, we analyze the impact of architecture
-modifications of a U-Net, namely the GC-DCNN and other self-developed variations. We find that the exact model
-architecture results in solely minor changes in prediction accuracy. Comparing this to other factors in the modeling
-pipeline, we conclude that the greatest impact can be reached by using a large and diverse training set. Considering the
-minor contribution of model architecture alternations, we propose two post-processing techniques. Although not improving
-prediction accuracy significantly, these procedures are able to improve some of the predicted roads visually.
-
-_**TODO: Add image**_
+Recent research in the field of semantic image segmentation predominantly directs attention to the development of slight architecture variations with increasing complexity. In this work, we analyze the impact of architecture modifications of a U-Net, namely the \acrshort{gcdcnn} and other self-developed variations.  Our experiments with fine tuning and model architecture alterations lead us to a novel better variant of  \acrshort{gcdcnn}. We also propose two novel post-processing techniques to remove artefacts in predictions. Although these methods improve the visual quality, they do not improve prediction accuracy significantly due to patch abstraction. With the help of numerous experiments, we conclude that the greatest improvement is observed by making the training dataset diverse.
 
 ## Findings & Results
 
