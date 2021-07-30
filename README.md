@@ -310,7 +310,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 ### 6. Postprocessing using retraining
 
 1. Create the binary training dataset by running inference on the entire original dataset used for training. Results from sample
-   training datasets created in this way are in UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
+   training datasets created in this way are in U-Net Binary (Table. VI in the report) and GCDCNN Binary (Table. VII in the report).
     1. The `inference.py` script can create the binary training dataset.
     2. To do this follow [5. Run the inference](#5-run-the-inference) but additionally set the
        commandline argument `--predict_on_train True`.
