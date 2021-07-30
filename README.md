@@ -306,7 +306,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 ### 7. Run an ensemble prediction
 
-1. Before you can run an ensemble prediction, make sure you executed ([5. Run the inference](#5-run-the-inference) for every training run you want to include into the ensemble prediction
+1. Before you can run an ensemble prediction, make sure you executed ([5. Run the inference](#5-run-the-inference)) for every training run you want to include into the ensemble prediction
 2. Load the environment ([3. Loading environment](#3-loading-environment))
 3. Navigate to the road segmentation folder `cd road_segmentation_main/`
 4. Run an ensemble job on the GPU using the python script `ensemble.py`
