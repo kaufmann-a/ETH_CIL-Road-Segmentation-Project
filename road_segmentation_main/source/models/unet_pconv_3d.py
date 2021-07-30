@@ -1,5 +1,7 @@
 """
-Unet model
+Unet model partial convolution 3d
+Original source: https://github.com/rishikksh20/ResUnet
+Original source for partial convolution:  https://github.com/NVIDIA/partialconv/blob/master/models/partialconv3d.py 
 """
 
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
@@ -12,7 +14,6 @@ import torch.nn.functional as F
 
 from source.models.basemodel import BaseModel
 
-# Partial convolution code from https://github.com/NVIDIA/partialconv/blob/master/models/partialconv3d.py
 class PartialConv3d(nn.Conv3d):
     def __init__(self, *args, **kwargs):
 
