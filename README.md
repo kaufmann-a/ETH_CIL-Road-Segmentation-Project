@@ -306,9 +306,10 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 ### 7. Run an ensemble prediction
 
-1. Load the environment ([3. Loading environment](#3-loading-environment))
-2. Navigate to the road segmentation folder `cd road_segmentation_main/`
-3. Run an ensemble job on the GPU using the python script `ensemble.py`
+1. Before you can run an ensemble prediction, make sure you executed ([5. Run the inference](#5-run-the-inference) for every training run you want to include into the ensemble prediction
+2. Load the environment ([3. Loading environment](#3-loading-environment))
+3. Navigate to the road segmentation folder `cd road_segmentation_main/`
+4. Run an ensemble job on the GPU using the python script `ensemble.py`
     - The ensemble.py script has the argument `--configuration` which takes the path to the "special" ensemble
       configuration file which is different from the normal configuration files.
         - Contrary to the normal configuration files an ensemble configuration file **needs to be adjusted** because it
@@ -337,7 +338,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
           variable `OUTPUT_DIR` specified as in [2. Add environment variables](#2-add-environment-variables).
     - To run the ensemble prediction with the final ensemble file one can use following **Leonhard** command:
       `bsub -n 1 -J "ensemble" -W 0:05 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_mtotal0>=10240]" 'python ensemble.py --configuration configurations/final/ensemble-final.jsonc'`
-4. The result of the ensemble prediction can be found in the directory where the environment variable `OUTPUT_DIR`
+5. The result of the ensemble prediction can be found in the directory where the environment variable `OUTPUT_DIR`
    points to.
     - The folder has the following naming convention: `<datetime>-<config-file-name>`
     - The `submission.csv` file can be found directly in this folder.    
