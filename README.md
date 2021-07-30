@@ -361,3 +361,10 @@ The configuration files used for postprocessing experiments in Tables VI, VII of
    points to.
     - The folder has the following naming convention: `<datetime>-<config-file-name>`
     - The `submission.csv` file can be found directly in this folder.    
+
+
+## Authors
+    - Frederike Luebeck
+    - Akanksha Baranwal
+    - Jona Braun
+    - Andreas Kaufmann
