@@ -1,13 +1,13 @@
 {
     "environment": {
-        "name": "augmentation test",
+        "name": "binary retraining",
         "output_path": "getenv('OUTPUT_DIR')",
         "log_file": "logs.txt"
     },
     "data_collection": {
         "folder": "getenv('DATA_COLLECTION_DIR')",
         "collection_names": [
-            "experiments_dataset_binary"
+            "experiments_dataset"
         ],
 	"transform_folders" : ["original"],
         "include_overlapping_patches" : false,

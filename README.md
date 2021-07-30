@@ -304,12 +304,19 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 ### 6. Postprocessing using retraining
 
-1. Create the binary training dataset by running inference on the entire original dataset used for training. Results from sample
-   training datasets created in this way are in U-Net Binary (Table. VI in the report) and GCDCNN Binary (Table. VII in the report).
+1. Create the binary training dataset by running inference on the entire original dataset used for training.
     1. The `inference.py` script can create the binary training dataset.
-    2. To do this follow [5. Run the inference](#5-run-the-inference) but additionally set the
+    2. To get the predictions of the `experiments_dataset` adjust the configuration file
+       parameter `data_collection.collection_names` to `"experiments_dataset"` of the configuration file that is located
+       in the `run_folder` (folder created during training):
+       ```
+       "data_collection": {
+            "folder": "getenv('DATA_COLLECTION_DIR')",
+            "collection_names": ["experiments_dataset"],
+       ```
+    3. To create the binary training dataset follow [5. Run the inference](#5-run-the-inference) but additionally set the
        commandline argument `--predict_on_train True`.
-    3. Then inside the `run_folder` the folder `prediction-<datetime>/pred-masks-original` contains the binary training
+    4. Then inside the `run_folder` the folder `prediction-<datetime>/pred-masks-original` contains the binary training
        dataset folder:
        ```
        +-- trainings
@@ -318,7 +325,6 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
                    +-- pred-masks-original       [contains the binary training dataset]
                        +-- experiments_dataset   [this is the binary training dataset]
        ```
-       The training images created in this way used for Table III in the report are here: [Unet-Plus](https://polybox.ethz.ch/index.php/s/QFrOwuiYLnAwmhb), [GCDCNN-Plus](https://polybox.ethz.ch/index.php/s/JI1UobMe9A5IrCw)
 2. Adjust the path to the dataset folder by adjusting the parameter `data_collection.folder` in the configuration file.
    The parameter `data_collection.folder` should link to the folder that contains the folders with names as specified
    with the parameter `data_collection.collection_names`. For example:
