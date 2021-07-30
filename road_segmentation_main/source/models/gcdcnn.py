@@ -55,7 +55,7 @@ class ResidualDilatedBlock(nn.Module):
         @param bias_out_layer: True = bias for the last Conv2d layer is set to True
         @param fixed_skip_kernel: True = Uses a 1x1 kernel Conv2d layer with fixed weights equal to ones
                                   False = Uses a 1x1 kernel Conv2d layer where the weights are learned
-                                  # TODO fixed_skip_kernel does not work! The loss does not change during training!
+                                  # TODO fixed_skip_kernel=True does not work! The loss does not change during training!
         """
         super(ResidualDilatedBlock, self).__init__()
         self.fixed_skip_kernel = fixed_skip_kernel
@@ -71,12 +71,10 @@ class ResidualDilatedBlock(nn.Module):
 
             nn.BatchNorm2d(output_dim),
             nn.ReLU(),
-            # TODO is padding = dilation ok?
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=False),
 
             nn.BatchNorm2d(output_dim),
             nn.ReLU(),
-            # TODO is padding = dilation ok?
             nn.Conv2d(output_dim, output_dim, kernel_size=3, padding=dilation, dilation=dilation, bias=bias_out_layer)
         )
 
