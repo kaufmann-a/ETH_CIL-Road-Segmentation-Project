@@ -373,8 +373,8 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
       file [unet_exp_dilation_5.jsonc](./road_segmentation_main/configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc)
       was used.
    2. Before retraining, adjust the path to the dataset folder such that it links to the binary training dataset created
-      in the last step. Do this by adjusting the parameter `data_collection.folder` in the configuration file. The
-      parameter `data_collection.folder` should link to the folder that contains the folders with names as specified
+      in the previous **step 2**. Do this by adjusting the parameter `data_collection.folder` in the configuration file.
+      The parameter `data_collection.folder` should link to the folder that contains the folders with names as specified
       with the parameter `data_collection.collection_names`. For example:
       ```
       "data_collection": { 
