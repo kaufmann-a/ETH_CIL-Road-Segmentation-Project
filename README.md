@@ -4,7 +4,13 @@
 
 Recent research in the field of semantic image segmentation predominantly directs attention to the development of slight architecture variations with increasing complexity. In this work, we analyze the impact of architecture modifications of a U-Net, namely the GC-DCNN and other self-developed variations.  Our experiments with fine tuning and model architecture alterations lead us to a novel better variant of  GC-DCNN. We also propose two novel post-processing techniques to remove artefacts in predictions. Although these methods improve the visual quality, they do not improve prediction accuracy significantly due to patch abstraction. With the help of numerous experiments, we conclude that the greatest improvement is observed by making the training dataset diverse.
 
-## Findings & Results
+## Index
+- [Findings and results](#findings-and-results)
+- [Project Code Structure](#project-code-structure)
+- [Training Folder Structure](#training-folder-structure)
+- [Reproducibility](#reproducibility)
+
+## Findings and Results
 
 ### Data
 
