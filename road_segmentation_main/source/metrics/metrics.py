@@ -64,7 +64,7 @@ class PostProcessingPatchAccuracy(Metric):
         for img in toimgs:
             tmp = postprocess(img, self.morphparam)
             postprocessed_patched_preds.append(tmp)
-        # TODO do we need really need to change the device to cpu and then again to gpu
+        # TODO do we need to change the device to cpu and then again to gpu?
         postprocessed_patched_preds = torch.tensor(postprocessed_patched_preds).to(self.device)
         # update metric states
         self.correct += torch.sum(postprocessed_patched_preds == patched_target)
@@ -97,7 +97,7 @@ class PostProcessingPixelAccuracy(Metric):
         for img in toimgs:
             tmp = postprocess(img, self.morphparam)
             postprocessed_preds.append(tmp)
-        # TODO do we need really need to change the device to cpu and then again to gpu
+        # TODO do we need to change the device to cpu and then again to gpu?
         postprocessed_preds = torch.tensor(postprocessed_preds).to(self.device)
         # update metric states
         self.correct += torch.sum(postprocessed_preds == target)
