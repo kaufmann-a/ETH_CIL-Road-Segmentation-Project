@@ -23,7 +23,7 @@ Since we only have 100 training images we increased our training set by:
   rotated versions (by 90, 180, 270 degrees) of the original and the flipped image. This increases the training set from
   100 images to a total of 800 images. (see [ETH-dataset](./data/training/eth_dataset))
 - using additional training data from Google Maps: [GMaps-public](./data/training/gmaps_public)
-  , [GMaps-custom](./data/training/gmaps_custom)
+  , [GMaps-custom](./data/training/gmaps_custom) (The training set downloaders can be found in: [./other/maps](./other/maps))
 
 ### Models
 
