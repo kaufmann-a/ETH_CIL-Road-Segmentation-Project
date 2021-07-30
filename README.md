@@ -345,7 +345,8 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 1. Create the test image predictions by running the inference script [4. Run the training](#4-run-the-training).
    After the inference the test images can be found in the folder `run_folder/prediction-<datetime>/pred-masks-original`,
-   where `run_folder` is the folder that was supplied as a command line argument to the `inference.py` script.
+   where `run_folder` is the folder that was supplied as a command line argument to the `inference.py` script. These
+   images are later needed in the last step to get the postprocessed test images.
 2. Create the binary training dataset by running inference on the entire original dataset used for training.
     1. The `inference.py` script can create the binary training dataset.
     2. To get the predictions of the `experiments_dataset` adjust the configuration file
@@ -383,12 +384,10 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
       ],
       ```
    3. The command to run the retraining is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
-4. Replace the test images [./data/test_images](./data/test_images) with the predictions generated from
-   step (1.) [5. Run the inference](#5-run-the-inference) on the original colored test images.
-5. Using [5. Run the inference](#5-run-the-inference) with the updated test images to get the final postprocessed
-   predictions.
-   1. Before running the inference the `data_collection.folder` parameter in the `run_folder` configuration file needs
-      to be adjusted such that it points to the parent folder of the test images.
+5. Get the final postprocessed predictions of the test image predictions of step 1. 
+   1. Before running the inference the parameter `data_collection.test_images_folder` in the `run_folder` configuration
+      file needs to be adjusted such that it points to the parent folder of the test image predictions created in step 1.
+   2. Follow [5. Run the inference](#5-run-the-inference).
 
 The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
 
