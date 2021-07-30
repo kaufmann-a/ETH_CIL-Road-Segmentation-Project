@@ -20,11 +20,8 @@ The ETH training data comprises only 100 train images and 94 test images. The tr
 size (400x400 vs. 608x608) from the ETH test data but are also of different quality. Comparing the mean histograms we
 find that the test images are missing a lot of color intensity values. These facts increase the complexity of the
 problem and make it harder to generalize from the train images to the test images.
-<p>
-<img src="./other/analysis/histograms/ETH test images_mean_hist.png" alt="mean-test-histograms" height="100%" >
-<img src="./other/analysis/histograms/ETH train images_mean_hist.png" alt="mean-train-histograms" height="100%">
-</p>
-
+![mean-test-histograms](./other/analysis/histograms/ETH test images_mean_hist.png)
+![mean-train-histograms](./other/analysis/histograms/ETH train images_mean_hist.png)
 Since we only have 100 training images we increased our training set by:
 
 - creating augmented ETH images. For that we flipped the original image and stored it separately. Further we saved the
