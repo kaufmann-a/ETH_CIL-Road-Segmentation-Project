@@ -20,7 +20,6 @@ The ETH training data comprises only 100 train images and 94 test images. The tr
 size (400x400 vs. 608x608) from the ETH test data but are also of different quality. Comparing the mean histograms we
 find that the test images are missing a lot of color intensity values. These facts increase the complexity of the
 problem and make it harder to generalize from the train images to the test images.
-
 <p>
 <img src="./other/analysis/histograms/ETH test images_mean_hist.png" alt="mean-test-histograms" height="100%" >
 <img src="./other/analysis/histograms/ETH train images_mean_hist.png" alt="mean-train-histograms" height="100%">
@@ -334,12 +333,15 @@ The configuration files used for postprocessing experiments in Tables VI, VII of
 
 ### 7. Postprocessing using Hough Transformations
 
-1. Create the binary training data set as in [6.1] (#6-postprocessing-using-retraining).
+1. Create the binary training data set as in [6.1 Postprocessing using retraining] (#6-postprocessing-using-retraining).
 2. Create the images with line-completion using Hough Transformations, both for the training set as well as for the predictions.
-  1. Run the inference script on the training data set 
-
-
-
+   1. Run the script `lines.py` with the command line argument `--prediction_folder`, where you specify the folder that contains the folder _pred-masks-original_ with the binary predictions. This creates another folder named _pred-lines_ in the specified directory.
+3. Train the post-processing network as in [4. Run the training](#4-run-the-training). In the configuration file, you have to change the number of input channels to 5, i.e. `"in_channels" : 5`. Add the following command line arguments:
+   1. `--lines_layer_path` - path to the directory containing the lines.
+   2. `--predicted_masks_path`- path to the directory containing the predicted masks.
+4. Run the inference script as in [5. Run the inference](#5-run-the-inference). In addition, add the following command line arguments:
+   1. `--lines_layer_path` - path to the directory containing the lines.
+   2. `--predicted_masks_path`- path to the directory containing the predicted masks.
 
 ### 8. Run an ensemble prediction
 
