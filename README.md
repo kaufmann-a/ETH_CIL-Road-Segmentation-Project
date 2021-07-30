@@ -286,8 +286,8 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 ### 6. Postprocessing using retraining
 
-1. Create the binary training dataset by running inference on the entire original dataset used for training. Sample
-   training datasets created in this way are UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
+1. Create the binary training dataset by running inference on the entire original dataset used for training. Results from sample
+   training datasets created in this way are in UNET Binary(Table. VI) and GCDCNN Binary(Table. VII).
     1. The `inference.py` script can create the binary training dataset.
     2. To do this follow [5. Run the inference](#5-run-the-inference) but additionally set the
        commandline argument `--predict_on_train True`.
@@ -300,7 +300,8 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
                    +-- pred-masks-original       [contains the binary training dataset]
                        +-- experiments_dataset   [this is the binary training dataset]
        ```
-2. Update the binary test images by running the inference on the colored test images
+       The training images created in this way used for Table III in the report are here: [Unet-Plus](https://polybox.ethz.ch/index.php/s/QFrOwuiYLnAwmhb), [GCDCNN-Plus](https://polybox.ethz.ch/index.php/s/JI1UobMe9A5IrCw)
+2. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
 3. Using [4. Run the training](#4-run-the-training) and [5. Run the inference](#5-run-the-inference) with the updated
    train and test dataset to run this part. Lowering the learning rate by 10X while retraining gives better results.
 
