@@ -38,11 +38,34 @@ Since we only have 100 training images we increased our training set by:
 We employed two models the [U-Net](http://arxiv.org/abs/1505.04597) and
 the [GC-DCNN](https://www.sciencedirect.com/science/article/pii/S0020025520304862). To evaluate the influence of the
 architecture we additionally adapt both models to improve the predictive results. In the following we refer to the
-**U-Net plus** as the U-Net where we increased the pool kernel size from 2 to 4 resulting in a slight improvement.
-The **GC-DCNN plus** refers to a deeper version of the original GC-DCNN and can be viewed as a novel combination of the
+**U-Net-Plus** as the U-Net where we increased the pool kernel size from 2 to 4 resulting in a slight improvement.
+The **GC-DCNN-Plus** refers to a deeper version of the original GC-DCNN and can be viewed as a novel combination of the
 GC-DCNN with the modules [Atrous Spatial Pyramid Pooling](https://arxiv.org/abs/1606.00915v2) (used as a bridge
 replacing the Pyramid Pooling Module) and the [attention gate](https://arxiv.org/abs/1804.03999v3) (used in the upwards
 branch).
+#### Implementation
+The implementation of the models can be found
+under [./road_segmentation_main/source/models](./road_segmentation_main/source/models). The GC-DCNN implementation is
+based on the official paper. From the paper it is not clear at which positions batch normalization is employed. We found
+that using batch normalization after almost every convolution layer helps that the model does not diverge during
+training. To simplify architecture changes of the U-Net and the GC-DCNN we implemented the models in such a way that we
+could change the architecture in the configuration file (e.g. GC-DCNN
+implementation: [gcdcnn_bn.py](./road_segmentation_main/source/models/gcdcnn_bn.py)). For instance the model
+configuration of the **GC-DCNN-Plus** looks as following in the configuration file:
+
+```
+  "model": {
+      "name": "gcdcnn_bn",
+      "features" : [64, 128, 256, 512, 1024],
+      "bridge": {
+          "use_aspp" : true,
+          "aspp_avg_pooling" : true,
+          "ppm_bins" : [1, 2, 3, 6]
+      },
+      "use_attention" : true,
+      "upsample_bilinear" : false,
+  },
+```
 
 ### Postprocessing
 
