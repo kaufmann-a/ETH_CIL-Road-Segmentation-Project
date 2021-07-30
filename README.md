@@ -354,8 +354,8 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
        in the `run_folder` (folder created during training):
        ```
        "data_collection": {
-            "folder": "getenv('DATA_COLLECTION_DIR')",
-            "collection_names": ["experiments_dataset"],
+           "folder": "getenv('DATA_COLLECTION_DIR')",
+           "collection_names": ["experiments_dataset"],
        ```
     3. To create the binary training dataset follow [5. Run the inference](#5-run-the-inference) but additionally set the
        commandline argument `--predict_on_train True`.
@@ -378,16 +378,23 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
       with the parameter `data_collection.collection_names`. For example:
       ```
       "data_collection": { 
-           "folder": "./trainings/<datetime>-<config-file-name>/prediction-<datetime>/pred-masks-original",
-           "collection_names": [
-               "experiments_dataset"
+          "folder": "./trainings/<datetime>-<config-file-name>/prediction-<datetime>/pred-masks-original",
+          "collection_names": [
+              "experiments_dataset"
       ],
       ```
-   3. The command to run the retraining is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
-5. Get the final postprocessed predictions of the test image predictions of step 1. 
-   1. Before running the inference the parameter `data_collection.test_images_folder` in the `run_folder` configuration
-      file needs to be adjusted such that it points to the parent folder of the test image predictions created in step 1.
-   2. Follow [5. Run the inference](#5-run-the-inference).
+   3. Additionally adjust the path to the test images such that it points to the test image predictions created in **step 1**.
+      For that the parameter `data_collection.test_images_folder` of the configuration file needs to be
+      adjusted such that it points to the parent folder of the test image predictions created in **step 1**.
+      ```
+      "data_collection": {
+          ...,
+          "test_images_folder": "./trainings/<datetime>-<config-file-name>/prediction-<datetime>/pred-masks-original",
+      ```
+      Attention: This is a different `prediction-<datetime>` folder then that one set for `data_collection.folder`!
+   4. The command to run the retraining is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
+5. Get the final postprocessed predictions of the test image predictions of **step 1** by
+   following [5. Run the inference](#5-run-the-inference).
 
 The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
 
