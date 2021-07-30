@@ -278,12 +278,12 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 
 For the ensemble prediction we combined the results of all five runs listed above in [Baselines](#baselines)
 and [Final](#final). To execute the ensemble prediction follow the steps listed
-in [8. Run an ensemble prediction](#8-run-an-ensemble-prediction).
+in [6. Run an ensemble prediction](#6-run-an-ensemble-prediction).
 
 ##### Postprocessing: binary retraining
 
 We applied the postprocessing on the runs U-Net+, GC-DCNN+ and the ensemble prediction.
-In [6. Postprocessing using retraining](#6-postprocessing-using-retraining) we show how these results can be reproduced.
+In [7. Postprocessing using retraining](#7-postprocessing-using-retraining) we show how these results can be reproduced.
 
 ##### Intermediate results
 
@@ -302,47 +302,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 4. During the inference job a folder called `prediction-<datetime>` is created inside the `run_folder`. This folder will
    contain the submission file `submission.csv` (see [Training folder structure](#training-folder-structure)).
 
-### 6. Postprocessing using retraining
-
-1. Create the binary training dataset by running inference on the entire original dataset used for training.
-    1. The `inference.py` script can create the binary training dataset.
-    2. To get the predictions of the `experiments_dataset` adjust the configuration file
-       parameter `data_collection.collection_names` to `"experiments_dataset"` of the configuration file that is located
-       in the `run_folder` (folder created during training):
-       ```
-       "data_collection": {
-            "folder": "getenv('DATA_COLLECTION_DIR')",
-            "collection_names": ["experiments_dataset"],
-       ```
-    3. To create the binary training dataset follow [5. Run the inference](#5-run-the-inference) but additionally set the
-       commandline argument `--predict_on_train True`.
-    4. Then inside the `run_folder` the folder `prediction-<datetime>/pred-masks-original` contains the binary training
-       dataset folder:
-       ```
-       +-- trainings
-           +-- <datetime>-<config-file-name>     [this is a training "run-folder"]
-               +-- prediction-<datetime>         [contains the model predictions and the submission file]
-                   +-- pred-masks-original       [contains the binary training dataset]
-                       +-- experiments_dataset   [this is the binary training dataset]
-       ```
-2. Adjust the path to the dataset folder by adjusting the parameter `data_collection.folder` in the configuration file.
-   The parameter `data_collection.folder` should link to the folder that contains the folders with names as specified
-   with the parameter `data_collection.collection_names`. For example:
-   ```
-   "data_collection": { 
-        "folder": "./trainings/<datetime>-<config-file-name>/prediction-<datetime>/pred-masks-original",
-        "collection_names": [
-            "experiments_dataset"
-   ],
-   ```
-3.  Run the retraining using [4. Run the training](#4-run-the-training).
-    - To reproduce the result in Table. III the commands is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
-3. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
-4. Using [5. Run the inference](#5-run-the-inference) with the updated test images to get the final postprocessed predictions.
-
-The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
-
-### 7. Run an ensemble prediction
+### 6. Run an ensemble prediction
 
 1. Before you can run an ensemble prediction, make sure you executed ([5. Run the inference](#5-run-the-inference)) for every training run you want to include into the ensemble prediction
 2. Load the environment ([3. Loading environment](#3-loading-environment))
@@ -380,6 +340,49 @@ The configuration files used for postprocessing experiments in Tables VI, VII of
    points to.
     - The folder has the following naming convention: `<datetime>-<config-file-name>`
     - The `submission.csv` file can be found directly in this folder.    
+
+### 7. Postprocessing using retraining
+
+1. Create the binary training dataset by running inference on the entire original dataset used for training.
+    1. The `inference.py` script can create the binary training dataset.
+    2. To get the predictions of the `experiments_dataset` adjust the configuration file
+       parameter `data_collection.collection_names` to `"experiments_dataset"` of the configuration file that is located
+       in the `run_folder` (folder created during training):
+       ```
+       "data_collection": {
+            "folder": "getenv('DATA_COLLECTION_DIR')",
+            "collection_names": ["experiments_dataset"],
+       ```
+    3. To create the binary training dataset follow [5. Run the inference](#5-run-the-inference) but additionally set the
+       commandline argument `--predict_on_train True`.
+    4. Then inside the `run_folder` the folder `prediction-<datetime>/pred-masks-original` contains the binary training
+       dataset folder:
+       ```
+       +-- trainings
+           +-- <datetime>-<config-file-name>     [this is a training "run-folder"]
+               +-- prediction-<datetime>         [contains the model predictions and the submission file]
+                   +-- pred-masks-original       [contains the binary training dataset]
+                       +-- experiments_dataset   [this is the binary training dataset]
+       ```
+2. Run the retraining using [4. Run the training](#4-run-the-training).
+   1. To get the results of table III of the report the configuration
+      file [unet_exp_dilation_5.jsonc](./road_segmentation_main/configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc)
+      was used.
+   2. Before retraining, adjust the path to the dataset folder by adjusting the parameter `data_collection.folder` in
+      the configuration file. The parameter `data_collection.folder` should link to the folder that contains the folders
+      with names as specified with the parameter `data_collection.collection_names`. For example:
+      ```
+      "data_collection": { 
+           "folder": "./trainings/<datetime>-<config-file-name>/prediction-<datetime>/pred-masks-original",
+           "collection_names": [
+               "experiments_dataset"
+      ],
+      ```
+   3. The command to run the retraining is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
+3. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
+4. Using [5. Run the inference](#5-run-the-inference) with the updated test images to get the final postprocessed predictions.
+
+The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
 
 
 ## Authors
