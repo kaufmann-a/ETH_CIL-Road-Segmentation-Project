@@ -380,8 +380,10 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
       ],
       ```
    3. The command to run the retraining is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
-3. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
+3. Replace the test images [./data/test_images](./data/test_images) with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
 4. Using [5. Run the inference](#5-run-the-inference) with the updated test images to get the final postprocessed predictions.
+   1. Before running the inference the `data_collection.folder` parameter in the `run_folder` configuration file needs
+      to be adjusted such that it points to the parent folder of the test images.
 
 The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
 
