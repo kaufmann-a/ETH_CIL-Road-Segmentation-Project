@@ -55,7 +55,7 @@ Refers to "Table V: Results of GC-DCNN Architecture Alterations"
 
 ### Postprocessing using Hough Transformations
 
-1. Create the binary training data set as in [7. Postprocessing using retraining](./README.md/#6-postprocessing-using-retraining).
+1. Create the binary training data set as in [7. Postprocessing using retraining](./README.md/#7-postprocessing-using-retraining).
 2. Create the images with line-completion using Hough Transformations, both for the training set as well as for the predictions.
    1. Run the script `lines.py` with the command line argument `--prediction_folder`, where you specify the folder that contains the folder _pred-masks-original_ with the binary predictions. This creates another folder named _pred-lines_ in the specified directory.
 3. Train the post-processing network as in [4. Run the training](./README.md/#4-run-the-training). In the configuration file, you have to change the number of input channels to 5, i.e. `"in_channels" : 5`. Add the following command line arguments:
