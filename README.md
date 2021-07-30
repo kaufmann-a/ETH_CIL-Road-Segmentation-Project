@@ -228,10 +228,8 @@ with the leonhard cluster).
           dataset: `bsub -n 4 -J "long-run" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration ./configurations/default.jsonc'`
     - Check the job status `bbjobs -w`
     - Peek the `stdout` log `bpeek` or `bpeek -f` to continuously read the log
-4. The result of the trainings can be found by default (
-   see [2. Add environment variables](#2-add-environment-variables)) in the folder `./trainings`
-    - The folders have following naming convention: `<datetime>-<config-file-name>` (
-      see [Training folder structure](#training-folder-structure))
+4. The result of the trainings can be found by default (see [2. Add environment variables](#2-add-environment-variables)) in the folder `./trainings`
+    - The folders have following naming convention: `<datetime>-<config-file-name>` (see [Training folder structure](#training-folder-structure))
 
 #### Reproducibility
 
@@ -311,7 +309,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
     1. The `inference.py` script can create the binary training dataset.
     2. To do this follow [5. Run the inference](#5-run-the-inference) but additionally set the
        commandline argument `--predict_on_train True`.
-    3. Then inside the `run_folder `the folder `prediction-<datetime>/pred-masks-original` contains the binary training
+    3. Then inside the `run_folder` the folder `prediction-<datetime>/pred-masks-original` contains the binary training
        dataset folder:
        ```
        +-- trainings
@@ -321,7 +319,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
                        +-- experiments_dataset   [this is the binary training dataset]
        ```
        The training images created in this way used for Table III in the report are here: [Unet-Plus](https://polybox.ethz.ch/index.php/s/QFrOwuiYLnAwmhb), [GCDCNN-Plus](https://polybox.ethz.ch/index.php/s/JI1UobMe9A5IrCw)
-2. Update the path for DATA_COLLECTION_DIR in the .env file to point to the binary dataset as in [2. Add environment variables](#2. Add environment variables).
+2. Update the path for DATA_COLLECTION_DIR in the .env file to point to the binary dataset as in [2. Add environment variables](#2-add-environment-variables).
 3.  Run the retraining using [4. Run the training](#4-run-the-training).
     - To reproduce the result in Table. III the commands is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
 3. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
