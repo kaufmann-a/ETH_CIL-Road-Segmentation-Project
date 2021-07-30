@@ -28,7 +28,7 @@ Refers to "Table II: Results of Augmentation Experiments for U-Net and GC-DCNN" 
 
 ### U-Net architecture experiments
 
-Refers to "Table IV: Results of U-Net Architecture Alternations"
+Refers to "Table IV: Results of U-Net Architecture Alterations"
 
 | Architecture | Command |
 | ------------- | ------- |
@@ -40,7 +40,7 @@ Refers to "Table IV: Results of U-Net Architecture Alternations"
 
 ### GC-DCNN architecture experiments
 
-Refers to "Table V: Results of GC-DCNN Architecture Alternations"
+Refers to "Table V: Results of GC-DCNN Architecture Alterations"
 
 | Architecture | Command |
 | ------------ | ------- |
