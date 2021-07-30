@@ -301,9 +301,13 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
                        +-- experiments_dataset   [this is the binary training dataset]
        ```
        The training images created in this way used for Table III in the report are here: [Unet-Plus](https://polybox.ethz.ch/index.php/s/QFrOwuiYLnAwmhb), [GCDCNN-Plus](https://polybox.ethz.ch/index.php/s/JI1UobMe9A5IrCw)
-2. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
-3. Using [4. Run the training](#4-run-the-training) and [5. Run the inference](#5-run-the-inference) with the updated
-   train and test dataset to run this part. Lowering the learning rate by 10X while retraining gives better results.
+2. Make sure the paths are correctly pointing to the binary dataset in the configuration file/env setting and run the retraining using [4. Run the training](#4-run-the-training).
+   For retraining to reproduce the result in Table. III in the report the commands is: `bsub -n 4 -J "unet_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/retrain_binary/unet_exp_dilation_5.jsonc'`
+4. Replace the test images with the predictions generated from step [5. Run the inference](#5-run-the-inference) on the original colored test images.
+5. Using [5. Run the inference](#5-run-the-inference) with the updated test images to get the final postprocessed predictions.
+
+The configuration files used for postprocessing experiments in Tables VI, VII of the report are in the folder [retrain-binary](./road_segmentation_main/configurations/experiments/retrain_binary/).
+
 
 ### 7. Run an ensemble prediction
 
