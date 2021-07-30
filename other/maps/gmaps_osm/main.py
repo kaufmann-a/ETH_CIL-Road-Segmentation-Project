@@ -6,7 +6,7 @@ from PIL import Image
 from tqdm import tqdm
 
 from src import gmaps_downloader
-from src.osm_downloader_ import get_osm_roads
+from src.osm_downloader import get_osm_roads
 from src.tile_coordinates_helper import num2deg, deg2num
 
 # bad masks from manual inspection
