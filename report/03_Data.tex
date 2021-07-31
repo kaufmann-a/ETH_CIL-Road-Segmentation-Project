@@ -1,0 +1,20 @@
+\section{Data}  \label{section:data}
+For this project, ETH provided 100 labelled aerial \acrshort{rgb} images of size 400 by 400 pixel, acquired from Google Maps. Since deep learning approaches often require a large amount of training data, we pursued two strategies to enlarge the data set for training our models.
+
+\subsection{Augmentations}
+
+First, we applied several transformations to each image using the python \textit{Albumentations} library \cite{albumentations}. We applied rotations and flips to make the model more robust against variations in road orientation. In in order to keep the absolute widths of roads, cars, trees etc. fixed, we didn't consider cropping and resizing transformations. These augmentations increased the data set by a factor of eight.
+
+%First, we applied several transformations to each image using the python \textit{Albumentations} library \cite{albumentations}. We applied rotations and flips. In in order to keep the absolute widths of roads, cars, trees etc. fixed, we didn't consider cropping and resizing transformations. These augmentations increased the data set by a factor of eight. An additional benefit is that the model becomes more robust against variations in road orientation.
+Additionally, we applied random transformations during training, which are described in Section \ref{section:models}.
+
+
+\subsection{Additional Data Sets}
+
+Because the provided data set is not only small, but also lacks diversity, we included a publicly available data set which we found on Github \cite{jkfrie}, which was retrieved from Google Maps (2411 images). In the following, we refer to this data set as \textit{GMaps-public}.
+
+We additionally scraped our own images from Google Maps using the tool of \cite{jkfrie} where we focused on including a more diverse set of roads: 1) Roads with a red, light blue, light yellow, white, black and grey color tone, 2) Roads of different quality, e.g. including  some with a lot of cracks, some with unusual texture and some without surface markings. The contribution of these different data sets are evaluated in Section \ref{section:models}. In the following, we refer to this data set as \textit{GMaps-custom}. This set contains 2366 images.
+
+\subsection{Labels}
+Even though we have pixel-level labels for our training images, our task is to predict one label per 16x16-pixel patch. We  experimented with approaches to directly predict the label per patch. However, we came to the conclusion that both visually and in terms of prediction accuracy, a pixel-level prediction with subsequent voting per patch with a threshold of 25\% produces better results.  
+That is, if at least 25\% of the pixels in a 16x16 px patch are classified as road, the entire patch is classified as a road.

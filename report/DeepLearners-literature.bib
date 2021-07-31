@@ -1,0 +1,184 @@
+@article{gcdcnn,
+title = {Global context based automatic road segmentation via dilated convolutional neural network},
+journal = {Information Sciences},
+volume = {535},
+pages = {156-171},
+year = {2020},
+issn = {0020-0255},
+doi = {https://doi.org/10.1016/j.ins.2020.05.062},
+url = {https://www.sciencedirect.com/science/article/pii/S0020025520304862},
+author = {Meng Lan and Yipeng Zhang and Lefei Zhang and Bo Du},
+keywords = {Road segmentation, UNet, Dilated convolution, Global context information},
+abstract = {Road segmentation from remote sensing images is a critical task in many applications. In recent years, various approaches, particularly deep learning-based methods, have been proposed for accurate road segmentation. However, most existing road segmentation methods always obtain unsatisfactory results (e.g., heterogeneous pixels) due to the complex backgrounds and view occlusions of buildings and trees around a road; consequently, road segmentation remains a challenging problem. In this study, we propose a novel global context based dilated convolutional neural network (GC-DCNN) to address the aforementioned problem. The structure of GC-DCNN is similar to that of UNet. In particular, building the encoder of GC-DCNN with three residual dilated blocks is suggested to further enlarge the effective receptive field and learn additional discriminative features. Thereafter, a pyramid pooling module is used to capture the multiscale global context features and fuse them to achieve stronger feature representation. The decoder network upsamples the fused features to the same size as the input image, combining the high-resolution features with the contracting path of the encoder network. Moreover, the dice coefficient loss is adopted as the loss function. This function differs from those in most previous studies but is more suitable for road segmentation. Extensive experimental results on two benchmark datasets compared with several baseline models demonstrate the superiority of the proposed GC-DCNN algorithm.}
+}
+
+@misc{oktay2018attention,
+      title={Attention U-Net: Learning Where to Look for the Pancreas}, 
+      author={Ozan Oktay and Jo Schlemper and Loic Le Folgoc and Matthew Lee and Mattias Heinrich and Kazunari Misawa and Kensaku Mori and Steven McDonagh and Nils Y Hammerla and Bernhard Kainz and Ben Glocker and Daniel Rueckert},
+      year={2018},
+      eprint={1804.03999},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+
+@ARTICLE{aspp_7913730,  author={Chen, Liang-Chieh and Papandreou, George and Kokkinos, Iasonas and Murphy, Kevin and Yuille, Alan L.},  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},   title={DeepLab: Semantic Image Segmentation with Deep Convolutional Nets, Atrous Convolution, and Fully Connected CRFs},   year={2018},  volume={40},  number={4},  pages={834-848},  doi={10.1109/TPAMI.2017.2699184}}
+
+@article{unet,
+  author    = {Olaf Ronneberger and
+               Philipp Fischer and
+               Thomas Brox},
+  title     = {U-Net: Convolutional Networks for Biomedical Image Segmentation},
+  journal   = {CoRR},
+  volume    = {abs/1505.04597},
+  year      = {2015},
+  url       = {http://arxiv.org/abs/1505.04597},
+  archivePrefix = {arXiv},
+  eprint    = {1505.04597},
+  timestamp = {Mon, 13 Aug 2018 16:46:52 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/RonnebergerFB15.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+@article{dicelosspaper,
+   title={A survey of loss functions for semantic segmentation},
+   ISBN={9781728194684},
+   url={http://dx.doi.org/10.1109/CIBCB48159.2020.9277638},
+   DOI={10.1109/cibcb48159.2020.9277638},
+   journal={2020 IEEE Conference on Computational Intelligence in Bioinformatics and Computational Biology (CIBCB)},
+   publisher={IEEE},
+   author={Jadon, Shruti},
+   year={2020},
+   month={Oct}
+}
+
+@inproceedings{imagenet,
+author = {Krizhevsky, Alex and Sutskever, Ilya and Hinton, Geoffrey E.},
+title = {ImageNet Classification with Deep Convolutional Neural Networks},
+year = {2012},
+publisher = {Curran Associates Inc.},
+address = {Red Hook, NY, USA},
+abstract = {We trained a large, deep convolutional neural network to classify the 1.2 million
+high-resolution images in the ImageNet LSVRC-2010 contest into the 1000 different
+classes. On the test data, we achieved top-1 and top-5 error rates of 37.5% and 17.0%
+which is considerably better than the previous state-of-the-art. The neural network,
+which has 60 million parameters and 650,000 neurons, consists of five convolutional
+layers, some of which are followed by max-pooling layers, and three fully-connected
+layers with a final 1000-way softmax. To make training faster, we used non-saturating
+neurons and a very efficient GPU implementation of the convolution operation. To reduce
+overriding in the fully-connected layers we employed a recently-developed regularization
+method called "dropout" that proved to be very effective. We also entered a variant
+of this model in the ILSVRC-2012 competition and achieved a winning top-5 test error
+rate of 15.3%, compared to 26.2% achieved by the second-best entry.},
+booktitle = {Proceedings of the 25th International Conference on Neural Information Processing Systems - Volume 1},
+pages = {1097–1105},
+numpages = {9},
+location = {Lake Tahoe, Nevada},
+series = {NIPS'12}
+}
+
+@article{resunet,
+  author    = {Foivos I. Diakogiannis and
+               Fran{\c{c}}ois Waldner and
+               Peter Caccetta and
+               Chen Wu},
+  title     = {ResUNet-a: a deep learning framework for semantic segmentation of
+               remotely sensed data},
+  journal   = {CoRR},
+  volume    = {abs/1904.00592},
+  year      = {2019},
+  url       = {http://arxiv.org/abs/1904.00592},
+  archivePrefix = {arXiv},
+  eprint    = {1904.00592},
+  timestamp = {Wed, 24 Apr 2019 12:21:25 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/abs-1904-00592.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{residual,
+  author    = {Kaiming He and
+               Xiangyu Zhang and
+               Shaoqing Ren and
+               Jian Sun},
+  title     = {Deep Residual Learning for Image Recognition},
+  journal   = {CoRR},
+  volume    = {abs/1512.03385},
+  year      = {2015},
+  url       = {http://arxiv.org/abs/1512.03385},
+  archivePrefix = {arXiv},
+  eprint    = {1512.03385},
+  timestamp = {Wed, 17 Apr 2019 17:23:45 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/HeZRS15.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{hough,
+author = {Duda, Richard O. and Hart, Peter E.},
+title = {Use of the Hough Transformation to Detect Lines and Curves in Pictures},
+year = {1972},
+issue_date = {Jan. 1972},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {15},
+number = {1},
+issn = {0001-0782},
+url = {https://doi.org/10.1145/361237.361242},
+doi = {10.1145/361237.361242},
+abstract = {Hough has proposed an interesting and computationally efficient procedure for detecting
+lines in pictures. This paper points out that the use of angle-radius rather than
+slope-intercept parameters simplifies the computation further. It also shows how the
+method can be used for more general curve fitting, and gives alternative interpretations
+that explain the source of its efficiency.},
+journal = {Commun. ACM},
+month = jan,
+pages = {11–15},
+numpages = {5},
+keywords = {picture processing, pattern recognition, line detection, curve detection, point-line transformation, colinear points, Hough transformation}
+}
+@article{albumentations,
+  author = {A. Buslaev and A. Parinov and E. Khvedchenya and V.~I. Iglovikov and A.~A. Kalinin},
+  title = {Albumentations: fast and flexible image augmentations},
+  journal = {ArXiv e-prints},
+  eprint = {1809.06839},
+  year = 2018
+}
+
+@misc{jkfrie,
+  author = {Jason Friedman and Anna Laura John and Renato Menta and Dominic Weibel},
+  title = "{CIL-FS20-ETHZ}",
+  year = {2020},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/jkfrie/CIL-FS20-ETHZ}},
+  commit = {6d07c8560d616d47274c01585efface138e74466}
+}
+
+@article{dumoulin2016guide,
+  title="{A guide to convolution arithmetic for deep learning}",
+  author = {{Dumoulin}, Vincent and {Visin}, Francesco},
+  journal = {ArXiv e-prints},
+  eprint = {1603.07285},
+  year={2016},
+  month={mar}
+}
+
+@InProceedings{partialconv,
+author="Liu, Guilin
+and Reda, Fitsum A.
+and Shih, Kevin J.
+and Wang, Ting-Chun
+and Tao, Andrew
+and Catanzaro, Bryan",
+editor="Ferrari, Vittorio
+and Hebert, Martial
+and Sminchisescu, Cristian
+and Weiss, Yair",
+title="Image Inpainting for Irregular Holes Using Partial Convolutions",
+booktitle="Computer Vision -- ECCV 2018",
+year="2018",
+publisher="Springer International Publishing",
+address="Cham",
+pages="89--105",
+abstract="Existing deep learning based image inpainting methods use a standard convolutional network over the corrupted image, using convolutional filter responses conditioned on both valid pixels as well as the substitute values in the masked holes (typically the mean value). This often leads to artifacts such as color discrepancy and blurriness. Post-processing is usually used to reduce such artifacts, but are expensive and may fail. We propose the use of partial convolutions, where the convolution is masked and renormalized to be conditioned on only valid pixels. We further include a mechanism to automatically generate an updated mask for the next layer as part of the forward pass. Our model outperforms other methods for irregular masks. We show qualitative and quantitative comparisons with other methods to validate our approach.",
+isbn="978-3-030-01252-6"
+}

@@ -1,0 +1,101 @@
+%   Show evidence to support your claims made in the introduction.
+
+\section{Results} \label{section:results}
+
+Table \ref{tab:results} summarizes the results of our final models by comparing the Public Scores on Kaggle.
+The trend is that our proposed post-processing technique  (Retrain on binary, \ref{subsec:binary_retraining}) improves the accuracy. The best results are obtained with an ensemble of the best predictions from each model specification. For the ensemble, post-processing did not improve the accuracy. A reason might be the already removed artefacts by the ensemble.
+
+%However using post-processing on the ensemble results reduces the accuracy. Our intiution is that the possible corrections in artefacts could have already been taken care of by the ensemble.
+
+%Postprocessing with the retrained partial convolution network (\ref{subsec:binary_retraining}) improved the accuracy, but not for the ensemble prediction. A reason might be the already removed artefacts by the ensemble.  
+
+\begin{comment}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{p{0.4\linewidth}|p{0.3\linewidth}|p{0.2\linewidth}}
+    \hline
+    \hline
+         Model & Data Sets & Public Score \\
+         \hline
+         U-Net Baseline & ETH + GMaps-public  & 92.352\\
+         \hline
+         \parbox[t]{\linewidth}{U-Net + Augment.: SSR + RC}  & \parbox[t]{\linewidth}{ETH, GMaps-public,\\ GMaps-custom}  & 92.689 \\ % 20210710-115821-unet_final
+         \hline
+         \parbox[t]{\linewidth}{U-Net-Plus + Augment.: SSR + RC} & \parbox[t]{\linewidth}{ETH, GMaps-public,\\ GMaps-custom} & 92.835 \\ % 20210710-115820-unet_final_plus
+         \parbox[t]{\linewidth}{+ postprocessing } &  & 93.034 \textcolor{green}{*}\\
+         \hline
+         GC-DCNN Baseline & ETH + GMaps-public  & 92.242 \\
+         \hline
+         \parbox[t]{\linewidth}{GC-DCNN\\ + Augment.: SSR + RC + GN} & \parbox[t]{\linewidth}{ETH, GMaps-public,\\ GMaps-custom}  & 92.457 \\ % 20210710-115819-gcdcnn_final
+         \hline
+         \parbox[t]{\linewidth}{GC-DCNN-Plus\\ + Augment.: SSR + RC + GN} & \parbox[t]{\linewidth}{ETH, GMaps-public,\\ GMaps-custom}  & 92.999 \\
+         \parbox[t]{\linewidth}{+ postprocessing} &  & 93.065  \textcolor{green}{*}\\
+
+    \hline
+    %\hdashline
+    % \hline
+    % U-Net Ensemble (5 different lr-schedules) & ETH + GMaps-public  & \textcolor{red}{\textbf{93.198}} \\ 
+    \parbox[t]{\linewidth}{Ensemble: \\GC-DCNN Baseline, U-Net Baseline, GC-DCNN,\\ U-Net, GC-DCNN plus, \\ U-Net plus } & & \textbf{93.497} \\
+    \parbox[t]{\linewidth}{+ postprocessing} &  & 93.303\\
+    \hline
+    \hline
+    \end{tabular}
+    \centering
+    %\caption{Results of Final Models: The \acrshort{unet}-plus refers to using PoolKernel (4) and the \acrshort{gcdcnn}-plus to the alternations: ASPP + Attention + Deep. Postprocessing refers to using the retrained partial convolution network (see \ref{subsec:binary_retraining}) on the predicted masks.}
+    \caption{Results of Final Models: \acrshort{unet}-plus Sec: \ref{section:unetplus}, \acrshort{gcdcnn}-plus Sec: \ref{section:gcdcnnplus}, \textcolor{green}{*} Postprocessing Sec:  \ref{subsec:binary_retraining})}
+    \label{tab:results}
+        \vspace{-4mm}
+\end{table}
+\end{comment}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{p{0.22\linewidth}|p{0.31\linewidth}|p{0.14\linewidth}|p{0.03\linewidth}|p{0.08\linewidth}}
+    \hline
+    \hline
+         Model & Specification & Data Sets  & PP & Public Score \\
+         \hline
+         U-Net &  Baseline  & \circ{1}, \circ{2} & -  & 92.352\\
+         \hline
+         U-Net & Aug.: SSR + RC & \circ{1}, \circ{2}, \circ{3} & - & 92.689 \\ % 20210710-115821-unet_final
+         \hline
+         U-Net-plus & Aug.: SSR + RC  & \circ{1}, \circ{2}, \circ{3} & - & 92.835 \\ % 20210710-115820-unet_final_plus
+          &  & & \checkmark & 93.034 \\
+         \hline
+         GC-DCNN  & Baseline  & \circ{1}, \circ{2} & - & 92.242 \\
+         \hline
+         GC-DCNN & Aug.: SSR + RC + GN & \circ{1}, \circ{2}, \circ{3} & - & 92.457 \\ % 20210710-115819-gcdcnn_final
+         \hline
+         GC-DCNN-plus & Aug.: SSR + RC + GN & \circ{1}, \circ{2}, \circ{3} & - & 92.999 \\
+         & & & \checkmark   & 93.065\\
+
+    \hline
+    % \parbox[t]{\linewidth}{GC-DCNN Baseline, \\ U-Net Baseline, \\ GC-DCNN,\\ U-Net, \\ GC-DCNN plus, \\ U-Net plus }
+    Ensemble &  All models from above, not post-processed &  & - & \textbf{93.497} \\
+     & &  & \checkmark  & 93.303\\
+    \hline
+    \hline
+    \end{tabular}
+    \centering
+    %\caption{Results of Final Models: The \acrshort{unet}-plus refers to using PoolKernel (4) and the \acrshort{gcdcnn}-plus to the alternations: ASPP + Attention + Deep. Postprocessing refers to using the retrained partial convolution network (see \ref{subsec:binary_retraining}) on the predicted masks.}
+    \caption{Results of Final Models: \acrshort{unet}-plus Sec: \ref{section:unetplus}, \acrshort{gcdcnn}-plus Sec: \ref{section:gcdcnnplus}, PP: Post-processing Sec:  \ref{subsec:binary_retraining}). Data sets: \circ{1} ETH, \circ{2} GMaps-public, \circ{3} GMaps-custom.}
+    \label{tab:results}
+\end{table}
+
+  \vspace{-4mm}
+\begin{comment}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l|p{0.1\linewidth}|p{0.1\linewidth}|p{0.1\linewidth}|p{0.1\linewidth}|p{0.1\linewidth}|l}
+    
+    \hline
+    \hline
+    1 & Model & ETH & GMaps-public & GMaps-custom & Post-Process. & Score
+    
+    \end{tabular}
+    \caption{Results of final models. \textbf{Post} = Post-processing (Retrain on binary images). \textbf{Score} = Public Score on Kaggle}
+\end{table}
+
+
+\end{comment}

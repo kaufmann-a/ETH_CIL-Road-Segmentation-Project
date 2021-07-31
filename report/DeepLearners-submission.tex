@@ -1,0 +1,55 @@
+\documentclass[10pt,conference,compsocconf]{IEEEtran}
+
+%\usepackage{times}
+%\usepackage{balance}
+\usepackage{url}
+\usepackage{graphicx}	% For figure environment
+\usepackage{xcolor}
+\usepackage{comment}
+\usepackage{glossaries}
+\usepackage{amssymb}
+%\usepackage{subfig}
+\usepackage{subcaption}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{arydshln} % for table /hdashline
+\usepackage{float} % used to place figures with \begin{figure}[H]
+\usepackage{arydshln}
+
+\renewcommand{\circ}[1]{\textcircled{\raisebox{-0.9pt}{#1}}}
+
+\makeglossaries
+
+\input{acronyms.tex}
+
+\begin{document}
+\title{CIL Course Project Report 2021: Road Segmentation}
+
+\author{
+  Team name: Corpus Inscriptionum Latinarum (CIL) \\
+  Akanksha Baranwal, Jona Braun, Andreas Kaufmann, Frederike Lübeck \\
+  Department of Computer Science, ETH Zurich, Switzerland
+}
+
+\maketitle
+
+\input{01_Abstract}
+\input{02_Introduction}
+\input{03_Data}
+\input{04_ModelAndMethods}
+\input{05_Postprocessing}
+\input{06_Results}
+\input{07_Discussion}
+\input{08_Summary}
+\input{09_Appendix}
+
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{DeepLearners-literature}
+
+\glossarystyle{altlist}
+\printglossary[type=\acronymtype]
+
+\end{document}

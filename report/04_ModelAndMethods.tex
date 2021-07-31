@@ -1,0 +1,110 @@
+% Describe your idea and how it was implemented to solve the problem. Survey the related work, giving credit where credit is due.
+\section{Models and Methods} \label{section:models}
+
+\subsection{Baseline Models}
+
+We have focused on two different model architectures as our baselines: \acrshort{unet} \cite{unet} and \acrshort{gcdcnn} \cite{gcdcnn}.
+
+\subsubsection{Baseline U-Net}
+A U-Net is based on a fully connected CNN and consists of a contracting and an expanding path, arranged symmetrically in a U-shape. The contracting path has the architecture of a typical \acrshort{cnn}, it repeatedly applies convolutions and pooling operations to extract meaningful features. This results in reduced spatial information. By combining these features with high-resolution information from the contracting path, the expanding path is able to precisely locate detected objects on a high-resolution output mask. This propagation of context information between different levels in the network is enabled by skip connections.
+\subsubsection{Baseline \acrshort{gcdcnn}}
+%\subsubsection{\acrshort{gcdcnn}}
+
+The \acrfull{gcdcnn} builds upon the structure of a U-Net. Encoder blocks in the contracting path are replaced by \acrlong{rdb}s (\acrshort{rdb}s) to further enlarge the receptive field, by using the dilation technique \cite{dumoulin2016guide}. A dilated convolution leaves a specific number of pixels spare between the rows and columns of a filter. Residual blocks have been introduced in \cite{residual}, and are used to facilitate information propagation by adding shortcut connections to jump over layers. Additionally, a \acrfull{ppm} is used in the bottleneck layer, which applies multilevel global average pooling to obtain a global representation. See Figure \ref{fig:ppm} in the appendix for an illustration.
+
+
+
+In order to improve the two baseline models and to tailor them to our specific problem of segmenting roads on aerial images, we conducted the following experiments. For each experiment, we provide an intuition on why it might improve our model and draw conclusions. This results in our final versions of the \acrshort{unet} and the \acrshort{gcdcnn} compared in Section \ref{section:results}.
+
+\textbf{Experimental setup}:
+We train each network for 200 epochs and save the model weights of the best epoch in terms of validation accuracy. We use the optimizer Adam and the dice-loss as our loss function. As initial learning rates, we use $10^{-3}$ for the U-Net and $10^{-4}$ for the \acrshort{gcdcnn}, as we have figured out that these are good values to prevent overfitting as well as divergence. Additionally, we use a learning rate scheduler, which drops the learning rate by a factor of $10$ at epochs $50$ and $100$. We train our models on the ETH data set including the augmented images and on the data set \textit{GMaps-public}. We used a fixed validation set in order to compare validation accuracy among different experiments. Images which contain only non-road pixels are removed from the training set. During training, we apply the transformation \textit{ShiftScaleRotate} with probability 50\% to each image, which is explained in more detail later.
+
+ We evaluate our models in terms of validation accuracy on our validation set and the public score on Kaggle. 
+
+\subsection{Experiment: Training Data}
+In this experiment we evaluate the contribution of using additional data described in Section II B. 
+% We compare following data sets:
+% \begin{itemize}
+%     \item \emph{\acrshort{eth} data set}: 800 images (original plus the 8 rotation and flip augmentations) of size (400, 400)
+%     \item \emph{GMaps-public}: 2411 images cropped to size (400, 400)
+%     \item \emph{GMaps-custom}: X images cropped to size (400, 400)
+% \end{itemize}
+ We always use a validation set of 20\% and report in Table \ref{tab:datasets} the public score reached on Kaggle as well as the training epoch with the highest validation accuracy. A comparison of the validation accuracy itself is not helpful, since in this experiment the validation set is different for every experiment.
+ 
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l|p{0.15\linewidth}|p{0.15\linewidth}}
+         Data Set & Public Score & Best Epoch  \\ \hline
+         \acrshort{eth} & 89.162 & 77 \\
+         GMaps-public & 90.584 & 81 \\
+         GMaps-custom & 91.716 & 120 \\ % 20210703-202815-unet_exp_jkfrie_additional
+         % GMaps-custom & 91.843 & 173 \\ % 20210708-231725-unet_exp_gmaps_custom
+         %\acrshort{eth} + GMaps-public & 91.897 & 142 \\
+         %\acrshort{eth} + GMaps-custom & 92.332 & 99 \\
+         \acrshort{eth} + GMaps-public + GMaps-custom & \textbf{93.077} & 72 \\ %  20210703-202816-unet_exp_eth_jkfrie_jkfrie_additional
+    \end{tabular}
+    \caption{Results of training on different data sets (\acrshort{unet})}
+    \label{tab:datasets}
+    \vspace{-3mm}
+\end{table}
+
+
+The results clearly show that using more data as well as a diverse set of images as in the union of all three sets can lead to a great improvement in prediction accuracy.
+
+
+\subsection{Experiment: Augmentations During Training}
+
+In order to achieve better generalization and to make our models robust against small variations in the training images, we apply different random augmentations during training. Here we compare the augmentations \acrfull{ssr}, \acrfull{rc} and \acrfull{gn} from the albumentations library \cite{albumentations} using default parameters.
+
+
+We apply each augmentation with probability 50\% if we use one or two augmentations simultaneously. When using three augmentations, we apply each with probability 40\%. The results are shown in Table \ref{tab:aug}.
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l|l|p{0.15\linewidth}|p{0.15\linewidth}|p{0.1\linewidth}}
+        Model & Method & Validation Accuracy  & Public Score & Best Epoch  \\ \hline
+        % results with 2080Ti:
+        U-Net & no augmentation & 96.894 & 91.935 & 51 \\ % 20210709-232120-0000_unet_exp_augmentation
+        &SSR & 97.185 & 92.352 & 124 \\ % 20210709-163934-0004_unet_exp_augmentation
+        % &SSR+CS & 97.189 & 92.138 & 195 \\ % 20210709-163933-0403_unet_exp_augmentation
+        &SSR+RC & \textbf{97.202} & \textbf{92.687} & 83 \\ % 20210709-231921-0409_unet_exp_augmentation
+        &SSR+RC+GN & 97.145 & 92.510 & 177  \\ % 20210709-163933-040908_unet_exp_augmentation
+        % results with 1080Ti:
+        %&- & 96.90 & 92.263 & 52 \\ % 20210622-163346-0000_unet_exp_augmentation
+        %&SSR & 97.17 & 92.428 & 106 \\ % 20210622-203049-0004_unet_exp_augmentation
+        %&SSR+CS & \textbf{97.237} & 92.156 & 107 \\ % 20210624-101058-0403_unet_exp_augmentation
+        %&SSR+RC & 97.188 & 92.412 & 83 \\ % 20210625-091625-0409_unet_exp_augmentation
+        %&SSR+RC+GN & 97.175 & \textbf{92.549} & 177 \\ % 20210625-053145-040908_unet_exp_augmentation
+        \hline
+        GC-DCNN & no augmentation & 97.004 & 91.256 & 56 \\ % 20210626-123903-0000_gcdcnn_exp_augmentation
+        & SSR & 97.270 & 92.242 & 71 \\ % 20210626-222336-0004_gcdcnn_exp_augmentation
+        & SSR+RC & \textbf{97.309} & 92.317 & 155 \\ % 20210627-171426-0409_gcdcnn_exp_augmentation
+        & SSR+RC+GN & 97.273 & \textbf{92.422} & 95 \\ % 20210627-171254-040908_gcdcnn_exp_augmentation
+    \end{tabular}
+    \caption{Results of Augmentation Experiments for U-Net and GC-DCNN}
+    \label{tab:aug}
+        \vspace{-5mm}
+\end{table}
+\subsection{Experiment: Architecture Alterations U-Net}
+\label{section:unetplus}
+In order to fine tune the U-Net architecture to our specific task, we experimented with varying dilation,  convolutional filter sizes and max pooling kernel sizes. 
+%As shown in Table \ref{tab:unet_alt} in Appendix  such model changes did not contribute much to prediction accuracy in our case.
+Table \ref{tab:unet_alt} in the Appendix shows the variations and results in detail. The best architecture, henceforth referred to as \acrshort{unet}-Plus, was obtained using a pooling kernel of size 4 which increased the public score (in \%) by 0.457. 
+ 
+%In order to adapt the basic U-Net architecture to our specific task, we applied several changes in architecture and hyper parameters. We experimented with increasing dilation, varying convolutional filter sizes and max pooling kernel sizes. 
+
+
+\subsection{Experiment: Architecture Alterations \acrshort{gcdcnn}}\label{section:gcdcnnplus}
+
+We experimented with the following alterations to the \acrshort{gcdcnn} architecture. 
+\paragraph{Deep} The original \acrshort{gcdcnn} was designed for images of size 256x256. However, as we use images of size 400x400, the bottleneck layer has a higher resolution. Therefore, we study the effect of a deeper network. Instead of 3 \acrshort{rdb}s with filters [128, 256, 512] we use 4 \acrshort{rdb}s with an additional filter of size 1024. This reduces the image size in the bottleneck layer by a factor of 16.
+\paragraph{\acrfull{aspp}} We replace the bridge (\acrshort{ppm}) with the \acrshort{aspp} \cite{aspp_7913730} module.
+\paragraph{Attention} We use an attention gate, as proposed by Oktay et al. \cite{oktay2018attention}, in the expanding path of the \acrshort{gcdcnn}. For this, we apply the attention gate to the decoder tensors before concatenating them with the skip connections.
+
+%Finally we combine these alterations to find the best combination. The results, that can be found in the Appendix in Table \ref{tab:gcdcnn_tuning}, show that the improvements are only of small degree. 
+
+%We combine these alterations to find the best novel combination:
+%\acrshort{gcdcnn}-plus. The results in Table \ref{tab:gcdcnn_tuning} in the Appendix show an improvement of 0.049 in Validation Accuracy and 0.307 in Public Score. 
+
+The best result is obtained by combining all three above-mentioned alterations which creates our novel altered model \acrshort{gcdcnn}-plus. The results in Table \ref{tab:gcdcnn_tuning} in the Appendix show that our architecture variations can increase the public score by up to 0.307 percentage points.
+

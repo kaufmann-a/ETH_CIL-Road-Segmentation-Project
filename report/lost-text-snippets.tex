@@ -1,0 +1,50 @@
+
+
+
+
+
+
+The project specification and the data provided by \acrshort{eth} required it to spend a lot of time on analyzing on how to deal with the data. Several properties of the data were defined and investigated into.
+
+\subsection{16x16 patch issue} 
+The prediction metric measures the fraction of correctly predicted 16 by 16 pixel patches. There are two ways on how the masks can be learned. One way is to build the model structure of the \acrshort{cnn} such that it predicts the patches directly, i.e. the dimensionality of the output layer is then the number of pixels in the original image, divided by a factor of 16x16. Another way would be to learn the full mask, containing as many pixels as the imput image and then to find a way to reduce the predicted mask to an image with the 16x16 px patches.
+\subsection{Labels are decimal numbers but metric uses binary values}
+Another question which had to be answered is how the provided labels (masks) should be used. The provided masks contain gray scale values from 0 to 255 but the metric just evaluates for 0 or 255, i.e. black or white. Thus we evaluated what threshold should be used to consider a pixel to be either street or background in the provided labels. Additionally, we analyzed if we should learn the grayscale images directly and then apply the threshold to the predictions.
+\subsection{Image size of train set is different then test set}
+The images in the train set, provided by \acrshort{eth} are of size 400x400, but the images in the test set are of size 608x608. Thus the model can be constructed such that it either predicts 400x400 px images or directly 608x608 px images. For the first case, the overlapping regions have then to be averaged.
+
+\subsection{Histograms of test data}  \label{sec:histogram}
+When plotting the histograms of the training and the test images, we recognized that they look completely different. All the test images are missing certain \acrshort{rgb} values. We therefore investigated into procedures such as histogram matching. 
+
+\subsection{Additional data we used.}
+The data provided by \acrshort{eth} contains 100 images of size 400x400 px. When visually comparing the images, one can immediately see that the test images look quite different to the training images. This is why we investigated into collecting more data. We collected additional training data in the following ways:
+\begin{itemize}
+    \item Dowlnoad of Google Maps satelite images and the same areas from \acrfull{osm} to generate the labels (Streetwidth is not stored in \acrshort{osm} thus was chosen to be the same for all streets)
+    \item Download of.... \textcolor{red}{Script used to get jkfrie data}
+    %The rest of the data I would not mention here, as we didn't really use it for training
+\end{itemize}
+
+
+We use the following hyperparameters as a baseline for all the experiments.
+
+ With probability 0.5 we apply the \textcolor{red}{Shiftscalerotate} augmentation during training. Images are cropped to size 400x400. As a threshold to predict either street or background, we use 0.5 
+For the U-Net parameters, we use the model proposed in \cite{unet}. For the \acrshort{gcdcnn} we use the parameters, proposed in \textcolor{red}{\cite{gcdcnn}}. As a lossfunction, we use dice loss \cite{dicelosspaper} and as an optimizer we use adam. After noticing that some initial learning rates cause the loss of the models to diverge, we decided to use $10^{-3}$ for the unet and $10^{-4}$ for the \acrshort{gcdcnn}. Additionally we drop the learning rate by a factor of $10$ at epochs $50$ and $100$. 
+
+In this section we evaluate the contribution of using additional data.
+We compare following datasets:
+\begin{itemize}
+    \item \emph{\acrshort{eth}}: The provided training dataset comprised out of 100 images. We additionally increase this dataset by using the flipped version of the original image as well as the three rotations 90, 180, 270 degree of the original and flipped image resulting in a total of 8 images per original image.
+    \item \emph{jkfrie}: This is a public dataset of scrapped google maps satellite images and google maps road labelings. These images are of size 608x608, but for the sake of comparison we used the top left 400x400 cropped image for training.
+    \item \emph{jkfrie-add}: This dataset uses the map scrapper of jkfrie to get the images and masks, but we use our own locations. We tried to choose locations that contain a diverse set of roads to increase generalization.
+\end{itemize}
+
+ We always use a validation set of 20\% and report in table \ref{tab:datasets} the public score reached with the best validation accuracy weights checkpoint. A comparison of the validation accuracy is not helpful, since the validation set is different for every dataset.
+
+The results clearly show using more data as well as a diverse set of images as in \emph{\acrshort{eth}-jkfrie-jkfrie-add} can lead to a great improvement from 89.162 to 93.077 accuracy.
+
+
+\begin{comment}
+
+Furthermore, we pre-trained our models on images from \acrfull{osm} \cite{}, which do not contain accurate pixel level masks, but only the center line of roads with a fixed width. The respective experiment is described in \ref{}.
+
+\end{comment}
