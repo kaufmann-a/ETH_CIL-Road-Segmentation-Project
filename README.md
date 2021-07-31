@@ -23,7 +23,7 @@ problem and make it harder to generalize from the train images to the test image
 <img src="./other/analysis/histograms/ETH train images_mean_hist.png" alt="mean-train-histograms" height="100%">
 </p>
 
-Since we only have 100 training images we increased our training set by:
+Since we only have 100 training images we increased our training set by (please also see section [1.2 ](#1.2-download-the-data) to get the following directories) :
 
 - creating augmented ETH images. For that we flipped the original image and stored it separately. Further we saved the
   rotated versions (by 90, 180, 270 degrees) of the original and the flipped image. This increases the training set from
