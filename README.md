@@ -343,7 +343,7 @@ in: [intermediate_experiments.md](./intermediate_experiments.md)
 
 ### 7. Postprocessing using retraining
 
-1. Create the test image predictions by running the inference script [4. Run the training](#4-run-the-training).
+1. Create the test image predictions by running the inference script [5. Run the inference](#5-run-the-inference).
    After the inference the test images can be found in the folder `run_folder/prediction-<datetime>/pred-masks-original`,
    where `run_folder` is the folder that was supplied as a command line argument to the `inference.py` script. These
    images are later needed in the last step to get the postprocessed test images.
