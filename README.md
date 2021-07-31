@@ -252,7 +252,11 @@ varies, by running 10 runs of the GC-DCNN baseline using the "experiments datase
 - min validation accuracy: 0.9724 (removed one outlier with validation accuracy of 0.9715)
 - max validation accuracy: 0.9732
 
-##### Baselines
+##### Reproduce final results
+
+Below we list the commands to run our final models which can be found in "Table III: Results of Final Models" of the report.
+
+###### Baselines
 
 For the baselines we use the "experiments dataset" which is a combination of the ETH and the GMaps-public dataset with a
 predefined train and validation split. The images of the GMaps-public dataset were center cropped to size 400x400 to
@@ -263,7 +267,7 @@ match the ETH dataset image size.
 | U-Net |`bsub -n 4 -J "gcdcnn_exp_baseline" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/gcdcnn_exp_baseline.jsonc'`|
 | GC-DCNN |`bsub -n 4 -J "unet_exp_baseline" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/experiments/unet_exp_baseline.jsonc'`|
 
-##### Final
+###### Final
 
 For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom with a validation split of 20%.
 
@@ -274,13 +278,13 @@ For our final submission we used the datasets: ETH, GMaps-public, GMaps-custom w
 |GC-DCNN<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final.jsonc'`|
 |GC-DCNN+<br>Augmentations: SSR, RC, GN|`bsub -n 4 -J "gcdcnn_final_plus" -W 24:00 -R "rusage[mem=10240, ngpus_excl_p=1]" -R "select[gpu_model0==GeForceRTX2080Ti]" 'python train.py --configuration configurations/final/gcdcnn_final_plus.jsonc'`|
 
-##### Ensemble prediction
+###### Ensemble prediction
 
 For the ensemble prediction we combined the results of all five runs listed above in [Baselines](#baselines)
 and [Final](#final). To execute the ensemble prediction follow the steps listed
 in [6. Run an ensemble prediction](#6-run-an-ensemble-prediction).
 
-##### Postprocessing: binary retraining
+###### Postprocessing: binary retraining
 
 We applied the postprocessing on the runs U-Net+, GC-DCNN+ and the ensemble prediction.
 In [7. Postprocessing using retraining](#7-postprocessing-using-retraining) we show how these results can be reproduced.
