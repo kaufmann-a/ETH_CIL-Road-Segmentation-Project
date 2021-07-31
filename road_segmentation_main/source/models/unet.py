@@ -1,5 +1,5 @@
 """
-Unet model
+Unet model, inspired by https://www.youtube.com/watch?v=IHq1t7NxS8k&t=157s
 """
 
 __author__ = 'Andreas Kaufmann, Jona Braun, Frederike Lübeck, Akanksha Baranwal'
